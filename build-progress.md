@@ -45,7 +45,7 @@
 - [x] Step 26: Generate Report (AI draft + PDF export) + Manage Teachers (+ TeachersTable) + Academy Schedule
 
 ## Phase 6 — Polish + Deploy
-- [ ] Step 27: PWA manifest + install-to-homescreen
+- [~] Step 27: PWA manifest + install-to-homescreen — manifest, icons, theme color, iOS standalone meta all done and verified in the build output. App is installable from the Chrome menu. **Service worker not built — pending Gio's call** (needed for the automatic install prompt + offline; see Current Status)
 - [ ] Step 28: Dark mode QA across all three route groups
 - [ ] Step 29: Desktop / tablet / mobile responsive QA — not mobile-only
 - [ ] Step 30: Vercel deploy
@@ -62,6 +62,7 @@
 ---
 
 ## Current Status
-**Last completed:** Step 26 — all Phase 5 pages built; eslint + tsc + production build all pass (39 routes + proxy). Also fixed: proxy.ts redirect loop for role-less sessions, Turbopack workspace root pinned.
-**In progress:** —
-**Next action:** Steps 7–9 + 13 need Gio (create Supabase project, run schema.sql + seed.sql, fill .env.local, verify RLS per role) → then Phase 6 (PWA manifest, QA, deploy)
+**Last completed:** Step 27 (partial) — PWA manifest at `app/manifest.ts`, icons generated from the design tokens (`scripts/generate-icons.mjs` → teal-on-dark K monogram, incl. a maskable variant), `themeColor` + `appleWebApp` in the root layout. tsc + production build pass; `/manifest.webmanifest` verified serving valid JSON as `application/manifest+json`.
+**In progress:** Step 27 — service worker deferred, see below.
+**Open decision (Gio):** Chrome 108+/112+ makes KOMS installable from the browser menu on the manifest alone, but the *automatic* install prompt and any offline capability need a service worker with a fetch handler. KOMS is fully auth-gated over minors' data, so a naive cache-everything SW would leave student records in the Cache API on shared devices. Recommendation: a narrow SW that caches only static assets and the app shell, and never caches HTML or `/api/*` responses. Not built pending Gio's approval.
+**Next action:** Steps 7–9 + 13 still need Gio and still block everything downstream (create Supabase project, run schema.sql + seed.sql, fill `.env.local`, verify RLS per role). `.env.local` still absent as of 2026-07-22. Steps 28–30 (dark mode QA, responsive QA, Vercel deploy) cannot start until the app runs against a real database.

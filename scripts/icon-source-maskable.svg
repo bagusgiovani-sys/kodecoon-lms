@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Maskable variant: full-bleed background, glyph kept inside the 80% safe
+       zone so Android can crop to a circle/squircle without clipping the K. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a1f28"/>
+      <stop offset="100%" stop-color="#030d12"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.45" r="0.55">
+      <stop offset="0%" stop-color="#2fd8d0" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#2fd8d0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#tile)"/>
+  <rect width="512" height="512" fill="url(#glow)"/>
+
+  <!-- glyph scaled to ~72% and recentred: stays within the safe zone -->
+  <g transform="translate(256 256) scale(0.72) translate(-256 -256)"
+     stroke="#2fd8d0" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M170 130 V382"/>
+    <path d="M338 130 L196 256 L346 382"/>
+  </g>
+</svg>
