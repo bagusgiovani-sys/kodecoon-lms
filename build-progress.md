@@ -45,7 +45,7 @@
 - [x] Step 26: Generate Report (AI draft + PDF export) + Manage Teachers (+ TeachersTable) + Academy Schedule
 
 ## Phase 6 — Polish + Deploy
-- [~] Step 27: PWA manifest + install-to-homescreen — manifest, icons, theme color, iOS standalone meta all done and verified in the build output. App is installable from the Chrome menu. **Service worker not built — pending Gio's call** (needed for the automatic install prompt + offline; see Current Status)
+- [x] Step 27: PWA manifest + install-to-homescreen — manifest, icons, theme color, iOS standalone meta done and verified in the build output. Installable from the browser menu. **Decision (Gio, 2026-07-22): online-only, no service worker.** Classroom wifi is reliable, offline is unrequested in BRD/PRD/SDD, and a cache layer over minors' data carries risk with no matching benefit. Final install verification happens post-deploy at Step 30, since installability needs HTTPS.
 - [ ] Step 28: Dark mode QA across all three route groups
 - [ ] Step 29: Desktop / tablet / mobile responsive QA — not mobile-only
 - [ ] Step 30: Vercel deploy
@@ -63,6 +63,6 @@
 
 ## Current Status
 **Last completed:** Step 27 (partial) — PWA manifest at `app/manifest.ts`, icons generated from the design tokens (`scripts/generate-icons.mjs` → teal-on-dark K monogram, incl. a maskable variant), `themeColor` + `appleWebApp` in the root layout. tsc + production build pass; `/manifest.webmanifest` verified serving valid JSON as `application/manifest+json`.
-**In progress:** Step 27 — service worker deferred, see below.
-**Open decision (Gio):** Chrome 108+/112+ makes KOMS installable from the browser menu on the manifest alone, but the *automatic* install prompt and any offline capability need a service worker with a fetch handler. KOMS is fully auth-gated over minors' data, so a naive cache-everything SW would leave student records in the Cache API on shared devices. Recommendation: a narrow SW that caches only static assets and the app shell, and never caches HTML or `/api/*` responses. Not built pending Gio's approval.
+**In progress:** — Phase 6 is blocked below Step 27.
+**Settled (2026-07-22):** KOMS is **online-only**. No service worker, no offline mode. Installable from the browser menu, which satisfies BRD's "install-to-homescreen"; the automatic install banner is skipped since it would require a service worker. If offline ever comes up, the version worth building is "never lose a session log" (queue writes offline, sync on reconnect) — a scoped feature with conflict-resolution design, not PWA polish.
 **Next action:** Steps 7–9 + 13 still need Gio and still block everything downstream (create Supabase project, run schema.sql + seed.sql, fill `.env.local`, verify RLS per role). `.env.local` still absent as of 2026-07-22. Steps 28–30 (dark mode QA, responsive QA, Vercel deploy) cannot start until the app runs against a real database.

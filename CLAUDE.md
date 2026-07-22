@@ -285,6 +285,7 @@ DO NOT store raw video bytes anywhere in Supabase or on the server — Google Dr
 DO NOT auto-export or auto-send an AI-drafted report without human review — the teacher must see and can edit `ai_draft_text` before any PDF is generated, every time
 DO NOT build Scheduling-for-other-centers, Payments, CRM, or automated WhatsApp Business API push — all explicitly out of scope per PRD.md, confirm with Gio before adding any of them
 DO NOT let a parent-facing route use the Supabase service-role client — parent/student routes must go through the RLS-scoped client, never bypass it "to make a query easier"
+DO NOT add a service worker, offline cache, or `next-pwa`-style plugin — KOMS is online-only by decision (Gio, 2026-07-22). It's still an installable PWA without one. Caching auth-gated pages would put minors' data in the Cache API on shared devices for no requested benefit. If offline logging is ever wanted, scope it as its own feature with sync-conflict handling, don't bolt it on
 DO NOT add `Co-Authored-By: Claude`, a `🤖 Generated with Claude Code` footer, or any other AI attribution to a commit message or PR body — Gio is the sole author on this repo (§13 Secretary)
 DO NOT sit on finished work — commit and push after every major change without waiting to be asked (§0, §13)
 DO NOT use `float` for `sequence_number` or any ordering field — integers only, gaps are fine, fractional reordering is not needed at this scale
