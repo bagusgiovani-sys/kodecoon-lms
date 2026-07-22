@@ -96,7 +96,7 @@ koms/
 ├── types/
 │   ├── database.types.ts                 # generated from Supabase
 │   └── api.types.ts                      # request/response interfaces from SDD.md Section 3
-├── middleware.ts                         # auth + role route protection
+├── proxy.ts                              # auth + role route protection (Next 16 renamed middleware.ts → proxy.ts)
 ├── CLAUDE.md                             # this file
 ├── BRD.md / PRD.md / SDD.md / schema.sql
 ├── build-progress.md
@@ -114,7 +114,7 @@ koms/
 
 Summary for Claude Code:
 - Session managed by: Supabase SSR (`@supabase/ssr`)
-- Session + role check location: `middleware.ts` — three route groups, three rules: `(dashboard)` requires `teacher` or `admin`, `(admin)` requires `admin` only, `(student)` requires `parent`
+- Session + role check location: `proxy.ts` at project root, exporting `proxy(request)` — Next.js 16 renamed `middleware.ts` → `proxy.ts`. Do NOT create a `middleware.ts`; it's deprecated and Next 16 will not run it alongside `proxy.ts`. Three route groups, three rules: `(dashboard)` requires `teacher` or `admin`, `(admin)` requires `admin` only, `(student)` requires `parent`
 - Server client: `lib/supabase/server.ts`
 - Browser client: `lib/supabase/browser.ts`
 - Auth user ID access: `(await supabase.auth.getUser()).data.user?.id`
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
 → RLS rules: schema.sql comments (every table, every policy, already written)
 
 Rules:
-- **RLS is the real security boundary** — app-layer role checks in middleware/route handlers are UX (fast redirects, clear errors), never the only thing standing between a parent and another family's student data
+- **RLS is the real security boundary** — app-layer role checks in proxy.ts/route handlers are UX (fast redirects, clear errors), never the only thing standing between a parent and another family's student data
 - **Always use the server client** for DB writes in route handlers
 - **Center-scope every admin query**: `.eq('center_id', activeCenterId)` — the Center Switcher's selected value, not assumed
 - **Never store a derived count as a column** — lesson totals come from `COUNT(lessons)`, progress from `COUNT(student_lesson_progress WHERE status='completed')`. This was a deliberate schema decision (see schema.sql comments) — don't reintroduce a `total_credits`-style column
@@ -308,7 +308,7 @@ Step 6:      Component inventory — list every component from PRD.md's Screen I
 
 --- BACKEND ---
 Steps 7–13:  Run schema.sql against Supabase, verify every RLS policy with a manual
-             test query per role, set env vars, write middleware.ts, generate DB types,
+             test query per role, set env vars, write proxy.ts, generate DB types,
              seed data (1 center, Gio as both teacher and admin)
 
 --- COMPONENTS ---
