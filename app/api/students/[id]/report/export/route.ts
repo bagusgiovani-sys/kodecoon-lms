@@ -12,6 +12,10 @@ import type { ExportReportResponse } from '@/types/api.types'
 // data, the bucket is never public.
 const SIGNED_URL_SECONDS = 60 * 60 * 24 * 365
 
+// React PDF rendering is CPU-bound and runs before two storage round-trips,
+// so this route can also exceed Vercel's default function window.
+export const maxDuration = 60
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

@@ -5,6 +5,12 @@ import { getStudentClassSummary } from '@/lib/reports/summary'
 import { draftReportText } from '@/lib/ai/reportDraft'
 import type { DraftReportResponse } from '@/types/api.types'
 
+// Claude drafting is the one route that can outlive Vercel's default function
+// window. Without this the platform kills the request before our own timeout
+// fires, and the teacher gets a raw 504 instead of the "write it manually"
+// fallback the PRD requires.
+export const maxDuration = 60
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

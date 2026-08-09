@@ -31,7 +31,13 @@ create table users (
   role text not null default 'teacher', -- 'teacher' | 'center_manager' | 'admin' | 'parent'
   center_id uuid references centers(id), -- null for parents, required for staff
   created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  updated_at timestamptz default now(),
+  -- Enforced, not just documented: several RLS policies scope by
+  -- "center_id in (select center_id from users where id = auth.uid())".
+  -- A parent with a non-null center_id would silently widen those policies to
+  -- every student in the center, so the invariant has to be a constraint.
+  constraint users_parent_has_no_center
+    check (role <> 'parent' or center_id is null)
 );
 
 create table classes (
@@ -178,7 +184,44 @@ alter table student_guardians enable row level security;
 
 -- users: everyone sees/updates only their own row
 create policy "users_select_own" on users for select using (id = auth.uid());
-create policy "users_update_own" on users for update using (id = auth.uid());
+
+-- WITH CHECK is spelled out deliberately. Postgres reuses the USING expression
+-- as WITH CHECK when it is omitted, and "id = auth.uid()" still holds after a
+-- row rewrites its OWN role — so the omitted form let any authenticated parent
+-- run `update users set role='admin', center_id=<their child's class center>`
+-- and inherit every *_admin_manage_center policy below. The anon key is public
+-- by design, so that reaches PostgREST directly and never passes a route guard.
+-- Column-level immutability is enforced by the trigger underneath; this clause
+-- keeps the row-level intent readable at the policy site.
+create policy "users_update_own" on users for update
+  using (id = auth.uid())
+  with check (id = auth.uid());
+
+-- Role and center assignment are not self-service. Blocks only self-edits, so
+-- an admin managing OTHER staff via users_admin_manage_center is unaffected,
+-- as are service-role operations (auth.uid() is null there).
+create or replace function prevent_self_privilege_escalation()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() = new.id
+     and (new.role is distinct from old.role
+          or new.center_id is distinct from old.center_id) then
+    raise exception 'role and center_id cannot be changed by the account holder';
+  end if;
+  return new;
+end;
+$$;
+
+-- create trigger has no "or replace"; the drop keeps a re-run of this file from
+-- failing halfway, which matters while Step 7 is still being iterated on.
+drop trigger if exists users_block_self_escalation on users;
+create trigger users_block_self_escalation
+  before update on users
+  for each row execute function prevent_self_privilege_escalation();
 
 -- centers: staff can see their own center
 create policy "centers_select_staff" on centers for select using (
@@ -186,7 +229,16 @@ create policy "centers_select_staff" on centers for select using (
 );
 
 -- classes: teacher owns their classes; parent sees classes their child is enrolled in
-create policy "classes_all_teacher" on classes for all using (teacher_id = auth.uid());
+-- WITH CHECK also pins center_id: with the inherited form a teacher could move
+-- one of their own classes into another center, where that center's admin
+-- policies would pick it up. Harmless in single-center v1, wrong the moment a
+-- second center exists.
+create policy "classes_all_teacher" on classes for all
+  using (teacher_id = auth.uid())
+  with check (
+    teacher_id = auth.uid()
+    and center_id in (select center_id from users where id = auth.uid())
+  );
 create policy "classes_select_parent" on classes for select using (
   id in (
     select e.class_id from enrollments e
@@ -286,8 +338,19 @@ create policy "reports_select_parent" on reports for select using (
 create policy "report_templates_select_staff" on report_templates for select using (auth.uid() is not null);
 
 -- student_guardians: teacher creates links when adding a student's parent; parent sees only their own links
+-- The role filter matches students_all_teacher above and is load-bearing: without
+-- it, any user row whose center_id happens to be set — including a parent's —
+-- would get ALL (insert/update/delete) on guardian links, letting them attach
+-- themselves to another family's child and inherit every parent policy that
+-- traverses student_guardians. The users_parent_has_no_center constraint closes
+-- the same hole from the other side; both stay.
 create policy "student_guardians_all_teacher" on student_guardians for all using (
-  student_id in (select id from students where center_id in (select center_id from users where id = auth.uid()))
+  student_id in (
+    select id from students where center_id in (
+      select center_id from users
+      where id = auth.uid() and role in ('teacher','center_manager','admin')
+    )
+  )
 );
 create policy "student_guardians_select_own" on student_guardians for select using (guardian_id = auth.uid());
 

@@ -24,9 +24,10 @@ Rules:
 
 export async function draftReportText(input: ReportDraftInput): Promise<string> {
   const anthropic = new Anthropic({
-    // route handlers should answer well within Vercel's window — fail fast
-    // and let the client fall back to manual writing (SDD.md §8)
-    timeout: 45_000,
+    // Two attempts at 25s sit inside the route's 60s maxDuration, so a slow
+    // Claude call surfaces as our own 502 ("write it manually", SDD.md §8)
+    // instead of Vercel killing the function and returning a raw 504.
+    timeout: 25_000,
     maxRetries: 1,
   })
 
@@ -45,7 +46,12 @@ export async function draftReportText(input: ReportDraftInput): Promise<string> 
 
   const response = await anthropic.messages.create({
     model: 'claude-opus-4-8',
-    max_tokens: 2048,
+    // max_tokens caps thinking AND response text together. At 2048 an adaptive
+    // thinking pass could eat the budget and truncate the report mid-sentence;
+    // this is a ceiling, not a reservation, so the headroom costs nothing.
+    max_tokens: 16_000,
+    // Explicit, not omitted: on Opus 4.8 an absent `thinking` field means no
+    // thinking at all (unlike Opus 5, where adaptive is the default).
     thinking: { type: 'adaptive' },
     system: SYSTEM_PROMPT,
     messages: [

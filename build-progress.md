@@ -19,7 +19,7 @@
 
 ## Phase 3 — Backend
 - [~] Step 7: schema.sql ready; **running it against the real Supabase project pending Gio's credentials**
-- [ ] Step 8: RLS manual verification per role — blocked on Step 7
+- [~] Step 8: RLS verification — **static audit done (2026-08-10), found and fixed a critical privilege-escalation hole**; the per-role live query test still needs Step 7. `users_update_own` had no `WITH CHECK`, so any parent could `update users set role='admin'` and inherit every admin policy — full access to all students' data. Fixed with an explicit `WITH CHECK` + a `before update` trigger blocking self-edits of `role`/`center_id`. Also hardened `student_guardians_all_teacher` (missing role filter), `classes_all_teacher` (unconstrained `center_id`), and added a `users_parent_has_no_center` CHECK so the invariant several policies rely on is enforced, not just commented. Details in errors.md.
 - [ ] Step 9: Env vars — `.env.example` documented; **no `.env.local` yet, needs Gio's Supabase/Anthropic/Google keys**
 - [x] Step 10: proxy.ts (Next 16's middleware.ts) — three route groups, three rules
 - [x] Step 11: database.types.ts generated from schema
@@ -47,7 +47,7 @@
 ## Phase 6 — Polish + Deploy
 - [x] Step 27: PWA manifest + install-to-homescreen — manifest, icons, theme color, iOS standalone meta done and verified in the build output. Installable from the browser menu. **Decision (Gio, 2026-07-22): online-only, no service worker.** Classroom wifi is reliable, offline is unrequested in BRD/PRD/SDD, and a cache layer over minors' data carries risk with no matching benefit. Final install verification happens post-deploy at Step 30, since installability needs HTTPS.
 - [~] Step 28: Dark mode QA — **static pass done**, runtime pass blocked on the DB. Audited every `app/` + `components/` file for hardcoded color, light-mode-only palette classes, and theme handling. Findings fixed: Toaster resolved its theme from the OS while the app pins dark; modal scrim (`bg-black/10`) invisible against `#030d12`; no `prefers-reduced-motion` support anywhere despite two infinite CSS loops and an infinite Journey pulse. Verified clean: no hardcoded hex in components (the three hits are PWA metadata + React PDF, both of which can't take CSS vars); `themeColor` `#030d12` matches `--background` exactly; tables already wrap in `overflow-x-auto`. Note: `<html>` pins `dark` unconditionally, so there is no light mode to QA — the light `:root` block is an unused fallback.
-- [ ] Step 29: Desktop / tablet / mobile responsive QA — not mobile-only
+- [~] Step 29: Responsive QA — **static pass done, clean.** Audited every layout-bearing file. The low count of `sm:`/`md:`/`lg:` prefixes (35 across 75 files) is not a gap: the layouts use intrinsically-responsive patterns instead — `AppNav` scrolls its tabs via `min-w-0 flex-1 overflow-x-auto` with `shrink-0` items, every table wraps in `overflow-x-auto`, and grids are mobile-first (`grid gap-4 sm:grid-cols-2 lg:grid-cols-3`). No fixed pixel widths outside two shadcn primitives. Runtime pass at three breakpoints still needs a live DB.
 - [ ] Step 30: Vercel deploy
 
 ---
@@ -59,6 +59,18 @@
 | 2       | 2026-07-17 | 14–17 | — | All feature components |
 | 3       | 2026-07-17 | 18–26 | — | All pages, guards, root layout; tsc + eslint clean |
 | 4       | 2026-08-09 | 28 (static half) | — | Dark-mode + motion audit; 3 fixes; tsc/eslint/build clean, verified in compiled CSS |
+| 5       | 2026-08-10 | 8 + 29 (static halves) | — | **Remote found compromised — see Security below.** RLS audit: critical parent→admin escalation fixed. Report-route timeout/token fixes. Responsive audit clean. |
+
+---
+
+## Security incident — 2026-08-10
+`origin/main` was **force-pushed with malware** (rewrote `2b23648` → `300f1e7`, preserving Gio's name, email, author date, and commit subject). Two payload files:
+- `postcss.config.mjs` (94 B → 9328 B): obfuscated RCE backdoor hidden after `export default config;` behind a long whitespace run. Resolves its C2 by reading the latest transaction from a hardcoded ETH address and decoding the `to` field as two IPv4 addresses, then fetches XOR-encrypted payloads, `eval`s them, and `spawn`s them detached. Executes on **every `next build` / `next dev`**.
+- `.gitignore`: deletes the `.env*` line and adds `config.bat` — so the next routine `git add -A` would sweep `.env.local` (Supabase service-role key, Anthropic key, Google OAuth secret) into a commit pushed to the attacker, while a dropped `config.bat` stays invisible to `git status`.
+
+**This machine was never infected** — the commit was fetched but never checked out, and `git fetch` doesn't touch the working tree. Local `postcss.config.mjs` is still the original 94 bytes; no `config.bat`; no IOC matches in tracked files or `node_modules`; no git hooks; git config clean. `CLAUDE.md` and `build-progress.md` on the malicious commit are byte-identical to ours — no prompt injection. Committer timezone on the malicious commit is **+0200**; Gio's is **+0700**.
+
+**Local `main` is the clean history and has NOT been pushed.** Before pushing: rotate GitHub credentials, revoke all PATs/SSH keys, check the security log (`git.push` events) for the source, enable branch protection with force-push disabled. Then `git push --force-with-lease` to restore clean history — the one case where force-pushing is correct.
 
 ---
 
@@ -68,4 +80,6 @@
 **Settled (2026-07-22):** KOMS is **online-only**. No service worker, no offline mode. Installable from the browser menu, which satisfies BRD's "install-to-homescreen"; the automatic install banner is skipped since it would require a service worker. If offline ever comes up, the version worth building is "never lose a session log" (queue writes offline, sync on reconnect) — a scoped feature with conflict-resolution design, not PWA polish.
 **Next action:** Steps 7–9 + 13 still need Gio and still block everything downstream (create Supabase project, run schema.sql + seed.sql, fill `.env.local`, verify RLS per role). `.env.local` still absent as of 2026-08-09; Docker is not installed on this machine either, so a local `supabase start` stack is not an option without Gio installing it first.
 
-Steps 28–29 have now been taken as far as static analysis allows (see Step 28 above). What remains in both genuinely needs a running app against real data: rendering each of the three route groups to check contrast and layering in situ, and exercising desktop/tablet/mobile breakpoints on screens whose height depends on row counts (roster, schedule calendar, journey with a full 24-lesson plan). Step 30 (Vercel deploy) is unblocked by nothing here.
+**Blocking on Gio, in priority order:** (1) the security remediation above — nothing should be pushed until GitHub credentials are rotated; (2) Steps 7–9 + 13. Docker is not installed on this machine either, so a local `supabase start` stack is not an option without Gio installing it first.
+
+Steps 8, 28, and 29 have now been taken as far as static analysis allows (see those steps above). What remains in both genuinely needs a running app against real data: rendering each of the three route groups to check contrast and layering in situ, and exercising desktop/tablet/mobile breakpoints on screens whose height depends on row counts (roster, schedule calendar, journey with a full 24-lesson plan). Step 30 (Vercel deploy) is unblocked by nothing here.
