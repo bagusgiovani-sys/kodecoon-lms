@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Check, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -23,6 +23,7 @@ export function JourneyNode({
   onTap,
 }: JourneyNodeProps) {
   const locked = status === 'locked'
+  const reduceMotion = useReducedMotion()
 
   return (
     <div className="flex w-16 flex-col items-center gap-1.5 sm:w-20">
@@ -59,12 +60,21 @@ export function JourneyNode({
           sequenceNumber
         )}
         {status === 'unlocked' ? (
-          <motion.span
-            className="border-journey-unlocked absolute inset-0 rounded-full border-2"
-            animate={{ scale: [1, 1.35], opacity: [0.7, 0] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
-            aria-hidden
-          />
+          reduceMotion ? (
+            // Reduced motion: keep the "up next" ring, drop the pulse. The ring
+            // carries meaning, so it stays — only the looping animation goes.
+            <span
+              className="border-journey-unlocked absolute inset-0 rounded-full border-2 opacity-70"
+              aria-hidden
+            />
+          ) : (
+            <motion.span
+              className="border-journey-unlocked absolute inset-0 rounded-full border-2"
+              animate={{ scale: [1, 1.35], opacity: [0.7, 0] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
+              aria-hidden
+            />
+          )
         ) : null}
       </motion.button>
       <motion.span

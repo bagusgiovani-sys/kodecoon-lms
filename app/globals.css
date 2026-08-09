@@ -223,6 +223,19 @@
   }
 }
 
+/* Accessibility: the data-stream motif and the Journey's pulse both loop
+   forever. Honour a reduced-motion preference by holding them still — the
+   decoration carries no information, so nothing is lost by stopping it. */
+@media (prefers-reduced-motion: reduce) {
+  .data-stream::before,
+  .data-stream-shimmer {
+    animation: none;
+  }
+  .data-stream-shimmer {
+    background: none;
+  }
+}
+
 @keyframes data-stream-fall {
   from {
     transform: translateY(0);

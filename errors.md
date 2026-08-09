@@ -44,3 +44,21 @@
 **Prevention:** Every role-based redirect must have an explicit branch for "authenticated but unprovisioned" — never let a null role fall into a role's home path.
 **Files affected:** proxy.ts
 ---
+## [2026-08-09 Session 4] Toaster resolved its theme from the OS while the app is pinned dark
+#[ui] #[theming]
+**Context:** Step 28 dark-mode QA — static audit of theme handling across all three route groups.
+**Error:** `components/ui/sonner.tsx` called `useTheme()` from next-themes, but no `ThemeProvider` is mounted anywhere in the tree. Without a provider the hook returns `theme: undefined`, so the `= "system"` default applied and Sonner resolved light/dark from `prefers-color-scheme` — on a light-mode device, toasts styled themselves light over an app that pins `<html class="dark">`.
+**Root cause:** The shadcn Toaster ships wired for a next-themes toggle. KOMS hard-codes `dark` on the root element and never installed the provider, so the stock wiring silently fell through to OS preference. Masked in most cases because `--normal-bg`/`--normal-text`/`--normal-border` are overridden to app tokens, which hid the mismatch on everything except Sonner internals.
+**Fix:** Pass `theme="dark"` literally and drop the next-themes import. That was its only usage — the package is now unreferenced (left installed; it becomes relevant again if a theme toggle ever ships).
+**Prevention:** When a shadcn primitive reads theme state, confirm the matching provider is actually mounted — a missing provider degrades to a silent default, not an error. If the app pins a theme, pin it in the primitives too rather than leaving them to infer it.
+**Files affected:** components/ui/sonner.tsx
+---
+## [2026-08-09 Session 4] Modal scrim invisible against the near-black dark background
+#[ui] #[dark-mode]
+**Context:** Step 28 dark-mode QA — checking layering on Dialog, AlertDialog, and Sheet.
+**Error:** All three overlays used the stock `bg-black/10`. Over `--background` (`oklch(0.15 0.02 230)` = `#030d12`) a 10% black scrim moves each channel by ~2/255 — imperceptible. Modals did not read as layered above the page; separation rested entirely on a 2px backdrop blur and a 10% ring.
+**Root cause:** shadcn's default scrim opacity is tuned for a light-background app. KOMS is dark-only, and nobody re-checked the value after the dark palette landed.
+**Fix:** Raised all three to `bg-black/50`. Verified in the compiled CSS as `background-color:#00000080`.
+**Prevention:** Stock component opacity values are calibrated against a light ground — re-check every scrim, shadow, and overlay after adopting a dark-default palette.
+**Files affected:** components/ui/dialog.tsx, components/ui/alert-dialog.tsx, components/ui/sheet.tsx
+---
