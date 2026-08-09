@@ -80,3 +80,21 @@
 **Prevention:** Any route calling an LLM or rendering a PDF needs an explicit `maxDuration`, and the client-side timeout budget must fit inside it — otherwise graceful-degradation paths are dead code. When thinking is enabled, size `max_tokens` for thinking plus output.
 **Files affected:** lib/ai/reportDraft.ts, app/api/students/[id]/report/draft/route.ts, app/api/students/[id]/report/export/route.ts
 ---
+## [2026-08-10 Session 5] Log Session trusted client-sent studentId — cross-class record corruption
+#[security] #[rls]
+**Context:** Second audit pass, reviewing the routes not covered the first time. Log Session is the core write of the app (SDD.md §3).
+**Error:** The route verified the caller owns the **session**, then wrote `attendance` and `student_lesson_progress` rows using `studentId`/`lessonId` straight from the request body. Neither RLS policy closed the gap: `attendance_all_teacher` gates only on `session_id`, and `progress_all_teacher` only on `lesson_id`. So a teacher could post an arbitrary `studentId` and write attendance or lesson-completion rows onto **any student in the academy**, including another teacher's. Those rows are readable by that child's parent through the `*_select_parent` policies and feed both the Journey view and the generated report — so it corrupts a minor's academic record across a class boundary, visible to the wrong family.
+**Root cause:** "Owns the session" was treated as sufficient scope for everything written during that session. It isn't: the session determines a *class*, and every id in the payload has to be checked against that class. This is the exact failure CLAUDE.md §4 warns about — a client-sent `studentId` used for authorization.
+**Fix:** The route now loads the session class's enrollments and lessons once, and rejects with 403 if any submitted `studentId` isn't enrolled or any `lessonId` doesn't belong to that class. Both RLS policies gained a matching `student_id in (...)` clause so the boundary holds for a caller hitting PostgREST directly with the public anon key, not just for callers coming through the route.
+**Prevention:** Ownership of a parent record never authorizes writes to arbitrary child records. For every id in a request body, name the scope it must fall inside and check it — and put that same constraint in the RLS policy, since the route is not the boundary.
+**Files affected:** app/api/sessions/[id]/log/route.ts, schema.sql
+---
+## [2026-08-10 Session 5] Half-provisioned staff account bounced off login with no message
+#[auth] #[ux]
+**Context:** Reviewing staff-login during the second audit pass — the follow-on to the Session 3 redirect-loop entry.
+**Error:** With an `auth.users` session but no `public.users` row, `staff-login` returned `redirectTo: '/dashboard'`. `proxy.ts` correctly treats a role-less session as unauthenticated (the Session 3 fix), so the browser was sent straight back to `/login` with nothing on screen explaining why. No loop, but the login silently appeared to fail.
+**Root cause:** The Session 3 fix made the role-less case *safe* in proxy.ts but left the login route still reporting success for it.
+**Fix:** staff-login now signs the session out and returns 403 with "This account isn't set up yet — ask your admin to re-send the invite".
+**Prevention:** When a guard starts treating a state as unauthenticated, check every route that can *produce* that state and make it say so.
+**Files affected:** app/api/auth/staff-login/route.ts
+---

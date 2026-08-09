@@ -60,6 +60,7 @@
 | 3       | 2026-07-17 | 18–26 | — | All pages, guards, root layout; tsc + eslint clean |
 | 4       | 2026-08-09 | 28 (static half) | — | Dark-mode + motion audit; 3 fixes; tsc/eslint/build clean, verified in compiled CSS |
 | 5       | 2026-08-10 | 8 + 29 (static halves) | — | **Remote found compromised — see Security below.** RLS audit: critical parent→admin escalation fixed. Report-route timeout/token fixes. Responsive audit clean. |
+| 6       | 2026-08-10 | 8 (second pass) | — | Full route re-audit: Log Session trusted client-sent studentId (cross-class record corruption) — fixed in route + RLS. staff-login half-provisioned UX. Push still blocked on credential rotation. |
 
 ---
 

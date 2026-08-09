@@ -43,6 +43,18 @@ export async function POST(request: Request) {
       )
     }
 
+    // Authenticated but unprovisioned (invite half-completed, profile deleted).
+    // Say so plainly: proxy.ts treats a role-less session as logged out, so
+    // without this the login appears to succeed and then bounces back here
+    // with nothing explaining why (see errors.md, Session 3).
+    if (!profile?.role) {
+      await supabase.auth.signOut()
+      return NextResponse.json(
+        { error: 'This account isn’t set up yet — ask your admin to re-send the invite' },
+        { status: 403 }
+      )
+    }
+
     const response: StaffLoginResponse = {
       redirectTo: profile?.role === 'admin' ? '/admin' : '/dashboard',
     }

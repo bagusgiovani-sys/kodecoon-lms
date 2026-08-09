@@ -37,6 +37,35 @@ export async function PATCH(
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
     }
 
+    // Scope every client-sent id to THIS session's class before writing
+    // (CLAUDE.md §4). Owning the session is not enough: without this a
+    // teacher could post an arbitrary studentId and write attendance or
+    // lesson progress onto another family's child, which that child's
+    // parent would then read in the Journey and the generated report.
+    const [enrolledRes, classLessonsRes] = await Promise.all([
+      supabase.from('enrollments').select('student_id').eq('class_id', session.class_id),
+      supabase.from('lessons').select('id').eq('class_id', session.class_id),
+    ])
+    if (enrolledRes.error || classLessonsRes.error) {
+      console.error(
+        '[log PATCH] scope lookup:',
+        enrolledRes.error?.message ?? classLessonsRes.error?.message
+      )
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    }
+    const enrolledIds = new Set((enrolledRes.data ?? []).map((e) => e.student_id))
+    const classLessonIds = new Set((classLessonsRes.data ?? []).map((l) => l.id))
+
+    const strayStudent =
+      attendance.find((entry) => !enrolledIds.has(entry.studentId)) ??
+      lessonCompletions.find((entry) => !enrolledIds.has(entry.studentId))
+    if (strayStudent) {
+      return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
+    }
+    if (lessonCompletions.some((entry) => !classLessonIds.has(entry.lessonId))) {
+      return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
+    }
+
     // 1. Session-level fields
     const { error: sessionError } = await supabase
       .from('sessions')

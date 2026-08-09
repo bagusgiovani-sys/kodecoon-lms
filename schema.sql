@@ -274,8 +274,16 @@ create policy "sessions_select_parent" on sessions for select using (
 );
 
 -- attendance: teacher manages for their sessions; parent sees only their own child's rows
+-- Both halves are required. Gating on session_id alone lets a teacher who owns
+-- the session write an attendance row for ANY student in the academy; the
+-- enrollment clause pins student_id to the session's own class.
 create policy "attendance_all_teacher" on attendance for all using (
   session_id in (select id from sessions where teacher_id = auth.uid())
+  and student_id in (
+    select e.student_id from enrollments e
+    join sessions s on s.class_id = e.class_id
+    where s.id = attendance.session_id
+  )
 );
 create policy "attendance_select_parent" on attendance for select using (
   student_id in (select student_id from student_guardians where guardian_id = auth.uid())
@@ -310,11 +318,19 @@ create policy "lessons_select_parent" on lessons for select using (
 );
 
 -- student_lesson_progress: teacher manages for their students; parent sees only their own child's progress
+-- As with attendance: the lesson clause alone would let a teacher mark any
+-- student in the academy complete on one of their own lessons. The enrollment
+-- clause pins student_id to a class that actually contains that lesson.
 create policy "progress_all_teacher" on student_lesson_progress for all using (
   lesson_id in (
     select l.id from lessons l
     join classes c on c.id = l.class_id
     where c.teacher_id = auth.uid()
+  )
+  and student_id in (
+    select e.student_id from enrollments e
+    join lessons l on l.class_id = e.class_id
+    where l.id = student_lesson_progress.lesson_id
   )
 );
 create policy "progress_select_parent" on student_lesson_progress for select using (
