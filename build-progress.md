@@ -1,5 +1,5 @@
 # Build Progress — KOMS
-> Started: 2026-07-17 | Last updated: 2026-07-17
+> Started: 2026-07-17 | Last updated: 2026-08-12
 > Read this at the start of EVERY Claude Code session before touching any file.
 
 ## Status
@@ -19,7 +19,8 @@
 
 ## Phase 3 — Backend
 - [~] Step 7: schema.sql ready; **running it against the real Supabase project pending Gio's credentials**
-- [~] Step 8: RLS verification — **static audit done (2026-08-10), found and fixed a critical privilege-escalation hole**; the per-role live query test still needs Step 7. `users_update_own` had no `WITH CHECK`, so any parent could `update users set role='admin'` and inherit every admin policy — full access to all students' data. Fixed with an explicit `WITH CHECK` + a `before update` trigger blocking self-edits of `role`/`center_id`. Also hardened `student_guardians_all_teacher` (missing role filter), `classes_all_teacher` (unconstrained `center_id`), and added a `users_parent_has_no_center` CHECK so the invariant several policies rely on is enforced, not just commented. Details in errors.md.
+- [~] Step 8: RLS verification — **static audit done; harness written 2026-08-12 (`supabase/rls-verification.sql`), execution still needs Step 7.** The harness is 60+ per-role checks in one rolled-back transaction: it seeds two centers, two peer teachers, two families, an admin and an orphan auth account, then impersonates teacher / cross-center teacher / parent / admin / anon and asserts exactly what each can read and write. Every hole found in Sessions 5–7 has a named regression check. Run it straight after schema.sql — it is safe against production, since it ends in `rollback`. **Third pass (2026-08-12) found a critical defect: `users_admin_manage_center` was a policy on `users` that read from `users`, which aborts every statement touching the table with `42P17 infinite recursion` — the role lookup in proxy.ts runs on every request, so the app would have bounced every user to login on first boot.** Fixed with `security definer` helpers (`current_user_role()`, `current_user_center()`); `report_templates_select_staff` tightened from "any authenticated user" to actual staff in the same pass. Details in errors.md.
+  Earlier passes: **static audit 2026-08-10, found and fixed a critical privilege-escalation hole**; the per-role live query test still needs Step 7. `users_update_own` had no `WITH CHECK`, so any parent could `update users set role='admin'` and inherit every admin policy — full access to all students' data. Fixed with an explicit `WITH CHECK` + a `before update` trigger blocking self-edits of `role`/`center_id`. Also hardened `student_guardians_all_teacher` (missing role filter), `classes_all_teacher` (unconstrained `center_id`), and added a `users_parent_has_no_center` CHECK so the invariant several policies rely on is enforced, not just commented. Details in errors.md.
 - [ ] Step 9: Env vars — `.env.example` documented; **no `.env.local` yet, needs Gio's Supabase/Anthropic/Google keys**
 - [x] Step 10: proxy.ts (Next 16's middleware.ts) — three route groups, three rules
 - [x] Step 11: database.types.ts generated from schema
@@ -61,6 +62,7 @@
 | 4       | 2026-08-09 | 28 (static half) | — | Dark-mode + motion audit; 3 fixes; tsc/eslint/build clean, verified in compiled CSS |
 | 5       | 2026-08-10 | 8 + 29 (static halves) | — | **Remote found compromised — see Security below.** RLS audit: critical parent→admin escalation fixed. Report-route timeout/token fixes. Responsive audit clean. |
 | 6       | 2026-08-10 | 8 (second pass) | — | Full route re-audit: Log Session trusted client-sent studentId (cross-class record corruption) — fixed in route + RLS. staff-login half-provisioned UX. Push still blocked on credential rotation. |
+| 7       | 2026-08-12 | 8 (third pass + harness) | — | Remediation push confirmed landed; remote clean. Found `users_admin_manage_center` self-referencing → 42P17 on every query touching `users`; fixed via security definer helpers. report_templates opened to parents — tightened. RLS verification harness written, ready to run the moment Step 7 lands. |
 
 ---
 
@@ -71,16 +73,22 @@
 
 **This machine was never infected** — the commit was fetched but never checked out, and `git fetch` doesn't touch the working tree. Local `postcss.config.mjs` is still the original 94 bytes; no `config.bat`; no IOC matches in tracked files or `node_modules`; no git hooks; git config clean. `CLAUDE.md` and `build-progress.md` on the malicious commit are byte-identical to ours — no prompt injection. Committer timezone on the malicious commit is **+0200**; Gio's is **+0700**.
 
-**Local `main` is the clean history and has NOT been pushed.** Before pushing: rotate GitHub credentials, revoke all PATs/SSH keys, check the security log (`git.push` events) for the source, enable branch protection with force-push disabled. Then `git push --force-with-lease` to restore clean history — the one case where force-pushing is correct.
+**RESOLVED 2026-08-10 05:53 +0700 — clean history restored.** The force-push landed: `origin/main` is `51f02f0`, confirmed live via `git ls-remote`, and the malicious `300f1e7` is no longer reachable from the branch. Re-verified 2026-08-12: no IOC matches in tracked files, `postcss.config.mjs` still 94 bytes, `.gitignore` still carries `.env*`, no `config.bat`, no git hooks installed.
+
+**Still open, and Gio's call:** the malicious commit's objects survive in the remote's object store until GitHub garbage-collects them, so anyone with the SHA can still fetch `300f1e7` directly. If credential rotation, PAT/SSH-key revocation, the security-log review (`git.push` events, to find how the attacker got write access), and branch protection with force-push disabled have not all happened, they still need to — restoring the branch closed the symptom, not the entry point.
 
 ---
 
 ## Current Status
-**Last completed:** Step 27 (partial) — PWA manifest at `app/manifest.ts`, icons generated from the design tokens (`scripts/generate-icons.mjs` → teal-on-dark K monogram, incl. a maskable variant), `themeColor` + `appleWebApp` in the root layout. tsc + production build pass; `/manifest.webmanifest` verified serving valid JSON as `application/manifest+json`.
-**In progress:** — Phase 6 is blocked below Step 27.
+**Last completed:** Step 8's third static pass (2026-08-12) — the `users` policy recursion fix and the RLS verification harness. Before that, Step 27 (partial) — PWA manifest at `app/manifest.ts`, icons generated from the design tokens (`scripts/generate-icons.mjs` → teal-on-dark K monogram, incl. a maskable variant), `themeColor` + `appleWebApp` in the root layout. tsc + production build pass; `/manifest.webmanifest` verified serving valid JSON as `application/manifest+json`.
+**In progress:** — Phase 6 is blocked below Step 27; Phase 3 is blocked at Step 7.
 **Settled (2026-07-22):** KOMS is **online-only**. No service worker, no offline mode. Installable from the browser menu, which satisfies BRD's "install-to-homescreen"; the automatic install banner is skipped since it would require a service worker. If offline ever comes up, the version worth building is "never lose a session log" (queue writes offline, sync on reconnect) — a scoped feature with conflict-resolution design, not PWA polish.
-**Next action:** Steps 7–9 + 13 still need Gio and still block everything downstream (create Supabase project, run schema.sql + seed.sql, fill `.env.local`, verify RLS per role). `.env.local` still absent as of 2026-08-09; Docker is not installed on this machine either, so a local `supabase start` stack is not an option without Gio installing it first.
+**Next action:** Steps 7–9 + 13 still need Gio and still block everything downstream. Re-checked 2026-08-12: `.env.local` still absent, Docker still not installed, so a local `supabase start` stack remains unavailable. The Supabase CLI itself is present (2.113.0), so only the project and its credentials are missing.
 
-**Blocking on Gio, in priority order:** (1) the security remediation above — nothing should be pushed until GitHub credentials are rotated; (2) Steps 7–9 + 13. Docker is not installed on this machine either, so a local `supabase start` stack is not an option without Gio installing it first.
+**The run order once a project exists**, now that the harness is written — schema.sql → `supabase/rls-verification.sql` (expect `ALL CHECKS PASSED`; any failure is a boundary hole, stop and fix before going further) → create Gio's auth user in the dashboard → seed.sql → `npx supabase gen types typescript > types/database.types.ts` (the two new helper functions will appear under `Functions`) → fill `.env.local` → `npm run dev` for the runtime halves of Steps 8, 13, 28 and 29 that no static pass can reach. That closes Steps 7, 8, 9 and 13 in one sitting.
 
-Steps 8, 28, and 29 have now been taken as far as static analysis allows (see those steps above). What remains in both genuinely needs a running app against real data: rendering each of the three route groups to check contrast and layering in situ, and exercising desktop/tablet/mobile breakpoints on screens whose height depends on row counts (roster, schedule calendar, journey with a full 24-lesson plan). Step 30 (Vercel deploy) is unblocked by nothing here.
+**Blocking on Gio, in priority order:** (1) the remaining security remediation — the branch is restored, but credential rotation, PAT/SSH revocation, the push-log review and branch protection are what actually close the entry point; (2) Steps 7–9 + 13.
+
+Steps 8, 28, and 29 have now been taken as far as static analysis allows (see those steps above). What remains genuinely needs a running app against real data: executing the RLS harness, rendering each of the three route groups to check contrast and layering in situ, and exercising desktop/tablet/mobile breakpoints on screens whose height depends on row counts (roster, schedule calendar, journey with a full 24-lesson plan). Step 30 (Vercel deploy) also waits on Steps 7–9, since the deploy needs the same env vars.
+
+**A note on how much static review is left worth doing.** Three passes over the same schema have now found three separate critical defects, and the third — a policy that would have made the app unbootable — sat in the most-reviewed file in the repo through two prior audits. The honest read is not that a fourth pass would find nothing, but that the returns have shifted: what is left is the class of bug that only a running Postgres reports. Step 7 is now the highest-value unblock in the project by some distance, ahead of any further reading.
