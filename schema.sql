@@ -182,6 +182,68 @@ alter table report_templates enable row level security;
 alter table reports enable row level security;
 alter table student_guardians enable row level security;
 
+-- ------------------------------------------------------------
+-- CURRENT-USER HELPERS
+-- ------------------------------------------------------------
+-- A policy ON users may not read FROM users. While rewriting a query the
+-- planner expands the policy, hits the subquery's reference to users, and
+-- re-applies the same policy to it — Postgres detects the loop and aborts the
+-- whole statement with 42P17 "infinite recursion detected in policy for
+-- relation users". It is not a slow query or a subtle wrong answer: every
+-- statement touching users fails, including proxy.ts's role lookup, which runs
+-- on every authenticated request. The failure also propagates outward, because
+-- policies on other tables (students_all_teacher and friends) read from users,
+-- so expanding *those* re-enters users' policies and trips the same check.
+--
+-- security definer breaks the loop: the body runs as the function owner
+-- (postgres, when this file is run from the SQL editor), and the owner is not
+-- subject to RLS, so no policy is expanded inside it. plpgsql rather than sql
+-- is deliberate — the planner inlines trivial sql functions, and an inlined
+-- body would be back inside the caller's query tree with RLS applied again.
+-- (`set search_path` already blocks inlining on its own; the language choice
+-- keeps that from being load-bearing.) Both functions are scoped to
+-- auth.uid(), so they expose nothing the caller can't already read from its
+-- own row via users_select_own.
+create or replace function public.current_user_role()
+returns text
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  r text;
+begin
+  select role into r from public.users where id = auth.uid();
+  return r;
+end;
+$$;
+
+create or replace function public.current_user_center()
+returns uuid
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  c uuid;
+begin
+  select center_id into c from public.users where id = auth.uid();
+  return c;
+end;
+$$;
+
+revoke execute on function public.current_user_role() from public;
+revoke execute on function public.current_user_center() from public;
+-- anon is granted too, deliberately. Policies are evaluated for whoever runs
+-- the query, so a logged-out request touching report_templates would fail with
+-- "permission denied for function" instead of the empty result the app expects.
+-- Both functions key on auth.uid(), which is null for anon, so they return null
+-- and every policy using them is simply false.
+grant execute on function public.current_user_role() to authenticated, anon;
+grant execute on function public.current_user_center() to authenticated, anon;
+
 -- users: everyone sees/updates only their own row
 create policy "users_select_own" on users for select using (id = auth.uid());
 
@@ -351,7 +413,13 @@ create policy "reports_select_parent" on reports for select using (
 
 -- report_templates: any authenticated staff can read; Gio edits the row directly via
 -- the Supabase dashboard in v1 — no in-app editor, per PRD Out of Scope.
-create policy "report_templates_select_staff" on report_templates for select using (auth.uid() is not null);
+-- "auth.uid() is not null" was every authenticated user, parents included —
+-- the name said staff and the expression said anyone. Nothing in the parent
+-- portal reads this table (only the two staff report pages do), so the narrow
+-- form is what the app actually needs.
+create policy "report_templates_select_staff" on report_templates for select using (
+  (select public.current_user_role()) in ('teacher','center_manager','admin')
+);
 
 -- student_guardians: teacher creates links when adding a student's parent; parent sees only their own links
 -- The role filter matches students_all_teacher above and is load-bearing: without
@@ -378,11 +446,27 @@ create policy "student_guardians_select_own" on student_guardians for select usi
 -- as more centers come online later.
 -- ============================================================
 
-create policy "users_admin_manage_center" on users for all using (
-  role in ('teacher','admin') and center_id in (
-    select center_id from users where id = auth.uid() and role = 'admin'
+-- Reads the caller's own role/center through the security definer helpers
+-- rather than a subquery on users — see the CURRENT-USER HELPERS note above.
+-- Each call is wrapped in (select ...) so the planner evaluates it once as an
+-- InitPlan instead of once per candidate row.
+-- WITH CHECK is spelled out for the same reason it is on users_update_own: the
+-- inherited form would be identical here, but an admin editing staff is
+-- exactly the path where an accidental widening would be worst.
+-- center_manager is deliberately absent from the managed set, matching the
+-- pre-existing policy — v1 has no such account, and adding one to the list is
+-- a privilege decision, not a bug fix.
+create policy "users_admin_manage_center" on users for all
+  using (
+    (select public.current_user_role()) = 'admin'
+    and role in ('teacher','admin')
+    and center_id = (select public.current_user_center())
   )
-);
+  with check (
+    (select public.current_user_role()) = 'admin'
+    and role in ('teacher','admin')
+    and center_id = (select public.current_user_center())
+  );
 
 create policy "classes_admin_manage_center" on classes for all using (
   center_id in (select center_id from users where id = auth.uid() and role = 'admin')
