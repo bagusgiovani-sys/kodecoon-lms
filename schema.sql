@@ -244,6 +244,80 @@ revoke execute on function public.current_user_center() from public;
 grant execute on function public.current_user_role() to authenticated, anon;
 grant execute on function public.current_user_center() to authenticated, anon;
 
+-- Breaks the students <-> student_guardians policy cycle.
+--
+-- student_guardians_all_teacher used to ask "is this student in my center?" with
+-- a subquery on students. But students_select_parent answers itself with a
+-- subquery on student_guardians, so each table's policy needed the other's
+-- evaluated first and Postgres aborted the statement with 42P17 infinite
+-- recursion -- on students, student_guardians, and every parent policy that
+-- traverses them (enrollments, sessions, attendance, progress, reports).
+--
+-- security definer is what breaks it: the lookup inside runs without RLS, so it
+-- never re-enters the policy that called it. Returning boolean rather than the
+-- student's center_id keeps the promise the helpers above make -- it discloses
+-- nothing, it answers the authorization question the caller is already entitled
+-- to ask about itself, and it keys on auth.uid() the same way. plpgsql for the
+-- same reason as the others: it cannot be inlined, so the search_path pin never
+-- becomes load-bearing.
+create or replace function public.is_staff_for_student(p_student_id uuid)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  ok boolean;
+begin
+  select exists (
+    select 1
+    from public.students s
+    join public.users u on u.id = auth.uid()
+    where s.id = p_student_id
+      and u.role in ('teacher','center_manager','admin')
+      and s.center_id = u.center_id
+  ) into ok;
+  return ok;
+end;
+$$;
+
+revoke execute on function public.is_staff_for_student(uuid) from public;
+grant execute on function public.is_staff_for_student(uuid) to authenticated, anon;
+
+-- Breaks the classes <-> enrollments policy cycle, the second of the two.
+--
+-- enrollments_all_teacher asked "is this class mine?" by reading classes, while
+-- classes_select_parent answers itself by reading enrollments -- so each table
+-- again needed the other's policy evaluated first, and every query touching
+-- either aborted with 42P17. Same shape as the students/student_guardians cycle
+-- above, same remedy: move the lookup inside a security definer function, where
+-- it runs without RLS and cannot re-enter the policy that called it.
+--
+-- Returns boolean for the same reason is_staff_for_student does: the caller
+-- learns only whether it owns the class, which it is entitled to know, and
+-- never reads a row out of classes through this path.
+create or replace function public.is_teacher_of_class(p_class_id uuid)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  ok boolean;
+begin
+  select exists (
+    select 1 from public.classes c
+    where c.id = p_class_id and c.teacher_id = auth.uid()
+  ) into ok;
+  return ok;
+end;
+$$;
+
+revoke execute on function public.is_teacher_of_class(uuid) from public;
+grant execute on function public.is_teacher_of_class(uuid) to authenticated, anon;
+
 -- users: everyone sees/updates only their own row
 create policy "users_select_own" on users for select using (id = auth.uid());
 
@@ -319,7 +393,7 @@ create policy "students_select_parent" on students for select using (
 
 -- enrollments: teacher manages enrollments for their own classes; parent sees their child's
 create policy "enrollments_all_teacher" on enrollments for all using (
-  class_id in (select id from classes where teacher_id = auth.uid())
+  public.is_teacher_of_class(class_id)
 );
 create policy "enrollments_select_parent" on enrollments for select using (
   student_id in (select student_id from student_guardians where guardian_id = auth.uid())
@@ -428,13 +502,10 @@ create policy "report_templates_select_staff" on report_templates for select usi
 -- themselves to another family's child and inherit every parent policy that
 -- traverses student_guardians. The users_parent_has_no_center constraint closes
 -- the same hole from the other side; both stay.
+-- The role filter lives inside is_staff_for_student() now, but it is still
+-- load-bearing for exactly the reason described above.
 create policy "student_guardians_all_teacher" on student_guardians for all using (
-  student_id in (
-    select id from students where center_id in (
-      select center_id from users
-      where id = auth.uid() and role in ('teacher','center_manager','admin')
-    )
-  )
+  public.is_staff_for_student(student_id)
 );
 create policy "student_guardians_select_own" on student_guardians for select using (guardian_id = auth.uid());
 
