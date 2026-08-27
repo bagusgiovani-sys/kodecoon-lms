@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "rls:verify": "node supabase/local-harness/run.mjs",
+    "rls:graph": "node supabase/local-harness/graph.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.1",
@@ -31,6 +33,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
