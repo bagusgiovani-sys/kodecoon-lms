@@ -1,11 +1,12 @@
 'use client'
 import { useState } from 'react'
-import { CalendarDays, CheckCircle2, Download, Pencil, Plus, Users } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Pencil, Plus, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { mockId, mockToday, type MockClass, type MockSession, type MockStudent } from '@/lib/mock/data'
 import { applyMockSession } from '@/lib/mock/session'
 import { useMock } from './MockProvider'
+import { ReportPrintButton } from './ReportPrintButton'
 import { createLearningData } from '@/lib/mock/learning'
 import { Action, Back, dateLabel, Empty, Field, Heading, inputStyle, LinkAction, Modal, Panel, Pill, StudentLink } from './MockUI'
 
@@ -126,5 +127,5 @@ export function ReportPage({ student }: { student: MockStudent }) {
   }
   return <><Back href={`/students/${student.id}`} text="Student record" /><Heading eyebrow="A thoughtful reflection" title={`${student.name}’s progress report.`} description="Draft from the demo learning record, review your wording, then publish it to the parent view." /><Panel className="max-w-3xl"><div className="mb-5 flex flex-wrap gap-3 print:hidden"><Action secondary onClick={draft}>Create demo draft</Action><Pill>Local draft · no AI service needed</Pill></div><div className="print:hidden"><Field title="Report text"><textarea rows={14} value={text} onChange={e => { setText(e.target.value); setSaved(false) }} className={inputStyle} placeholder="Write a progress report, or start with a draft from their learning record." /></Field></div><div className="hidden whitespace-pre-wrap text-sm leading-7 print:block">{text}</div><div className="mt-5 flex flex-wrap gap-3 print:hidden"><Action disabled={!text.trim() || saved} onClick={() => {
     if (update(current => ({ ...current, reports: [{ id: mockId(), studentId: student.id, date: mockToday(), text: text.trim() }, ...current.reports] }))) { toast.success('Report published to parent view'); setSaved(true) }
-  }}>{saved ? 'Published ✓' : 'Publish report'}</Action><Action secondary disabled={!text.trim()} onClick={() => window.print()}><Download className="size-4" />Print / Save PDF</Action></div></Panel></>
+  }}>{saved ? 'Published ✓' : 'Publish report'}</Action><ReportPrintButton studentName={student.name} date={mockToday()} text={text} /></div></Panel></>
 }

@@ -1,5 +1,31 @@
 # Build Progress — KOMS
 
+## 2026-10-15 — Demo workflow verification and report printing
+
+- Exercised the production build in an isolated Chrome session: profile edits
+  and credit top-ups survive refresh; feedback drafts stay hidden in parent
+  preview and become visible after publication; an uploaded WebM survives
+  refresh in IndexedDB and plays; HTTPS video links persist and embed correctly.
+- Verified attendance deduction, duplicate-save protection, session date changes
+  propagating to ledger/video records, and absence correction refunds in the UI.
+- Found that parent report printing included the entire student record and
+  teacher printing could include toast notifications. Added a shared dedicated
+  print layout containing only the selected report, learner name, and date.
+  Closing print removes the temporary layout and restores the workspace.
+- Verified report drafting/publication and parent persistence, generated teacher
+  and parent PDFs, reviewed print screenshots, and checked extracted PDF text.
+  A 60-observation report exported across five pages with its final entry intact.
+  Screen/print overflow checks passed at 360, 390, 768, 1024, and 1440px.
+- Production build/TypeScript passed; lint has zero errors and the same two
+  existing RLS harness warnings. Workflow browser run had zero page errors.
+- In-app browser still failed on missing sandboxPolicy metadata; local Chrome
+  ran with approved escalation. QA script/PDF/screenshots are in the local Temp
+  kodehub-workflow-check.mjs and kodehub-workflow-qa directory, outside Git.
+- Limits: browser print emulation/PDF generation does not verify a physical
+  printer or every native print dialog. External YouTube/Drive playback remains
+  dependent on sharing permissions/network. All workflows are browser-local
+  demo behavior; live authentication, storage, and deployment remain pending.
+
 ## 2026-10-15 — Course, lesson, and assignment pages
 
 - Continued the agreed LMS direction with five connected demo page types:

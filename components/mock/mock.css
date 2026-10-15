@@ -23,7 +23,24 @@
 }
 button, a, select { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
+.mock-print-report { display: none; }
+
 @media print {
+  body:has(> .mock-print-report) > :not(.mock-print-report) { display: none !important; }
+  body > .mock-print-report {
+    display: block;
+    color: #111827;
+    background: white;
+    font-family: Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    padding: 12mm;
+    overflow-wrap: anywhere;
+  }
+  .mock-print-report header { break-inside: avoid; margin-bottom: 8mm; }
+  .mock-print-report h1 { font-size: 24pt; line-height: 1.2; margin: 3mm 0; }
+  .mock-print-report-text { white-space: pre-wrap; orphans: 3; widows: 3; }
+  .mock-print-report footer { margin-top: 10mm; font-size: 9pt; color: #475569; }
   .mock-workspace, .student-card { background-image: none; }
   .mock-panel { box-shadow: none; }
   .dark {

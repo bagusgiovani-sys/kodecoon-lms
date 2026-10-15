@@ -67,11 +67,18 @@ cloud video storage, and payments are not performed by the demo.
   duplicate-save protection, video deduplication, rescheduling dates, correction
   refunds, video removal, and insufficient-credit atomicity passed.
 - Eleven demo routes: HTTP 200 without service credentials.
-- Full browser interaction, uploads/playback, printing, and responsive visual
-  checks: pending. In-app browser connection and fallback Chrome launch were
-  blocked by environment errors.
+- Browser workflows verified on 2026-10-15: profile/top-up persistence, local
+  WebM upload/playback after refresh, video-link persistence, draft/public
+  feedback visibility, attendance retries/corrections, session rescheduling,
+  and report publication to parent preview. Zero page errors.
+- Print / Save PDF now prints only the selected report with learner name/date.
+  Teacher/parent PDFs and a five-page report were verified, including the final
+  text. Screen/print layouts had no overflow at five widths from 360 to 1440px.
+- Native print dialogs/physical printers and third-party video playback were
+  not verified. In-app browser remained unavailable; approved local Chrome
+  checks supplied the browser evidence. Live Supabase QA remains pending.
 
-## Next-session manual check
+## Repeatable manual regression checklist
 
 1. Log in, open a student, edit the profile, top up credits, and refresh.
 2. Add a video link and a small local video; verify playback after refresh.
