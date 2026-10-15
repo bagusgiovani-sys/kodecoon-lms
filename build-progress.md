@@ -1,9 +1,79 @@
 # Build Progress — KOMS
-> Started: 2026-07-17 | Last updated: 2026-08-12
+
+## 2026-10-15 — Dark-blue responsive student experience
+
+- User approved futuristic dark/blue styling, modular student cards, phone and
+  tablet support, and documentation plus commit/push for each major change.
+- Added DESIGN.md and persistent AGENTS.md guidance. Updated shared dark tokens
+  and browser/PWA theme colors; navy surfaces, blue accents, visible focus.
+- Added reusable StudentCard to demo student directory and parent hub: name,
+  enrolled classes, credit balance/status, module progress, and record link.
+- Wrapped student identity in its own card; improved shared panel surfaces,
+  touch targets, mobile form text, reduced-motion and print styling.
+- Chrome browser checks passed across six routes at 360, 390, 768, 1024, and
+  1440px: 30 route/viewport checks, no document horizontal overflow or page
+  errors. Student search, navigation, credit tab and top-up dialog also passed.
+  Screenshots reviewed for phone, tablet directory, and desktop student record.
+- Mock credit/session regression script passed. Final production build including
+  TypeScript passed. Lint: zero errors, two pre-existing harness warnings.
+- In-app browser was blocked by missing sandboxPolicy metadata; local Chrome
+  checks ran with approved escalation. Live Supabase QA and full upload/print
+  workflows remain outside this visual change's verification.
+- Commit includes the previously uncommitted demo source required by these
+  changes. Unrelated checkpoint archives and security slides are excluded.
+
+> Started: 2026-07-17 | Last updated: 2026-10-06
 > Read this at the start of EVERY Claude Code session before touching any file.
 
 ## Status
 - [ ] Pending  [~] In Progress  [x] Done
+
+## Current delivery — mock MVP (2026-10-06)
+
+**User direction:** ship a quick fake-data demo with one-click login, student
+video documentation, credits left, and end-of-module teacher feedback.
+**Delivered:** mock mode is enabled by default; no service credentials are
+needed. Open `http://127.0.0.1:3000/login` and press **Log in**.
+Usage and persistence are documented in [MOCK-MVP.md](MOCK-MVP.md).
+
+**Save checkpoint (2026-10-06):** implementation files and Markdown updates
+are saved locally. Git staging is blocked: `.git/index.lock` cannot be created
+under the current read-only Git permissions. A file checkpoint is saved at
+`checkpoints/kodehub-mock-mvp-2026-10-06.zip`. `README.md` and
+`KOMS-project-summary.md` could not be updated because writes to those files
+were denied; current handoff information is in this log, `CLAUDE.md`,
+`errors.md`, and `MOCK-MVP.md`. No commit or push was made.
+
+- [x] Separate demo surface in `pages/demo.tsx`, routed through `proxy.ts`.
+- [x] One-click teacher login and parent preview; six students and three programs.
+- [x] Student profiles, class rosters, student creation, and profile editing.
+- [x] Video documentation: local uploads up to 100 MB or HTTPS links; previews.
+- [x] Credit balances, top-ups, ledger, attendance deductions, and correction refunds.
+- [x] Module completion and editable teacher feedback; drafts hidden from parent views.
+- [x] Session scheduling/rescheduling and attendance logging/correction.
+- [x] Demo teacher records, program assignments, and curriculum module creation.
+- [x] Local report drafts, teacher review, parent publication, and Print / Save PDF.
+- [x] Browser-local persistence: localStorage for records, IndexedDB for video blobs.
+- [x] `npm run build`: passed, including TypeScript.
+- [x] `npm run lint`: zero errors; two existing harness warnings.
+- [x] `node scripts/mock-check.mjs`: passed credit/session regression assertions.
+- [x] Eleven demo routes returned HTTP 200 without Supabase credentials.
+- [ ] Browser interaction, upload/playback, print, and visual/mobile QA.
+
+**Verification limit:** the in-app browser failed to connect with a missing
+`sandboxPolicy` metadata error. The fallback Chrome launch failed with
+`spawn EPERM`. Route and logic checks do not replace browser QA.
+
+**Next action:** manually exercise the demo at desktop/mobile widths, including
+video upload + refresh, feedback draft/publication, session correction, and
+report printing. To resume live Supabase work, set `NEXT_PUBLIC_MOCK_MODE=false`
+and restart/rebuild, then address the production checklist below.
+
+**Production scope remains open:** real auth, live Supabase/storage setup,
+email callbacks and invite recovery, real session transaction/retry fixes,
+remaining edit flows, Drive/AI/PDF integration, deployment, and live QA.
+Mock completion does not mark those production items complete. The older
+phase checklist and status notes below describe the original Supabase build.
 
 ---
 
@@ -64,6 +134,7 @@
 | 6       | 2026-08-10 | 8 (second pass) | — | Full route re-audit: Log Session trusted client-sent studentId (cross-class record corruption) — fixed in route + RLS. staff-login half-provisioned UX. Push still blocked on credential rotation. |
 | 7       | 2026-08-12 | 8 (third pass + harness) | — | Remediation push confirmed landed; remote clean. Found `users_admin_manage_center` self-referencing → 42P17 on every query touching `users`; fixed via security definer helpers. report_templates opened to parents — tightened. RLS verification harness written, ready to run the moment Step 7 lands. |
 | 8       | 2026-08-27 | **8 + 13 (RLS half) DONE** | — | Ran the harness for the first time via PGlite — no Supabase project needed. Two more 42P17 recursion cycles found and fixed; 68/68 checks pass. Committed the runner so it is repeatable. `.env.example` corrected. |
+| 9       | 2026-10-06 | Mock MVP delivered | — | One-click demo login, student videos/credits/module feedback, browser persistence, scheduling/attendance, parent preview, reports. Build, lint, credit regressions, and 11 HTTP routes checked. Browser QA remains pending. |
 
 ---
 
@@ -80,7 +151,7 @@
 
 ---
 
-## Current Status
+## Original Supabase Status (historical; see current mock delivery above)
 **Last completed:** Step 8's third static pass (2026-08-12) — the `users` policy recursion fix and the RLS verification harness. Before that, Step 27 (partial) — PWA manifest at `app/manifest.ts`, icons generated from the design tokens (`scripts/generate-icons.mjs` → teal-on-dark K monogram, incl. a maskable variant), `themeColor` + `appleWebApp` in the root layout. tsc + production build pass; `/manifest.webmanifest` verified serving valid JSON as `application/manifest+json`.
 **In progress:** — Phase 6 is blocked below Step 27; Phase 3 is blocked at Step 7.
 **Settled (2026-07-22):** KOMS is **online-only**. No service worker, no offline mode. Installable from the browser menu, which satisfies BRD's "install-to-homescreen"; the automatic install banner is skipped since it would require a service worker. If offline ever comes up, the version worth building is "never lose a session log" (queue writes offline, sync on reconnect) — a scoped feature with conflict-resolution design, not PWA polish.

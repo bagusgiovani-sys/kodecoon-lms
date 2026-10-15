@@ -39,7 +39,7 @@ const TABS: NavTab[] = [
 
 export function AppNav({ role, userName }: AppNavProps) {
   const { t } = useLanguage()
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ''
   const router = useRouter()
 
   async function handleLogout() {

@@ -120,3 +120,22 @@
 **Prevention:** The Session 7 rule ("a policy on table T may never name T in its own body") was necessary but too narrow — it only catches cycles of length one. The real rule: **build the graph.** Any policy on A that reads B creates an edge A→B, and any cycle in that graph aborts every query touching any table in it. Before shipping a policy that reads another table, check whether that table's policies can reach back. Second, this is now the third critical RLS defect found in this file and the second found only by execution — static review of RLS has reached its limit here, and the harness should be run after *any* policy change, not once at Step 7. PGlite makes that possible with no Supabase project and no Docker, so there is no longer a reason to defer it.
 **Files affected:** schema.sql
 ---
+
+## [2026-10-06 Session 9] App Router pathname became nullable alongside demo Pages routes
+#[typescript] #[routing]
+**Context:** Added the user-requested isolated mock MVP in pages/demo.tsx while preserving the original App Router application.
+**Error:** Production build failed in components/shared/AppNav.tsx: 'pathname' is possibly 'null'.
+**Root cause:** Next.js adds navigation compatibility types when App and Pages routes coexist; usePathname() can return null.
+**Fix:** Defaulted the existing navigation pathname to an empty string with usePathname() ?? ''. The final production build passed, including TypeScript.
+**Prevention:** When introducing a second routing surface, check shared navigation hooks against the generated compatibility types before treating successful compilation as a complete build.
+**Files affected:** components/shared/AppNav.tsx, pages/demo.tsx
+---
+## [2026-10-06 Session 9] Mock MVP browser QA blocked by environment
+#[tooling] #[verification]
+**Context:** Attempted end-to-end and visual checks of the finished browser-local demo.
+**Error:** In-app browser execution failed with 'codex/sandbox-state-meta: missing field sandboxPolicy'. Fallback headless Chrome failed to launch with 'spawn EPERM'.
+**Root cause:** Browser execution was unavailable under the current environment/tool permissions; no application failure was established by these tool errors.
+**Fix/status:** No environment fix was applied. Verified the production build, lint (zero errors, two existing warnings), eleven HTTP routes, and credit/session regression checks. Full browser interaction, file upload/playback, print, and responsive visual QA remain pending in MOCK-MVP.md and build-progress.md.
+**Prevention:** Distinguish HTTP and logic checks from browser interaction evidence. Do not mark visual or upload workflows verified without an actual browser run.
+**Files affected:** errors.md, MOCK-MVP.md, build-progress.md
+---

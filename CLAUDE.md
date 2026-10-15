@@ -1,6 +1,25 @@
 # CLAUDE.md — KOMS
-> Last updated: 2026-07-22
+> Last updated: 2026-10-06
 > Planning docs: BRD.md | PRD.md | schema.sql | SDD.md
+
+## Current implementation note — mock MVP
+
+The user requested a quick fake-data MVP on 2026-10-06. The default is now
+mock mode (`NEXT_PUBLIC_MOCK_MODE` defaults to true). Login is one click,
+student records include videos, credits, module progress, and teacher feedback,
+and changes persist only in the browser. See `MOCK-MVP.md` and the current
+delivery section of `build-progress.md` before assuming Supabase is required.
+
+The isolated mock surface uses `pages/demo.tsx`, `components/mock/`, and
+`lib/mock/`; `proxy.ts` rewrites demo page routes without touching real API
+authorization or RLS. This is an implementation exception for the requested
+demo. Keep the original App Router and live auth rules for production work.
+Local uploaded videos are browser-owned IndexedDB blobs, never server storage.
+Set `NEXT_PUBLIC_MOCK_MODE=false` and restart/rebuild to restore live mode.
+
+Verification: build passed, lint has zero errors/two existing warnings,
+`node scripts/mock-check.mjs` passed, and eleven HTTP routes passed. Full
+browser interaction and visual/mobile QA are still pending.
 
 ---
 

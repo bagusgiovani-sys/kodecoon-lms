@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isMockMode } from '@/lib/mock/config'
 
 // Next 16 renamed middleware.ts → proxy.ts; this is CLAUDE.md §4's
 // "middleware.ts" — auth + role route protection, three route groups,
@@ -30,6 +31,22 @@ function homeFor(role: string | null) {
 }
 
 export async function proxy(request: NextRequest) {
+  // Render a separate demo surface, never weaken API authorization or RLS.
+  // Rewrites preserve the familiar routes without invoking database layouts.
+  if (isMockMode()) {
+    const pathname = request.nextUrl.pathname
+    if (
+      pathname === '/' || pathname === '/login' || pathname === '/dashboard' ||
+      pathname === '/schedule' || isStaffPath(pathname) ||
+      isAdminPath(pathname) || pathname === '/student/login' || isStudentPath(pathname)
+    ) {
+      const destination = request.nextUrl.clone()
+      destination.pathname = '/demo'
+      destination.searchParams.set('path', pathname)
+      return NextResponse.rewrite(destination)
+    }
+    return NextResponse.next()
+  }
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(

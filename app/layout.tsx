@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   // Single value, not a light/dark pair: the root <html> pins `dark` unconditionally.
-  themeColor: '#030d12',
+  themeColor: '#080e20',
   // Let the standalone shell paint under the notch/status bar on iOS.
   viewportFit: 'cover',
 }

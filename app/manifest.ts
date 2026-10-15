@@ -14,8 +14,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     // No orientation lock: KOMS targets desktop, tablet, and mobile (PRD), not mobile-only.
-    background_color: '#030d12',
-    theme_color: '#030d12',
+    background_color: '#080e20',
+    theme_color: '#080e20',
     categories: ['education', 'productivity'],
     icons: [
       {
