@@ -14,6 +14,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta name="theme-color" content="#080e20" />
     </Head>
+    <style jsx global>{`body { font-family: ${geist.style.fontFamily}; }`}</style>
     <Providers initialLocale="en"><Component {...pageProps} /></Providers>
   </div>
 }

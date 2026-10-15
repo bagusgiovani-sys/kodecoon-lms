@@ -1,5 +1,5 @@
 'use client'
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { cloneElement, isValidElement, useId, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { ArrowUpRight, ChevronLeft } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
@@ -27,6 +27,10 @@ export function Empty({ title, description }: { title: string; description: stri
   return <div className="rounded-xl border border-dashed p-8 text-center"><p className="font-medium">{title}</p><p className="mt-2 text-sm text-muted-foreground">{description}</p></div>
 }
 export function Field({ title, children }: { title: string; children: ReactNode }) {
+  const id = useId()
+  if (isValidElement<{ id?: string }>(children) && typeof children.type === 'string' && ['input', 'textarea', 'select'].includes(children.type)) {
+    return <div className="grid gap-2 text-sm font-medium"><label htmlFor={id}>{title}</label>{cloneElement(children, { id })}</div>
+  }
   return <label className="grid gap-2 text-sm font-medium"><span>{title}</span>{children}</label>
 }
 export function Modal({ open, title, description, close, children }: { open: boolean; title: string; description: string; close: () => void; children: ReactNode }) {

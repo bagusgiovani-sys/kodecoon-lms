@@ -37,7 +37,8 @@ export async function proxy(request: NextRequest) {
     const pathname = request.nextUrl.pathname
     if (
       pathname === '/' || pathname === '/login' || pathname === '/dashboard' ||
-      pathname === '/schedule' || isStaffPath(pathname) ||
+      pathname === '/schedule' || pathname === '/courses' || pathname.startsWith('/courses/') ||
+      pathname === '/assignments' || pathname.startsWith('/assignments/') || isStaffPath(pathname) ||
       isAdminPath(pathname) || pathname === '/student/login' || isStudentPath(pathname)
     ) {
       const destination = request.nextUrl.clone()

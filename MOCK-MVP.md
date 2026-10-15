@@ -1,5 +1,29 @@
 # KodeHub mock MVP
 
+## Learning pages added 2026-10-15
+
+- `/courses`: searchable course cards with subject filters, age/level, and
+  lesson counts. Three starter courses cover robotics, coding, and engineering.
+- `/courses/:courseId`: prerequisites, ordered lesson cards, and class linking.
+  Each class links to one course; replacing that link preserves its existing
+  attendance, credit balance, module progress, and assignments.
+- `/courses/:courseId/lessons/:lessonId`: objectives, materials, activity steps,
+  evidence criteria, editable lesson content, and assignment creation.
+- `/assignments`: create assignments, filter by class, inspect due dates and
+  submitted-learner counts. Empty states guide the first assignment.
+- `/assignments/:assignmentId`: project brief, enrolled-student roster, HTTPS
+  project links, reflections, review outcomes, feedback, and submission history.
+  Resubmissions create new versions; prior reviews stay attached to their version.
+
+These are teacher-managed demo pages. Teachers record links on learners' behalf;
+they are not a new authenticated student submission portal. No code execution,
+file upload, cloud storage, or production APIs were added for these pages.
+Optional `learning` data lives inside the existing browser-local record. Older
+demo saves still load and gain course data on the first learning-page save.
+Course lessons are separate from the original attendance/module-completion
+model: assigning a course does not automatically complete or replace modules.
+
+
 > Last updated: 2026-10-06. Interactive mock delivery; live production setup remains pending.
 
 Run `npm install`, then `npm run dev -- --hostname 127.0.0.1`.

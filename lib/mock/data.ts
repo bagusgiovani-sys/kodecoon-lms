@@ -1,3 +1,4 @@
+import type { LearningData } from './learning'
 export interface MockClass {
   id: string; name: string; ageBracket: string; teacher: string; modules: string[]
 }
@@ -21,6 +22,7 @@ export interface MockSession {
 }
 export interface MockReport { id: string; studentId: string; date: string; text: string }
 export interface MockData {
+  learning?: LearningData
   version: 1; classes: MockClass[]; students: MockStudent[]; videos: MockVideo[]
   feedback: MockFeedback[]; sessions: MockSession[]; reports: MockReport[]
   teachers: Array<{ id: string; name: string; email: string }>

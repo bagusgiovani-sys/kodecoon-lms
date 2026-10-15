@@ -8,6 +8,7 @@ import { MockProvider, useMock } from './MockProvider'
 import { Avatar, Empty, Heading, inputStyle, LinkAction, Panel, Pill, StudentLink } from './MockUI'
 import { StudentRecord } from './StudentRecord'
 import { StudentCard } from './StudentCard'
+import { LearningScreen } from './LearningPages'
 import { ClassPage, ClassForm, StudentForm, SchedulePage, SessionForm, TeacherPage, LessonPage, ReportPage } from './MockOperations'
 
 export function MockApp({ path, sessionId }: { path: string; sessionId?: string }) {
@@ -39,11 +40,13 @@ function MockShell({ path, children }: { path: string; children: React.ReactNode
   const tabs = parent ? [{ href: '/student', label: 'My children', icon: Users }] : [
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
     { href: '/students', label: 'Students', icon: Users },
+    { href: '/courses', label: 'Courses', icon: BookOpen },
+    { href: '/assignments', label: 'Assignments', icon: CheckCircle2 },
     { href: '/schedule', label: 'Schedule', icon: CalendarDays },
     { href: '/admin/teachers', label: 'Teachers', icon: GraduationCap },
   ]
   return <div className="mock-workspace min-h-screen">
-    <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur print:hidden"><div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-4 sm:px-8"><a href={parent ? '/student' : '/dashboard'} className="flex items-center gap-2 text-lg font-semibold tracking-tight"><span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Bot className="size-5" /></span>KodeHub</a><span className="hidden text-xs text-muted-foreground md:inline">Indonesia Academy</span><div className="ml-auto flex items-center gap-3"><Pill tone="good">{parent ? 'Parent preview' : 'Demo workspace'}</Pill><Avatar name={parentName} /><a href={parent ? '/student/login' : '/login'} aria-label="Log out" className="flex size-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-secondary"><LogOut className="size-4" /></a></div></div><nav aria-label="Main navigation" className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 sm:px-8">{tabs.map(({ href, label, icon: Icon }) => <a key={href} href={href} aria-current={path === href || (href === '/students' && path.startsWith('/students/')) ? 'page' : undefined} className={cn('flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm', path === href || (href === '/students' && path.startsWith('/students/')) ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}><Icon className="size-4" />{label}</a>)}<a href={parent ? '/dashboard' : '/student'} className="ml-auto flex shrink-0 items-center gap-1 px-3 text-xs text-muted-foreground hover:text-primary">{parent ? 'Teacher workspace' : 'Parent preview'}<ArrowUpRight className="size-3" /></a></nav></header>
+    <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur print:hidden"><div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-4 sm:px-8"><a href={parent ? '/student' : '/dashboard'} className="flex items-center gap-2 text-lg font-semibold tracking-tight"><span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Bot className="size-5" /></span>KodeHub</a><span className="hidden text-xs text-muted-foreground md:inline">Indonesia Academy</span><div className="ml-auto flex items-center gap-3"><Pill tone="good">{parent ? 'Parent preview' : 'Demo workspace'}</Pill><Avatar name={parentName} /><a href={parent ? '/student/login' : '/login'} aria-label="Log out" className="flex size-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-secondary"><LogOut className="size-4" /></a></div></div><nav aria-label="Main navigation" className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 sm:px-8">{tabs.map(({ href, label, icon: Icon }) => <a key={href} href={href} aria-current={path === href || path.startsWith(`${href}/`) ? 'page' : undefined} className={cn('flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm', path === href || path.startsWith(`${href}/`) ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}><Icon className="size-4" />{label}</a>)}<a href={parent ? '/dashboard' : '/student'} className="ml-auto flex shrink-0 items-center gap-1 px-3 text-xs text-muted-foreground hover:text-primary">{parent ? 'Teacher workspace' : 'Parent preview'}<ArrowUpRight className="size-3" /></a></nav></header>
     <main className="mx-auto max-w-7xl px-4 py-7 sm:px-8 sm:py-10">{children}</main><footer className="mx-auto max-w-7xl px-4 pb-6 text-xs text-muted-foreground sm:px-8 print:hidden">Demo data · Changes are saved in this browser.</footer>
   </div>
 }
@@ -51,6 +54,7 @@ function MockShell({ path, children }: { path: string; children: React.ReactNode
 function MockScreen({ path, sessionId }: { path: string; sessionId?: string }) {
   const { data } = useMock()
   if (path === '/dashboard' || path === '/admin') return <Dashboard />
+  if (path === '/courses' || path.startsWith('/courses/') || path === '/assignments' || path.startsWith('/assignments/')) return <LearningScreen path={path} />
   if (path === '/students') return <Students />
   if (path === '/schedule' || path === '/admin/schedule') return <SchedulePage />
   if (path === '/admin/teachers') return <TeacherPage />

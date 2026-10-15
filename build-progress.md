@@ -1,5 +1,42 @@
 # Build Progress — KOMS
 
+## 2026-10-15 — Course, lesson, and assignment pages
+
+- Continued the agreed LMS direction with five connected demo page types:
+  course library, course detail, lesson workspace, assignments board, and
+  assignment detail/submission review. Courses and Assignments are in the main
+  navigation; class rosters link to their assigned course.
+- Added three starter courses with six substantive lesson plans, search/subject
+  filters, class linking, lesson editing, project briefs/due dates, class filters,
+  enrolled-student selection, HTTPS project links, reflections, review outcomes,
+  and versioned submission history.
+- Kept the dark-blue modular layout, responsive grids, touch-sized actions,
+  scrollable dialogs, and explicit labels for form controls.
+- Existing browser-local records remain compatible through optional learning
+  data. Credits, attendance, and original module progress are kept independent.
+- Production auth/API behavior is unchanged; these pages are only rewritten in
+  mock mode. Teacher-recorded submissions are explicitly labeled. Real student
+  submission access, uploads, cloud persistence, and assessment rubrics remain
+  future work. Detailed route inventory is in MOCK-MVP.md.
+- Browser validation: all five new page types passed at 360, 390, 768, 1024,
+  and 1440px (25 checks), with no document overflow or page errors. Verified
+  search, class linking, lesson-edit persistence, assignment creation, rejection
+  of non-HTTPS links, roster filtering, review/revision/approval persistence,
+  retained earlier submission feedback, unique learner counts, and old-data
+  compatibility (credits and attendance unchanged). Reviewed phone/tablet/
+  desktop screenshots and a 360px submission dialog.
+- Fixed two issues found in QA: explicit input/select labels and demo portal
+  dialogs inheriting the same font as the main app.
+- Final production build and TypeScript passed. Lint passed with zero errors
+  and two existing warnings in the RLS graph harness. Credit/session regression
+  assertions passed.
+- Existing-page regression passed against the production build: six routes at
+  360, 390, 768, 1024, and 1440px (30 checks), no document overflow or page
+  errors; student search, record navigation, and credit dialog also passed.
+  In-app browser connection remained blocked by missing sandboxPolicy metadata;
+  the existing local Chrome regression script completed successfully.
+
+
 ## 2026-10-15 — Dark-blue responsive student experience
 
 - User approved futuristic dark/blue styling, modular student cards, phone and
