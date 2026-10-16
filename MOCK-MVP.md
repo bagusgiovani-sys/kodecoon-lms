@@ -15,19 +15,21 @@
   project links, reflections, review outcomes, feedback, and submission history.
   Resubmissions create new versions; prior reviews stay attached to their version.
 
-These are teacher-managed demo pages. Teachers record links on learners' behalf;
-they are not a new authenticated student submission portal. No code execution,
-file upload, cloud storage, or production APIs were added for these pages.
+These are teacher-managed demo pages. The parent preview can also record a
+child's HTTPS project link and reflection, or submit a new version after review.
+Submissions remain browser-local demo records; there is no authenticated student
+account, code execution, file upload, cloud storage, or production API for them.
 Optional `learning` data lives inside the existing browser-local record. Older
 demo saves still load and gain course data on the first learning-page save.
 Course lessons are separate from the original attendance/module-completion
 model: assigning a course does not automatically complete or replace modules.
 
-Parent preview includes a read-only assignments summary on each child’s record.
-It shows due dates, that child’s submission status, reflection, and published
-teacher feedback. Submission data is filtered by both assignment and child so
+Parent preview includes an assignment card on each child’s record. It shows due
+dates, that child’s submission status, reflection, and teacher feedback. The
+parent can submit an HTTPS project link and reflection, then send a new version
+after review. Submission data is filtered by both assignment and child so
 siblings in the same class see only their own work. This remains a demo preview,
-not an authenticated student portal.
+not an authenticated student portal; changes stay in the browser.
 
 
 > Last updated: 2026-10-06. Interactive mock delivery; live production setup remains pending.

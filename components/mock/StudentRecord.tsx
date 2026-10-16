@@ -4,6 +4,7 @@ import { ArrowUpRight, BookOpen, Check, CheckCircle2, Coins, Download, MessageSq
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { mockId, mockToday, type MockFeedback, type MockStudent, type MockVideo } from '@/lib/mock/data'
+import { createLearningData, safeProjectUrl, type LearningAssignment, type LearningData } from '@/lib/mock/learning'
 import { readMockVideo, saveMockVideo } from '@/lib/mock/videoStorage'
 import { useMock } from './MockProvider'
 import { ReportPrintButton } from './ReportPrintButton'
@@ -60,9 +61,10 @@ export function StudentRecord({ student, parent }: { student: MockStudent; paren
 }
 
 function ParentAssignmentProgress({ student }: { student: MockStudent }) {
-  const { data } = useMock()
+  const { data, update } = useMock()
   const learning = data.learning
   const assignments = learning?.assignments.filter(item => student.classIds.includes(item.classId)) ?? []
+  const [activeAssignment, setActiveAssignment] = useState<LearningAssignment | null>(null)
   return <Panel title="Class assignments" subtitle="Projects set for your child’s classes">
     {assignments.length ? <div className="grid gap-4">{assignments.map(assignment => {
       const submission = learning?.submissions.filter(item => item.assignmentId === assignment.id && item.studentId === student.id).at(-1)
@@ -74,8 +76,30 @@ function ParentAssignmentProgress({ student }: { student: MockStudent }) {
         <p className="mt-3 whitespace-pre-line text-sm leading-6 text-muted-foreground">{assignment.instructions}</p>
         {submission?.reflection && <p className="mt-3 rounded-lg bg-background/60 p-3 text-sm leading-6"><span className="font-medium">Project reflection: </span>{submission.reflection}</p>}
         {submission?.feedback && <p className="mt-3 rounded-lg border border-primary/15 p-3 text-sm leading-6"><span className="font-medium text-primary">Teacher feedback: </span>{submission.feedback}</p>}
+        <Action secondary className="mt-4 w-full" onClick={() => setActiveAssignment(assignment)}>{submission ? 'Submit a new version' : 'Submit project'}</Action>
       </article>
     })}</div> : <Empty title="No class assignments yet" description="New projects from your child’s teachers will appear here." />}
+    <Modal open={!!activeAssignment} close={() => setActiveAssignment(null)} title="Share a project" description="Demo submission · saved only in this browser. Add a project link and a reflection.">
+      {activeAssignment && <form className="grid gap-4" onSubmit={event => {
+        event.preventDefault()
+        const form = new FormData(event.currentTarget)
+        const url = String(form.get('url')).trim()
+        const reflection = String(form.get('reflection')).trim()
+        if (!safeProjectUrl(url) || !reflection) { toast.error('Enter a secure HTTPS link and a reflection.'); return }
+        const submission = { id: mockId(), assignmentId: activeAssignment.id, studentId: student.id, url, reflection, submittedAt: new Date().toISOString(), feedback: '', status: 'submitted' as const }
+        if (update(current => {
+          const currentLearning: LearningData = current.learning ?? createLearningData()
+          return { ...current, learning: { ...currentLearning, submissions: [...currentLearning.submissions, submission] } }
+        })) {
+          toast.success('Project submitted')
+          setActiveAssignment(null)
+        }
+      }}>
+        <Field title="Project link"><input name="url" type="url" required placeholder="https://…" className={inputStyle} /></Field>
+        <Field title="Student reflection"><textarea name="reflection" required minLength={8} maxLength={2000} rows={5} className={inputStyle} placeholder="What did you build? What did you learn?" /></Field>
+        <Action type="submit">Save project submission</Action>
+      </form>}
+    </Modal>
   </Panel>
 }
 

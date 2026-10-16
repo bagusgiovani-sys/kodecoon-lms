@@ -1,5 +1,23 @@
 # Build Progress — KOMS
 
+## 2026-10-16 — Parent demo assignment submissions
+
+- Parents/students in the local preview can now submit an HTTPS project link and
+  reflection from their child’s assignment card, then submit another version
+  after teacher feedback. The submission appears in the existing teacher review
+  page and returns there after approval.
+- Reused the HTTPS link validation and versioned submission record. Existing
+  submissions and prior feedback stay in history. The dialog labels this as a
+  demo submission saved only in the current browser; there is no production API,
+  authenticated student account, or file upload.
+- Browser verified rejection of an HTTP URL, successful HTTPS submission,
+  persistence after refresh, teacher review/approval round trip, sibling privacy,
+  and no horizontal overflow at 360, 390, 768, 1024, and 1440px. Zero page errors.
+- Production build and TypeScript passed. Lint had zero errors and the same two
+  pre-existing warnings. Credit/session regression checks passed.
+- Local Chrome supplied browser evidence after the in-app browser failed on its
+  sandbox metadata configuration.
+
 ## 2026-10-16 — Parent view of class assignments
 
 - Added a read-only assignments card to each parent-preview child record. It
