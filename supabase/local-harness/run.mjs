@@ -19,6 +19,7 @@ async function stage(name, sql) {
 await stage('shim (auth schema, roles)', read(here('shim.sql')))
 await stage('schema.sql', read(`${KOMS}/schema.sql`))
 await stage('supabase bootstrap grants', read(here('grants.sql')))
+await stage('session RPC grants', read(here('session-rpc-grants.sql')))
 const res = await stage('rls-verification.sql', read(`${KOMS}/supabase/rls-verification.sql`))
 
 const sets = res.filter(r => r.rows && r.rows.length)

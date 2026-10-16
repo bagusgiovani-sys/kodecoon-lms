@@ -232,6 +232,7 @@ phase checklist and status notes below describe the original Supabase build.
 | 7       | 2026-08-12 | 8 (third pass + harness) | — | Remediation push confirmed landed; remote clean. Found `users_admin_manage_center` self-referencing → 42P17 on every query touching `users`; fixed via security definer helpers. report_templates opened to parents — tightened. RLS verification harness written, ready to run the moment Step 7 lands. |
 | 8       | 2026-08-27 | **8 + 13 (RLS half) DONE** | — | Ran the harness for the first time via PGlite — no Supabase project needed. Two more 42P17 recursion cycles found and fixed; 68/68 checks pass. Committed the runner so it is repeatable. `.env.example` corrected. |
 | 9       | 2026-10-06 | Mock MVP delivered | — | One-click demo login, student videos/credits/module feedback, browser persistence, scheduling/attendance, parent preview, reports. Build, lint, credit regressions, and 11 HTTP routes checked. Browser QA remains pending. |
+| 10      | 2026-10-16 | Atomic session logging | — | Session status, notes, attendance, and lesson completion now commit through one authenticated RLS-scoped RPC; validation prevents cross-class writes and duplicate keys. Video storage is idempotent and remains best-effort. Local harness passes 75/75, policy graph is cycle-free, mock checks and production build pass; lint has 0 errors and 2 existing graph-harness warnings. Production Supabase setup and live-project verification remain pending project credentials/selection. |
 
 ---
 

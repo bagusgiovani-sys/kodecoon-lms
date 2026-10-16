@@ -171,6 +171,21 @@ insert into reports (student_id, class_id, template_id, final_text) values
   ('00000000-0000-4000-8000-000000000501', '00000000-0000-4000-8000-000000000c11', '00000000-0000-4000-8000-000000000301', 'report for s1'),
   ('00000000-0000-4000-8000-000000000502', '00000000-0000-4000-8000-000000000c12', '00000000-0000-4000-8000-000000000301', 'report for s2');
 
+-- Force a failure after the RPC has updated the session and attendance rows.
+-- This proves that a later lesson-progress error rolls the earlier writes back.
+create function rls_abort_second_lesson_progress()
+returns trigger language plpgsql as $$
+begin
+  if new.lesson_id = '00000000-0000-4000-8000-000000000102'::uuid then
+    raise exception 'intentional transaction rollback check' using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+create trigger rls_abort_second_lesson_progress
+before insert or update on student_lesson_progress
+for each row execute function rls_abort_second_lesson_progress();
+
 -- ============================================================
 -- TEACHER A  — the ordinary staff case
 -- ============================================================
@@ -205,6 +220,43 @@ select rls_check('session_videos: teacher sees only their own session''s video',
   (select count(*) from session_videos) = 1);
 select rls_check('report_templates: staff can read the template',
   (select count(*) from report_templates) = 1);
+
+-- The transaction RPC is idempotent when the client retries the same log.
+select rls_expect_allowed('sessions: atomic logger accepts a valid session write',
+  $$select public.log_session(
+    '00000000-0000-4000-8000-000000000201', 'atomic baseline',
+    '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"present"}]'::jsonb,
+    '[{"studentId":"00000000-0000-4000-8000-000000000501","lessonId":"00000000-0000-4000-8000-000000000101"}]'::jsonb
+  )$$);
+select rls_expect_allowed('sessions: retry accepts the same write',
+  $$select public.log_session(
+    '00000000-0000-4000-8000-000000000201', 'atomic baseline',
+    '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"present"}]'::jsonb,
+    '[{"studentId":"00000000-0000-4000-8000-000000000501","lessonId":"00000000-0000-4000-8000-000000000101"}]'::jsonb
+  )$$);
+select rls_check('sessions: retry keeps one attendance and progress row',
+  (select count(*) from attendance where session_id = '00000000-0000-4000-8000-000000000201' and student_id = '00000000-0000-4000-8000-000000000501') = 1
+  and (select count(*) from student_lesson_progress where student_id = '00000000-0000-4000-8000-000000000501' and lesson_id = '00000000-0000-4000-8000-000000000101') = 1);
+
+-- The trigger fails after the RPC has changed notes and attendance; both must
+-- return to their previous values when the PostgREST transaction aborts.
+select rls_expect_blocked('sessions: progress failure aborts the whole log',
+  $$select public.log_session(
+    '00000000-0000-4000-8000-000000000201', 'must roll back',
+    '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"absent"}]'::jsonb,
+    '[{"studentId":"00000000-0000-4000-8000-000000000501","lessonId":"00000000-0000-4000-8000-000000000102"}]'::jsonb
+  )$$);
+select rls_check('sessions: failed log preserves original notes and attendance',
+  (select notes from sessions where id = '00000000-0000-4000-8000-000000000201') = 'atomic baseline'
+  and (select status from attendance where session_id = '00000000-0000-4000-8000-000000000201' and student_id = '00000000-0000-4000-8000-000000000501') = 'present'
+  and not exists (select 1 from student_lesson_progress where student_id = '00000000-0000-4000-8000-000000000501' and lesson_id = '00000000-0000-4000-8000-000000000102'));
+
+select rls_expect_blocked('sessions: atomic logger rejects an out-of-class student',
+  $$select public.log_session(
+    '00000000-0000-4000-8000-000000000201', 'unauthorized',
+    '[{"studentId":"00000000-0000-4000-8000-000000000502","status":"present"}]'::jsonb,
+    '[]'::jsonb
+  )$$);
 
 -- Regression, Session 5: Log Session trusted a client-sent studentId. Owning
 -- the session must not authorize writing rows about a student in another class.
@@ -366,6 +418,10 @@ select set_config('request.jwt.claims', '', true);
 set local role anon;
 
 select rls_check('anon: no users',    (select count(*) from users) = 0);
+select rls_expect_blocked('anon: cannot execute the session log RPC',
+  $$select public.log_session(
+    '00000000-0000-4000-8000-000000000201', null, '[]'::jsonb, '[]'::jsonb
+  )$$);
 select rls_check('anon: no students', (select count(*) from students) = 0);
 select rls_check('anon: no classes',  (select count(*) from classes) = 0);
 select rls_check('anon: no sessions', (select count(*) from sessions) = 0);

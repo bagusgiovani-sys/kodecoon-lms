@@ -532,7 +532,17 @@ export interface Database {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      log_session: {
+        Args: {
+          p_session_id: string
+          p_notes: string | null
+          p_attendance: Json
+          p_lesson_completions: Json
+        }
+        Returns: undefined
+      }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

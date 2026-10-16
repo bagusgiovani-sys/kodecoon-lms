@@ -95,7 +95,8 @@ create table session_videos (
   session_id uuid not null references sessions(id) on delete cascade,
   drive_file_id text not null,
   drive_link text not null,     -- shareable preview link — never raw video bytes in the DB
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  unique (session_id, drive_file_id)
 );
 
 -- The lesson plan (curriculum template) for a class — e.g. 24 ordered lessons
@@ -181,6 +182,96 @@ alter table session_videos enable row level security;
 alter table report_templates enable row level security;
 alter table reports enable row level security;
 alter table student_guardians enable row level security;
+
+-- A session log is one retriable database transaction. Without this RPC the
+-- handler's session update, attendance upsert, and lesson upsert are separate
+-- HTTP requests: a later failure can leave a half-logged session. This is
+-- SECURITY INVOKER so every read/write remains under the caller's RLS policies.
+create or replace function public.log_session(
+  p_session_id uuid,
+  p_notes text,
+  p_attendance jsonb,
+  p_lesson_completions jsonb
+)
+returns void
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_class_id uuid;
+begin
+  select s.class_id into v_class_id
+  from public.sessions s
+  where s.id = p_session_id
+    and s.teacher_id = auth.uid()
+  for update;
+
+  if not found then
+    raise insufficient_privilege using message = 'Not authorized to log this session';
+  end if;
+
+  if jsonb_typeof(p_attendance) <> 'array'
+     or jsonb_typeof(p_lesson_completions) <> 'array' then
+    raise invalid_parameter_value using message = 'Attendance and lesson completions must be arrays';
+  end if;
+
+  if exists (
+    select 1
+    from jsonb_to_recordset(p_attendance) as a("studentId" uuid, status text)
+    left join public.enrollments e
+      on e.student_id = a."studentId" and e.class_id = v_class_id
+    where e.student_id is null or a.status not in ('present', 'absent')
+  ) or exists (
+    select 1
+    from jsonb_to_recordset(p_attendance) as a("studentId" uuid, status text)
+    group by a."studentId" having count(*) > 1
+  ) then
+    raise insufficient_privilege using message = 'Attendance contains an invalid or duplicate student';
+  end if;
+
+  if exists (
+    select 1
+    from jsonb_to_recordset(p_lesson_completions) as p("studentId" uuid, "lessonId" uuid)
+    left join public.enrollments e
+      on e.student_id = p."studentId" and e.class_id = v_class_id
+    left join public.lessons l
+      on l.id = p."lessonId" and l.class_id = v_class_id
+    where e.student_id is null or l.id is null
+  ) or exists (
+    select 1
+    from jsonb_to_recordset(p_lesson_completions) as p("studentId" uuid, "lessonId" uuid)
+    group by p."studentId", p."lessonId" having count(*) > 1
+  ) then
+    raise insufficient_privilege using message = 'Lesson completion contains an invalid or duplicate record';
+  end if;
+
+  update public.sessions
+  set status = 'completed', notes = p_notes, updated_at = now()
+  where id = p_session_id;
+
+  insert into public.attendance (session_id, student_id, status)
+  select p_session_id, a."studentId", a.status
+  from jsonb_to_recordset(p_attendance) as a("studentId" uuid, status text)
+  on conflict (session_id, student_id) do update
+    set status = excluded.status;
+
+  insert into public.student_lesson_progress (
+    student_id, lesson_id, status, session_id, completed_date, updated_at
+  )
+  select p."studentId", p."lessonId", 'completed', p_session_id,
+    (now() at time zone 'Asia/Jakarta')::date, now()
+  from jsonb_to_recordset(p_lesson_completions) as p("studentId" uuid, "lessonId" uuid)
+  on conflict (student_id, lesson_id) do update set
+    status = 'completed',
+    session_id = excluded.session_id,
+    completed_date = excluded.completed_date,
+    updated_at = excluded.updated_at;
+end;
+$$;
+
+revoke execute on function public.log_session(uuid, text, jsonb, jsonb) from public;
+grant execute on function public.log_session(uuid, text, jsonb, jsonb) to authenticated;
 
 -- ------------------------------------------------------------
 -- CURRENT-USER HELPERS

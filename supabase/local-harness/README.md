@@ -5,7 +5,7 @@ Runs `schema.sql` and `supabase/rls-verification.sql` against a real Postgres
 verified on any machine at any time.
 
 ```bash
-npm run rls:verify   # execute schema.sql + the 68-check harness
+npm run rls:verify   # execute schema.sql + the 75-check harness
 npm run rls:graph    # print the policy dependency graph and any cycles
 ```
 
@@ -43,6 +43,13 @@ verifies the *SQL and the policy logic*. It does not cover Supabase's auth
 integration, PostgREST's behaviour, Storage, or anything in `storage-setup.sql`
 (which needs the real `storage.buckets`). Run the harness against the live
 project too, once Step 7 lands.
+
+## Session logging RPC checks
+
+The harness grants Supabase's default function privileges, then reapplies the
+intended grants for `public.log_session`. It verifies atomic writes and retries,
+rollback when a later write fails, rejection of out-of-class students, and
+denial to `anon`.
 
 ## graph.mjs
 
