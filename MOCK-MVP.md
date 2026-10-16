@@ -23,6 +23,12 @@ demo saves still load and gain course data on the first learning-page save.
 Course lessons are separate from the original attendance/module-completion
 model: assigning a course does not automatically complete or replace modules.
 
+Parent preview includes a read-only assignments summary on each child’s record.
+It shows due dates, that child’s submission status, reflection, and published
+teacher feedback. Submission data is filtered by both assignment and child so
+siblings in the same class see only their own work. This remains a demo preview,
+not an authenticated student portal.
+
 
 > Last updated: 2026-10-06. Interactive mock delivery; live production setup remains pending.
 

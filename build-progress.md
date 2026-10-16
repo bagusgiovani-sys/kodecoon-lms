@@ -1,5 +1,21 @@
 # Build Progress — KOMS
 
+## 2026-10-16 — Parent view of class assignments
+
+- Added a read-only assignments card to each parent-preview child record. It
+  shows each class project, due date, that child’s latest submission status,
+  reflection, and teacher feedback. Students without a submission see a clear
+  “Not submitted” state.
+- Submission lookup is scoped to the selected student, so siblings in one class
+  do not see each other’s work. The preview remains browser-local demo data.
+- Verified own-child submission privacy and both submitted/not-submitted states
+  at 360, 390, 768, 1024, and 1440px. No horizontal overflow or page errors.
+- `npm run build` and TypeScript passed. `npm run lint` had zero errors and the
+  same two existing RLS graph warnings. Session/credit regression checks passed.
+- Browser QA used local Chrome because the in-app browser remains unavailable
+  due to sandbox metadata. No live student auth or cloud-persistence behavior
+  was exercised.
+
 ## 2026-10-15 — Demo workflow verification and report printing
 
 - Exercised the production build in an isolated Chrome session: profile edits

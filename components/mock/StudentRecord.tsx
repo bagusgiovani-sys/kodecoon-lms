@@ -45,6 +45,7 @@ export function StudentRecord({ student, parent }: { student: MockStudent; paren
     <Panel title="Latest video moment" action={!parent && <Action secondary onClick={() => setDialog('video')}><Plus className="size-4" />Add video</Action>}>{videos[0] ? <VideoCard video={videos[0]} /> : <Empty title="Their story is just beginning" description="Add a session video to document their next breakthrough." />}</Panel></div>
     <div className="space-y-6"><Panel title="Package balance" className="border-primary/20 bg-primary/5"><div className="flex items-baseline gap-2"><p className="text-5xl font-semibold tracking-tight text-primary">{student.credits}</p><span className="text-sm text-muted-foreground">credits remaining</span></div><p className="my-4 text-xs leading-6 text-muted-foreground">Credits are used when a session is marked present. Absences do not use credits.</p>{student.credits <= 2 && <p className="mb-4 text-xs text-destructive">Your package is running low.</p>}{!parent && <Action secondary onClick={() => setDialog('credits')}><Plus className="size-4" />Top up credits</Action>}</Panel>
     <Panel title="Teacher’s latest feedback" action={<MessageSquare className="size-5 text-primary" />}>{feedback[0] ? <FeedbackCard feedback={feedback[0]} edit={!parent ? () => openFeedback(feedback[0]) : undefined} /> : <Empty title="Feedback coming soon" description="End-of-module notes from the teacher will appear here." />}{!parent && <Action secondary className="mt-4 w-full" onClick={() => openFeedback()}><Plus className="size-4" />Write module feedback</Action>}</Panel>
+    {parent && <ParentAssignmentProgress student={student} />}
     <Panel title="Progress reports"><p className="mb-4 text-sm leading-6 text-muted-foreground">A thoughtful summary of progress, attendance, and teacher feedback.</p>{!parent && <LinkAction secondary href={`/students/${student.id}/report`}><Download className="size-4" />Create report</LinkAction>}{data.reports.filter(r => r.studentId === student.id).map(report => <article key={report.id} className="mt-4 rounded-xl border p-4"><p className="text-xs text-primary">{dateLabel(report.date)}</p><p className="mt-2 whitespace-pre-line text-sm leading-6">{report.text}</p><div className="mt-3"><ReportPrintButton studentName={student.name} date={report.date} text={report.text} /></div></article>)}{parent && !data.reports.some(r => r.studentId === student.id) && <p className="text-xs text-muted-foreground">No reports published yet.</p>}</Panel></div></div>}
 
     {tab === 'videos' && <><Heading title="Learning in motion." description="Projects, experiments, and proud little moments from class." action={!parent && <Action onClick={() => setDialog('video')}><Plus className="size-4" />Add video documentation</Action>} /><div className="grid gap-5 md:grid-cols-2">{videos.map(video => <Panel key={video.id}><VideoCard video={video} /></Panel>)}</div>{!videos.length && <Empty title="No videos yet" description="Upload a video or paste a Drive, YouTube, or video file link." />}</>}
@@ -56,6 +57,26 @@ export function StudentRecord({ student, parent }: { student: MockStudent; paren
     <Modal open={dialog === 'credits'} close={() => setDialog(null)} title="Top up credits" description={`Add a new session package for ${student.name}.`}>{dialog === 'credits' && <CreditsForm student={student} close={() => setDialog(null)} />}</Modal>
     <Modal open={dialog === 'edit'} close={() => setDialog(null)} title="Edit student profile" description="Keep student and parent details up to date.">{dialog === 'edit' && <ProfileForm student={student} close={() => setDialog(null)} />}</Modal>
   </>
+}
+
+function ParentAssignmentProgress({ student }: { student: MockStudent }) {
+  const { data } = useMock()
+  const learning = data.learning
+  const assignments = learning?.assignments.filter(item => student.classIds.includes(item.classId)) ?? []
+  return <Panel title="Class assignments" subtitle="Projects set for your child’s classes">
+    {assignments.length ? <div className="grid gap-4">{assignments.map(assignment => {
+      const submission = learning?.submissions.filter(item => item.assignmentId === assignment.id && item.studentId === student.id).at(-1)
+      const status = submission ? { submitted: 'Awaiting teacher review', revision: 'Revision requested', approved: 'Approved' }[submission.status] : 'Not submitted'
+      const className = data.classes.find(item => item.id === assignment.classId)?.name ?? 'Class assignment'
+      return <article key={assignment.id} className="rounded-xl border p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs text-primary">{className}</p><h3 className="mt-1 font-semibold">{assignment.title}</h3></div><Pill tone={submission?.status === 'approved' ? 'good' : 'default'}>{status}</Pill></div>
+        <p className="mt-3 text-xs text-muted-foreground">Due {dateLabel(assignment.due)}</p>
+        <p className="mt-3 whitespace-pre-line text-sm leading-6 text-muted-foreground">{assignment.instructions}</p>
+        {submission?.reflection && <p className="mt-3 rounded-lg bg-background/60 p-3 text-sm leading-6"><span className="font-medium">Project reflection: </span>{submission.reflection}</p>}
+        {submission?.feedback && <p className="mt-3 rounded-lg border border-primary/15 p-3 text-sm leading-6"><span className="font-medium text-primary">Teacher feedback: </span>{submission.feedback}</p>}
+      </article>
+    })}</div> : <Empty title="No class assignments yet" description="New projects from your child’s teachers will appear here." />}
+  </Panel>
 }
 
 function VideoCard({ video }: { video: MockVideo }) {
