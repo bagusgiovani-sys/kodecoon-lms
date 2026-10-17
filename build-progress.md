@@ -1,5 +1,15 @@
 # Build Progress — KOMS
 
+## 2026-10-17 — Documentation baseline and architecture decisions
+
+- Replaced the starter README with a KodeHub document index, run/check guidance,
+  and next production-parity design work. Added ADR.md for existing decisions.
+- Added current-scope PRD/SDD addenda distinguishing the July KOMS baseline,
+  delivered demo, and unverified production behavior.
+- Checked claims against the proxy, schema, Drive helper, mock regression checks,
+  and delivery notes. All 75 local SQL checks and mock credit/session regressions
+  passed this session. No runtime code changed or external project was modified.
+
 ## 2026-10-16 — Parent demo assignment submissions
 
 - Parents/students in the local preview can now submit an HTTPS project link and

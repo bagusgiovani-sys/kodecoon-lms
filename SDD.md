@@ -4,6 +4,30 @@
 
 ---
 
+## Current implementation — 2026-10-17
+
+The July architecture below is the original baseline. Current differences:
+
+- Next.js 16 uses `proxy.ts`, not `middleware.ts`. The current proxy performs
+  demo rewrites and live session/role routing; the locale behavior described
+  below is not implemented there.
+- Default demo mode renders a separate Pages Router surface with localStorage
+  records and IndexedDB video uploads. It creates no authenticated session.
+  Production App Router/API behavior remains separate.
+- Core session logging uses the security-invoker `log_session` RPC for atomic
+  status, notes, attendance, and lesson completion under caller RLS. Video
+  metadata remains a separate best-effort write.
+- Drive validation uses the public Google Picker API key; the original blanket
+  description of a server-only Drive key is inaccurate. See `.env.example`.
+- Production report export uses server PDF generation/storage; demo reports
+  use browser printing. Demo video upload bytes stay in the browser.
+- The local SQL harness passes 75 checks, but does not verify live Auth,
+  PostgREST, Storage, or deployment. There is no service worker.
+
+Next design work covers production parity for paid credits, courses, assignments,
+versioned submissions, reviews, and publication visibility. Demo state does not
+establish production contracts. See [ADR.md](ADR.md) for recorded decisions.
+
 ## 1. System Architecture
 
 ```

@@ -4,6 +4,26 @@
 
 ---
 
+## Current scope — 2026-10-17
+
+The product is now **KodeHub**. The July KOMS specification below is the original
+baseline. [DESIGN.md](DESIGN.md) supersedes its palette direction.
+
+The browser-local demo now includes courses, lesson editing, assignments,
+versioned project-link submissions, teacher reviews, parent previews, paid-credit
+top-ups and attendance deductions/refunds, independent module progress, and
+printable reports. See [MOCK-MVP.md](MOCK-MVP.md) and
+[build-progress.md](build-progress.md) for limitations and delivery evidence.
+
+The original parent read-only scope has a demo exception: families can submit
+project links/reflections. Production submission authentication and permissions
+remain to be designed. Paid credits are separate from lesson progress in the
+demo; the original production schema does not yet provide that ledger.
+
+Next design work must reconcile these model and permission gaps before expanded
+learning workflows move into production. See [ADR.md](ADR.md). Live service
+configuration and verification remain pending; demo delivery is not production parity.
+
 ## Product Vision
 KOMS is a solo-built PWA giving Gio one unified place to run his own robotics/coding classes — attendance, video documentation, and credit-based progress reporting — replacing OClass, Excel, and manual Telegram/WhatsApp relay, as a working pilot toward eventual academy-wide adoption.
 
