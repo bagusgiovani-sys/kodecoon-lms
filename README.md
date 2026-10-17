@@ -1,4 +1,4 @@
-﻿# KodeHub
+# KodeHub
 
 KodeHub (formerly KOMS) is the Kodecoon classroom operations and learning workspace.
 The browser-local demo is usable; live Supabase setup and verification remain pending.
@@ -8,6 +8,7 @@ The browser-local demo is usable; live Supabase setup and verification remain pe
 - [PRD.md](PRD.md): product requirements and current scope.
 - [SDD.md](SDD.md): system architecture, API and database design.
 - [ADR.md](ADR.md): architecture decisions and pending design work.
+- [PRODUCTION-PARITY.md](PRODUCTION-PARITY.md): production models, permissions, transaction contracts, and delivery gates.
 - [BRD.md](BRD.md): original business objectives.
 - [DESIGN.md](DESIGN.md): approved visual and responsive requirements.
 - [MOCK-MVP.md](MOCK-MVP.md): demo workflows and limitations.

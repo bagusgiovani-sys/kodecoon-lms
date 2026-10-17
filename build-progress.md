@@ -1,5 +1,18 @@
 # Build Progress — KOMS
 
+## 2026-10-17 — Production parity implementation design
+
+- Added PRODUCTION-PARITY.md: entities/constraints, permissions, atomic credit
+  transactions, submission/review history, publication boundaries, API contracts,
+  migration sequence, and acceptance gates. Linked from README, PRD, and SDD.
+- Recorded proposed ADR-005. Business defaults are explicit assumptions.
+- Existing parent report policy lacks a publication boundary; implementation
+  starts with published snapshots separated from private draft rows.
+- Reviewed against schema.sql, mock data/session/learning behavior, report export,
+  Storage setup, and local Next.js Route Handler documentation. Documentation-only
+  change; no runtime or live database changes. Concurrency and live integration
+  tests are specified future gates, not verification performed for this change.
+
 ## 2026-10-17 — Documentation baseline and architecture decisions
 
 - Replaced the starter README with a KodeHub document index, run/check guidance,

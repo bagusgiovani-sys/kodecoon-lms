@@ -67,11 +67,31 @@ before claiming production credit support.
 
 **Evidence:** lib/mock/session.ts, scripts/mock-check.mjs, MOCK-MVP.md.
 
-## Pending design decisions
+## ADR-005: Production parity implementation specification
+
+**Status:** Proposed implementation design, 2026-10-17; not implemented.
+
+**Context:** The demo's credits and learning workflows exceed the July schema.
+
+**Decision proposal:** Use append-only credit history with serialized account
+updates, center-owned course content, class-scoped published assignments,
+immutable submission versions, and separate published feedback/report snapshots.
+Start with guardian-submitted work rather than adding a student authentication role.
+
+**Consequences:** Requires additive migrations and a successor to the current
+session RPC that can safely mutate protected ledger tables. Family report access
+must move off draft rows. No existing demo records are automatically imported.
+Admin-only top-ups, shared per-student credits, and permitted late submissions are
+explicit implementation defaults, not newly confirmed business requirements.
+
+**Specification:** [PRODUCTION-PARITY.md](PRODUCTION-PARITY.md), including permission
+matrix, transaction rules, API contracts, rollout, and acceptance gates.
+
+## Design items now specified for implementation
 
 - Production course/lesson ownership and class relationships.
 - Student versus guardian submission authority and versioned review permissions.
 - Draft/publication visibility for feedback and reports.
 - Paid-credit ledger ownership, corrections, and atomic attendance updates.
 
-These are design tasks, not accepted decisions or deployed capabilities.
+These are specified in PRODUCTION-PARITY.md; implementation and verification remain pending.

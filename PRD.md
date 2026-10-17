@@ -24,6 +24,10 @@ Next design work must reconcile these model and permission gaps before expanded
 learning workflows move into production. See [ADR.md](ADR.md). Live service
 configuration and verification remain pending; demo delivery is not production parity.
 
+The expanded production contract is specified in
+[PRODUCTION-PARITY.md](PRODUCTION-PARITY.md). Its business defaults are labeled
+assumptions; its acceptance gates must pass before claiming production parity.
+
 ## Product Vision
 KOMS is a solo-built PWA giving Gio one unified place to run his own robotics/coding classes — attendance, video documentation, and credit-based progress reporting — replacing OClass, Excel, and manual Telegram/WhatsApp relay, as a working pilot toward eventual academy-wide adoption.
 

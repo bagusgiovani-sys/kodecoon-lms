@@ -28,6 +28,9 @@ Next design work covers production parity for paid credits, courses, assignments
 versioned submissions, reviews, and publication visibility. Demo state does not
 establish production contracts. See [ADR.md](ADR.md) for recorded decisions.
 
+See [PRODUCTION-PARITY.md](PRODUCTION-PARITY.md) for the next schema, permission,
+transaction, API, and migration contracts. These are specified, not implemented.
+
 ## 1. System Architecture
 
 ```
