@@ -1,5 +1,37 @@
 # Build Progress — KOMS
 
+## 2026-10-18 — Private reports and explicit family publication
+
+- Production PDF export now stores a private object path and returns an
+  authorized download route. Export does not publish to families. Teachers
+  explicitly publish immutable final-text/PDF snapshots and can withdraw them
+  from a persistent report history list; same-center admins can manage reports.
+- Removed guardian access to source report rows, including raw notes and AI
+  drafts. Parent profile API/page read only active published snapshots. Downloads
+  check caller RLS before privileged Storage signing, use 60-second URLs, and
+  reject forged draft object paths. Publishing requires uploaded object metadata.
+- Added a transactional forward migration and matching fresh schema/types. Old
+  reports remain private; no automatic publication. Snapshot retries are
+  idempotent and cannot reopen withdrawn reports. See supabase/migrations/README.md
+  for rollout, class-less legacy records, and existing signed-link limitations.
+- Verification: 95/95 SQL assertions passed; disposable legacy migration retained
+  existing private data. Actual download-handler tests with isolated adapters
+  passed auth denial, RLS-hidden rows, forged paths, failures, and short-lived
+  redirects. Mock credit/session regressions passed. Production build/TypeScript
+  passed; lint has zero errors and two existing graph-script warnings.
+- Local Chrome exercised the actual ReportEditor with fixture API responses:
+  private export, stale-text publication disabled, explicit publish, history after
+  refresh, and withdrawal. No page errors or overflow at 360, 390, 768, 1024, 1440px.
+  Reviewed phone screenshot; controls use 44px minimum heights. Temporary QA
+  page removed; script/screenshots remain in Temp, excluded from Git.
+- Browser logs exposed a Base UI warning on PDF links rendered through Button;
+  marked those controls as links with nativeButton=false and rebuilt successfully.
+- Browser skill could not connect due to sandbox metadata; approved local Chrome
+  supplied UI evidence. Tests do not establish live Auth/PostgREST/Storage behavior.
+  No remote migration/deployment occurred. Legacy signed URLs are not revoked;
+  new URLs can remain valid for 60 seconds after withdrawal. History is limited
+  to the most recent 100 publications per student. Credits remain the next slice.
+
 ## 2026-10-17 — Production parity implementation design
 
 - Added PRODUCTION-PARITY.md: entities/constraints, permissions, atomic credit

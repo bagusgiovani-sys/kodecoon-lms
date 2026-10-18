@@ -4,6 +4,12 @@ Version 1, 2026-10-17. **Implementation specification; not deployed behavior.**
 This extends the July PRD/SDD using the delivered demo. Product defaults below
 are implementation assumptions and can be revised without changing demo data.
 
+Implementation update: the report publication slice now exists locally with a
+forward migration, private exports, immutable published snapshots, withdrawal,
+authorized download routes, and teacher controls. See build-progress.md for
+verification and supabase/migrations/README.md for rollout limits. Feedback
+publication, credits, courses, and submission production parity remain pending.
+
 ## Scope and defaults
 
 - Preserve center isolation and existing class/student IDs and lesson progress.

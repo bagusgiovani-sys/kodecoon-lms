@@ -45,8 +45,9 @@ export default async function StudentProfilePage({
       .eq('student_id', student.id)
       .eq('status', 'completed'),
     supabase
-      .from('reports')
-      .select('id, generated_date, final_pdf_url')
+      .from('published_reports')
+      .select('id, generated_date')
+      .is('withdrawn_at', null)
       .eq('student_id', student.id)
       .order('generated_date', { ascending: false }),
   ])
@@ -97,11 +98,10 @@ export default async function StudentProfilePage({
   }
 
   const reports = (reportsRes.data ?? [])
-    .filter((report) => report.final_pdf_url !== null)
     .map((report) => ({
       id: report.id,
       generatedDate: report.generated_date,
-      pdfUrl: report.final_pdf_url!,
+      pdfUrl: `/api/report-publications/${report.id}/download`,
     }))
 
   return (

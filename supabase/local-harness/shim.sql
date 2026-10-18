@@ -41,3 +41,8 @@ $$;
 
 grant usage on schema auth to anon, authenticated, service_role;
 grant select on auth.users to anon, authenticated, service_role;
+
+-- Minimal metadata only: does not emulate Storage uploads/downloads or policies.
+create schema storage;
+create table storage.buckets (id text primary key, name text, public boolean default false);
+create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text references storage.buckets(id), name text, unique(bucket_id, name));

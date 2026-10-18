@@ -89,6 +89,12 @@ matrix, transaction rules, API contracts, rollout, and acceptance gates.
 
 ## Design items now specified for implementation
 
+Report publication portion of ADR-005 completed locally on 2026-10-18:
+separate immutable snapshots, private exports, explicit publication/withdrawal,
+class-scoped teacher and center-scoped admin management, and authorized downloads
+with 60-second signed URLs. Existing reports remain private after migration.
+The remaining ADR-005 items are still proposed; live report integration is unverified.
+
 - Production course/lesson ownership and class relationships.
 - Student versus guardian submission authority and versioned review permissions.
 - Draft/publication visibility for feedback and reports.

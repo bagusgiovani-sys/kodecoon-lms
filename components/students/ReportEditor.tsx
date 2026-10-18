@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ExternalLink, Sparkles, TriangleAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -35,6 +35,15 @@ export function ReportEditor({
   const [rawNotes, setRawNotes] = useState('')
   const [reportText, setReportText] = useState('')
   const [exportedUrl, setExportedUrl] = useState<string | null>(null)
+  const [exportedReport, setExportedReport] = useState<{ id: string; text: string } | null>(null)
+  const [publicationId, setPublicationId] = useState<string | null>(null)
+  const [withdrawn, setWithdrawn] = useState(false)
+  const queryClient = useQueryClient()
+  const historyKey = ['report-publications', studentId]
+  const history = useQuery({
+    queryKey: historyKey,
+    queryFn: () => fetchJson<{ reports: Array<{ id: string; generated_date: string; withdrawn_at: string | null }> }>(`/api/students/${studentId}/report/publications`),
+  })
 
   const draftMutation = useMutation({
     mutationFn: () =>
@@ -51,18 +60,40 @@ export function ReportEditor({
   })
 
   const exportMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (finalText: string) =>
       fetchJson<ExportReportResponse>(`/api/students/${studentId}/report/export`, {
         method: 'POST',
-        body: JSON.stringify({ classId, finalText: reportText, templateId }),
+        body: JSON.stringify({ classId, finalText, templateId }),
       }),
-    onSuccess: (data) => {
+    onSuccess: (data, finalText) => {
       setExportedUrl(data.pdfUrl)
+      setExportedReport({ id: data.reportId, text: finalText })
+      setPublicationId(null)
+      setWithdrawn(false)
       toast.success(t('reportExported'))
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : t('genericError'))
     },
+  })
+
+  const publicationMutation = useMutation({
+    mutationFn: () => fetchJson<{ publicationId: string }>(`/api/reports/${exportedReport!.id}/publications`, { method: 'POST' }),
+    onSuccess: (data) => {
+      setPublicationId(data.publicationId)
+      void queryClient.invalidateQueries({ queryKey: historyKey })
+      toast.success(t('reportPublishedToast'))
+    },
+    onError: () => toast.error(t('genericError')),
+  })
+  const withdrawMutation = useMutation({
+    mutationFn: (id: string) => fetchJson(`/api/report-publications/${id}/withdraw`, { method: 'POST' }),
+    onSuccess: (_data, id) => {
+      if (id === publicationId) setWithdrawn(true)
+      void queryClient.invalidateQueries({ queryKey: historyKey })
+      toast.success(t('reportWithdrawnToast'))
+    },
+    onError: () => toast.error(t('genericError')),
   })
 
   return (
@@ -86,7 +117,7 @@ export function ReportEditor({
         <Button
           type="button"
           variant="secondary"
-          className="justify-self-start"
+          className="min-h-11 justify-self-start"
           onClick={() => draftMutation.mutate()}
           disabled={draftMutation.isPending || rawNotes.trim().length === 0}
         >
@@ -100,6 +131,7 @@ export function ReportEditor({
         <Textarea
           id="report-text"
           value={reportText}
+          disabled={exportMutation.isPending}
           onChange={(e) => setReportText(e.target.value)}
           rows={12}
         />
@@ -107,14 +139,17 @@ export function ReportEditor({
 
       <div className="flex flex-wrap items-center gap-3">
         <Button
-          onClick={() => exportMutation.mutate()}
-          disabled={exportMutation.isPending || reportText.trim().length === 0}
+          className="min-h-11"
+          onClick={() => exportMutation.mutate(reportText)}
+          disabled={exportMutation.isPending || publicationMutation.isPending || withdrawMutation.isPending || reportText.trim().length === 0}
         >
           {exportMutation.isPending ? t('exporting') : t('exportPdf')}
         </Button>
         {exportedUrl ? (
           <Button
+            className="min-h-11"
             variant="outline"
+            nativeButton={false}
             render={
               <a href={exportedUrl} target="_blank" rel="noopener noreferrer" />
             }
@@ -122,7 +157,36 @@ export function ReportEditor({
             <ExternalLink className="size-4" /> PDF
           </Button>
         ) : null}
+        {exportedReport && !publicationId && !withdrawn ? (
+          <Button className="min-h-11" onClick={() => publicationMutation.mutate()}
+            disabled={exportMutation.isPending || publicationMutation.isPending || reportText !== exportedReport.text}>
+            {t('publishToFamily')}
+          </Button>
+        ) : null}
+        {publicationId && !withdrawn ? (
+          <Button className="min-h-11" variant="outline" onClick={() => withdrawMutation.mutate(publicationId)}
+            disabled={exportMutation.isPending || withdrawMutation.isPending}>{t('withdrawReport')}</Button>
+        ) : null}
       </div>
+      <p role="status" className="text-sm text-muted-foreground">
+        {withdrawn ? t('reportWithdrawn') : publicationId ? t('reportPublished') : t('reportPrivateHint')}
+      </p>
+      <section className="grid gap-3" aria-label={t('reportsHeading')}>
+        <h2 className="font-semibold">{t('reportsHeading')}</h2>
+        {history.isError ? <p role="alert">{t('genericError')}</p> : null}
+        {history.data?.reports.map(report => (
+          <div key={report.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
+            <span>{report.generated_date}</span>
+            {report.withdrawn_at ? <span className="text-sm text-muted-foreground">{t('reportWithdrawn')}</span> : (
+              <div className="flex flex-wrap gap-3">
+                <Button className="min-h-11" variant="outline" nativeButton={false} render={<a href={`/api/report-publications/${report.id}/download`} target="_blank" rel="noopener noreferrer" />}>PDF</Button>
+                <Button className="min-h-11" variant="outline" disabled={withdrawMutation.isPending || exportMutation.isPending}
+                  onClick={() => withdrawMutation.mutate(report.id)}>{t('withdrawReport')}</Button>
+              </div>
+            )}
+          </div>
+        ))}
+      </section>
     </div>
   )
 }

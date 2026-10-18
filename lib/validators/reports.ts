@@ -7,6 +7,6 @@ export const draftReportSchema = z.object({
 
 export const exportReportSchema = z.object({
   classId: z.uuid(),
-  finalText: z.string().trim().min(1, 'Report text cannot be empty'),
+  finalText: z.string().trim().min(1, 'Report text cannot be empty').max(50000),
   templateId: z.uuid(),
 })

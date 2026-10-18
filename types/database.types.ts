@@ -443,6 +443,7 @@ export interface Database {
           ai_draft_text: string | null
           final_text: string | null
           final_pdf_url: string | null
+          pdf_storage_path: string | null
           generated_date: string
           created_at: string | null
         }
@@ -455,6 +456,7 @@ export interface Database {
           ai_draft_text?: string | null
           final_text?: string | null
           final_pdf_url?: string | null
+          pdf_storage_path?: string | null
           generated_date?: string
           created_at?: string | null
         }
@@ -467,6 +469,7 @@ export interface Database {
           ai_draft_text?: string | null
           final_text?: string | null
           final_pdf_url?: string | null
+          pdf_storage_path?: string | null
           generated_date?: string
           created_at?: string | null
         }
@@ -493,6 +496,36 @@ export interface Database {
             referencedColumns: ['id']
           },
         ]
+      }
+      published_reports: {
+        Row: {
+          id: string
+          report_id: string
+          student_id: string
+          class_id: string
+          final_text: string
+          generated_date: string
+          pdf_storage_path: string
+          published_by: string
+          published_at: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          id?: string
+          report_id: string
+          student_id: string
+          class_id: string
+          final_text: string
+          generated_date: string
+          pdf_storage_path: string
+          published_by: string
+          published_at?: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          withdrawn_at?: string | null
+        }
+        Relationships: []
       }
       student_guardians: {
         Row: {
@@ -533,6 +566,9 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      can_manage_report: { Args: { p_student: string; p_class: string }; Returns: boolean }
+      publish_report: { Args: { p_report_id: string }; Returns: string }
+      withdraw_report: { Args: { p_publication_id: string }; Returns: undefined }
       log_session: {
         Args: {
           p_session_id: string

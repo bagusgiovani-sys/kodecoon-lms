@@ -5,7 +5,7 @@ Runs `schema.sql` and `supabase/rls-verification.sql` against a real Postgres
 verified on any machine at any time.
 
 ```bash
-npm run rls:verify   # execute schema.sql + the 75-check harness
+npm run rls:verify   # forward migration + schema.sql + the 95-check harness
 npm run rls:graph    # print the policy dependency graph and any cycles
 ```
 
@@ -43,6 +43,20 @@ verifies the *SQL and the policy logic*. It does not cover Supabase's auth
 integration, PostgREST's behaviour, Storage, or anything in `storage-setup.sql`
 (which needs the real `storage.buckets`). Run the harness against the live
 project too, once Step 7 lands.
+
+## Report publication checks
+
+The runner first applies the forward report migration to a disposable legacy
+schema and verifies preservation of existing private rows. It then runs the
+fresh-schema permission suite, including publication retry, immutable snapshots,
+private draft edits, unrelated families/teachers/centers, guardian removal,
+withdrawal and missing PDF metadata. The Storage shim supplies only buckets and
+object metadata, never actual files, signed URLs, or Storage policy behavior.
+The runner exits nonzero if any recorded check fails.
+
+Run `node scripts/report-download-check.mjs` for isolated tests of the actual
+download handler's auth, RLS query, path validation and short-lived redirect.
+Live Auth/PostgREST/Storage checks remain required before release.
 
 ## Session logging RPC checks
 

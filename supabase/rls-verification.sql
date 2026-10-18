@@ -325,8 +325,8 @@ select rls_check('lessons: parent sees their child''s lesson plan',
   (select count(*) from lessons) = 2);
 select rls_check('progress: parent sees only their own child''s progress',
   (select count(*) from student_lesson_progress) = 1);
-select rls_check('reports: parent sees only their own child''s report',
-  (select count(*) from reports) = 1);
+select rls_check('reports: parent cannot read private report rows',
+  (select count(*) from reports) = 0);
 select rls_check('session_videos: parent sees only videos from sessions their child attended',
   (select count(*) from session_videos) = 1);
 select rls_check('student_guardians: parent sees only their own guardian link',
@@ -389,15 +389,9 @@ select rls_check('students: admin sees every student in their center',
 select rls_check('classes: admin does not see the other center''s class',
   (select count(*) from classes where center_id = '00000000-0000-4000-8000-000000000c02') = 0);
 
--- Intentional, not a gap: the admin override covers users/classes/sessions/
--- lessons — exactly the four tables behind Manage Teachers, Academy Schedule,
--- and Manage Lesson Plan (PRD Screen Inventory). Attendance, progress, and
--- reports stay teacher-scoped, so an admin who does not teach the class sees
--- none. In v1 Gio is both, so nothing is out of reach. If an admin screen ever
--- needs to read another teacher's reports, that is a new policy and a new
--- decision — this row failing means someone widened it by accident.
-select rls_check('reports: admin sees no reports for classes they do not teach (by design)',
-  (select count(*) from reports) = 0);
+-- The report publication contract permits same-center admin management.
+select rls_check('reports: admin sees center reports',
+  (select count(*) from reports) = 2);
 
 select rls_expect_allowed('users: admin can rename a teacher in their center',
   $$update users set name = 'Teacher B Renamed'
@@ -431,6 +425,85 @@ select rls_check('anon: no progress', (select count(*) from student_lesson_progr
 select rls_check('anon: no session_videos', (select count(*) from session_videos) = 0);
 select rls_check('anon: no student_guardians', (select count(*) from student_guardians) = 0);
 select rls_check('anon: no report_templates', (select count(*) from report_templates) = 0);
+
+-- Publication lifecycle, exercised under actual SQL roles.
+reset role;
+update reports set pdf_storage_path = student_id::text || '/' || id::text || '.pdf',
+ raw_notes = 'PRIVATE NOTES', ai_draft_text = 'PRIVATE AI DRAFT';
+insert into storage.buckets (id, name, public) values ('reports', 'reports', false) on conflict (id) do nothing;
+select set_config('test.report_a', (select id::text from reports where student_id = '00000000-0000-4000-8000-000000000501'), true);
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a02","role":"authenticated"}', true);
+set local role authenticated;
+select rls_expect_blocked('publication: missing uploaded PDF prevents publishing',
+  $$select public.publish_report((select id from reports limit 1))$$);
+reset role;
+insert into storage.objects (bucket_id, name) select 'reports', pdf_storage_path from reports;
+set local role authenticated;
+select rls_check('publication: teacher publishes own exported report',
+  public.publish_report((select id from reports limit 1)) is not null);
+select rls_check('publication: retry returns the same snapshot',
+  public.publish_report((select id from reports limit 1)) = (select id from published_reports));
+select rls_expect_blocked('publication: snapshot cannot be edited directly',
+  $$update published_reports set final_text = 'tampered'$$);
+select rls_expect_blocked('publication: snapshot cannot be deleted directly',
+  $$delete from published_reports$$);
+update reports set final_text = 'NEW PRIVATE EDIT';
+select rls_check('publication: subsequent draft edit does not change snapshot',
+  (select final_text from published_reports) = 'report for s1');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a03","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('publication: peer teacher sees no snapshot', (select count(*) from published_reports) = 0);
+select rls_expect_blocked('publication: direct snapshot insert is denied',
+  $$insert into published_reports(report_id,student_id,class_id,final_text,generated_date,pdf_storage_path,published_by)
+    select id,student_id,class_id,'forged',generated_date,pdf_storage_path,auth.uid() from reports$$);
+
+select rls_expect_blocked('publication: peer cannot publish another class report',
+  $$select public.publish_report(current_setting('test.report_a')::uuid)$$);
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a05","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('publication: guardian sees only published final text',
+  (select count(*) from published_reports where final_text = 'report for s1') = 1);
+select rls_check('publication: draft raw notes remain inaccessible', (select count(*) from reports) = 0);
+select rls_expect_blocked('publication: guardian cannot withdraw',
+  $$select public.withdraw_report((select id from published_reports limit 1))$$);
+select rls_expect_blocked('publication: guardian cannot publish',
+  $$select public.publish_report((select report_id from published_reports limit 1))$$);
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a06","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('publication: unrelated family sees nothing', (select count(*) from published_reports) = 0);
+reset role;
+delete from student_guardians where student_id = '00000000-0000-4000-8000-000000000501';
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a05","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('publication: removed guardian loses access', (select count(*) from published_reports) = 0);
+reset role;
+insert into student_guardians(student_id,guardian_id) values ('00000000-0000-4000-8000-000000000501','00000000-0000-4000-8000-000000000a05');
+
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a04","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('publication: other center sees nothing', (select count(*) from published_reports) = 0);
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a02","role":"authenticated"}', true);
+set local role authenticated;
+select public.withdraw_report((select id from published_reports limit 1));
+select public.withdraw_report((select id from published_reports limit 1));
+select public.publish_report((select id from reports limit 1));
+select rls_check('publication: withdrawal retry and publish retry do not reopen it',
+  (select withdrawn_at is not null from published_reports));
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a05","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('publication: withdrawn report is hidden from family', (select count(*) from published_reports) = 0);
+reset role;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+set local role anon;
+select rls_check('publication: anon sees nothing', (select count(*) from published_reports) = 0);
+select rls_expect_blocked('publication: anon cannot call publisher',
+  $$select public.publish_report(current_setting('test.report_a')::uuid)$$);
 
 -- ============================================================
 -- COVERAGE CHECK — every table must have RLS on
