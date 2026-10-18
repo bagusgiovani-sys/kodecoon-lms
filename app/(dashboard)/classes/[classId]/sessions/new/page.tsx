@@ -31,20 +31,20 @@ export default async function LogSessionPage({
 
   // Resolve the session being logged — a client-sent id is only honored if it
   // genuinely belongs to this class (CLAUDE.md §4)
-  let session: { id: string; notes: string | null } | null = null
+  let session: { id: string; notes: string | null; revision: number; credit_billable: boolean } | null = null
   if (requestedSessionId) {
     const { data } = await supabase
       .from('sessions')
-      .select('id, notes, class_id')
+      .select('id, notes, class_id, revision, credit_billable')
       .eq('id', requestedSessionId)
       .eq('class_id', classId)
       .maybeSingle()
-    session = data ? { id: data.id, notes: data.notes } : null
+    session = data
   }
   if (!session) {
     const { data } = await supabase
       .from('sessions')
-      .select('id, notes')
+      .select('id, notes, revision, credit_billable')
       .eq('class_id', classId)
       .eq('session_date', todayIsoDate())
       .order('session_time', { ascending: true })
@@ -96,6 +96,15 @@ export default async function LogSessionPage({
     }
   }
 
+  const initialAttendance: Record<string, 'present' | 'absent' | undefined> = {}
+  if (session) {
+    const { data: saved } = await supabase.from('attendance').select('student_id, status, students(id, name)').eq('session_id', session.id)
+    for (const entry of saved ?? []) {
+      initialAttendance[entry.student_id] = entry.status === 'present' || entry.status === 'absent' ? entry.status : undefined
+      if (entry.students && !students.some(student => student.id === entry.student_id)) students.push(entry.students)
+    }
+  }
+
   return (
     <>
       <PageHeader title={t('logSessionTitle')} subtitle={cls.name} />
@@ -106,6 +115,9 @@ export default async function LogSessionPage({
         lessons={lessons}
         existingCompletions={existingCompletions}
         initialNotes={session?.notes ?? null}
+        initialRevision={session?.revision ?? 0}
+        initialAttendance={initialAttendance}
+        creditBillable={session?.credit_billable ?? true}
       />
     </>
   )

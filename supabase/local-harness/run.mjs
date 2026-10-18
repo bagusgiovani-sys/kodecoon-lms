@@ -21,7 +21,22 @@ const migrated = await migrationDb.query(`select
   (select count(*) from published_reports) as published,
   (select count(*) from pg_policies where policyname = 'reports_select_parent') as legacy_policy`)
 if (migrated.rows[0].preserved !== 1 || migrated.rows[0].published !== 0 || migrated.rows[0].legacy_policy !== 0) throw new Error('Migration privacy/preservation failed')
+await migrationDb.exec(`
+  insert into auth.users(id) values ('00000000-0000-4000-8000-000000000003');
+  insert into users(id,email,name,role,center_id) values ('00000000-0000-4000-8000-000000000003','migration@example.invalid','Teacher','teacher','00000000-0000-4000-8000-000000000001');
+  insert into classes(id,center_id,teacher_id,name) values ('00000000-0000-4000-8000-000000000004','00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003','Legacy class');
+  insert into sessions(id,class_id,teacher_id,session_date) values ('00000000-0000-4000-8000-000000000005','00000000-0000-4000-8000-000000000004','00000000-0000-4000-8000-000000000003',current_date);
+  insert into attendance(session_id,student_id,status) values ('00000000-0000-4000-8000-000000000005','00000000-0000-4000-8000-000000000002','present');
+`)
+await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610180001_credit_ledger.sql`))
+const cutover = await migrationDb.query(`select
+ (select credit_billable from sessions limit 1) as billable,
+ (select balance from credit_accounts limit 1) as balance,
+ (select count(*) from credit_entries) as entries,
+ (select status from attendance limit 1) as attendance`)
+if (cutover.rows[0].billable !== false || cutover.rows[0].balance !== 0 || cutover.rows[0].entries !== 0 || cutover.rows[0].attendance !== 'present') throw new Error('Credit cutover changed legacy attendance/balances')
 await migrationDb.close()
+console.log('OK  credit migration exempts existing sessions without retroactive charges')
 console.log('OK  forward migration preserves legacy reports as private')
 const db = await PGlite.create()
 
@@ -40,6 +55,7 @@ await stage('schema.sql', read(`${KOMS}/schema.sql`))
 await stage('supabase bootstrap grants', read(here('grants.sql')))
 await stage('session RPC grants', read(here('session-rpc-grants.sql')))
 await stage('report RPC grants', read(here('report-rpc-grants.sql')))
+await stage('credit RPC grants', read(here('credit-rpc-grants.sql')))
 const res = await stage('rls-verification.sql', read(`${KOMS}/supabase/rls-verification.sql`))
 
 const sets = res.filter(r => r.rows && r.rows.length)

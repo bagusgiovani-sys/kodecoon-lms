@@ -1,3 +1,4 @@
+import { CreditPanel } from '@/components/students/CreditPanel'
 import { notFound } from 'next/navigation'
 import { GraduationCap } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -125,6 +126,7 @@ export default async function StudentProfilePage({
         <StudentSwitcher students={linked} activeStudentId={student.id} />
       </div>
 
+      <CreditPanel studentId={student.id} />
       <section>
         <h2 className="mb-3 text-sm font-semibold tracking-wide uppercase">
           {t('activePrograms')}

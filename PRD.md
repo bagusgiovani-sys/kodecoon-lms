@@ -18,7 +18,9 @@ printable reports. See [MOCK-MVP.md](MOCK-MVP.md) and
 The original parent read-only scope has a demo exception: families can submit
 project links/reflections. Production submission authentication and permissions
 remain to be designed. Paid credits are separate from lesson progress in the
-demo; the original production schema does not yet provide that ledger.
+demo. The production ledger is now implemented locally, with admin adjustments,
+atomic attendance deductions/refunds, and staff/family history. Live deployment
+and separate-connection concurrency tests remain pending (2026-10-18).
 
 Next design work must reconcile these model and permission gaps before expanded
 learning workflows move into production. See [ADR.md](ADR.md). Live service

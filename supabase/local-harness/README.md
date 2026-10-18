@@ -5,7 +5,7 @@ Runs `schema.sql` and `supabase/rls-verification.sql` against a real Postgres
 verified on any machine at any time.
 
 ```bash
-npm run rls:verify   # forward migration + schema.sql + the 95-check harness
+npm run rls:verify   # both forward migrations + schema.sql + the 126-check harness
 npm run rls:graph    # print the policy dependency graph and any cycles
 ```
 
@@ -60,8 +60,16 @@ Live Auth/PostgREST/Storage checks remain required before release.
 
 ## Session logging RPC checks
 
+The current writer is `log_session_credits`: a narrowly authorized definer RPC
+that owns the attendance/ledger transaction. The earlier invoker RPC is revoked.
+Credit checks include funded saves, exact retries, stale revisions, invalid
+request reuse, full rollback, direct-write denial, corrections after unenrollment,
+admin/teacher/family boundaries, and ledger reconciliation. The migration test
+confirms historical sessions remain exempt. Separate-connection race tests are
+a release gate described in supabase/migrations/README.md, not PGlite evidence.
+
 The harness grants Supabase's default function privileges, then reapplies the
-intended grants for `public.log_session`. It verifies atomic writes and retries,
+intended session/report/credit grants. It verifies atomic writes and retries,
 rollback when a later write fails, rejection of out-of-class students, and
 denial to `anon`.
 

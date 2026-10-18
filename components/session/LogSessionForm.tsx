@@ -42,6 +42,9 @@ interface LogSessionFormProps {
   lessons: Array<{ id: string; sequenceNumber: number; title: string }>
   existingCompletions: Record<string, string[]>
   initialNotes: string | null
+  initialRevision: number
+  initialAttendance: AttendanceValue
+  creditBillable: boolean
 }
 
 interface DraftState {
@@ -61,18 +64,23 @@ export function LogSessionForm({
   lessons,
   existingCompletions,
   initialNotes,
+  initialRevision,
+  initialAttendance,
+  creditBillable,
 }: LogSessionFormProps) {
   const { t } = useLanguage()
   const router = useRouter()
   const queryClient = useQueryClient()
 
   const draftKey = `koms-session-draft-${sessionId ?? classId}`
-  const [attendance, setAttendance] = useState<AttendanceValue>({})
+  const [attendance, setAttendance] = useState<AttendanceValue>(initialAttendance)
   const [video, setVideo] = useState<SessionVideo | null>(null)
   const [notes, setNotes] = useState(initialNotes ?? '')
   const [completions, setCompletions] = useState<Set<CompletionKey>>(new Set())
   const [confirmOpen, setConfirmOpen] = useState(false)
   const restored = useRef(false)
+  const targetRef = useRef<string | null>(sessionId)
+  const requestRef = useRef<{ signature: string; id: string } | null>(null)
 
   // Restore an unsaved draft once, on mount (PRD: draft retained on refresh).
   // setState inside this effect is deliberate: localStorage is client-only, so
@@ -82,7 +90,18 @@ export function LogSessionForm({
     if (restored.current) return
     restored.current = true
     try {
-      const raw = window.localStorage.getItem(draftKey)
+      let raw = window.localStorage.getItem(draftKey)
+      // After a lost creation response, the server may discover the newly
+      // scheduled session on refresh. Move its class-keyed draft to the ID key.
+      const pendingKey = `koms-session-draft-${classId}`
+      if (!raw && sessionId && window.localStorage.getItem(`${pendingKey}-session`) === sessionId) {
+        raw = window.localStorage.getItem(pendingKey)
+        for (const suffix of ['', '-request', '-session', '-date']) {
+          const value = window.localStorage.getItem(`${pendingKey}${suffix}`)
+          if (value !== null) window.localStorage.setItem(`${draftKey}${suffix}`, value)
+          window.localStorage.removeItem(`${pendingKey}${suffix}`)
+        }
+      }
       if (!raw) return
       const draft = JSON.parse(raw) as DraftState
       setAttendance(draft.attendance ?? {})
@@ -110,22 +129,34 @@ export function LogSessionForm({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      let targetSessionId = sessionId
-      if (!targetSessionId) {
+      const requestKey = `${draftKey}-request`
+      const signature = JSON.stringify({ attendance, video, notes, completions: [...completions], initialRevision })
+      if (!requestRef.current) {
+        try {
+          const saved = JSON.parse(window.localStorage.getItem(requestKey) ?? 'null')
+          if (saved?.signature === signature && typeof saved?.id === 'string') requestRef.current = saved
+        } catch { /* A corrupt retry token must not prevent a new request. */ }
+      }
+      if (requestRef.current?.signature !== signature) requestRef.current = { signature, id: crypto.randomUUID() }
+      window.localStorage.setItem(requestKey, JSON.stringify(requestRef.current))
+      if (!targetRef.current) {
+        targetRef.current = window.localStorage.getItem(`${draftKey}-session`) ?? crypto.randomUUID()
+        window.localStorage.setItem(`${draftKey}-session`, targetRef.current)
+      }
+      if (!sessionId) {
+        const createDate = window.localStorage.getItem(`${draftKey}-date`) ?? todayIsoDate()
+        window.localStorage.setItem(`${draftKey}-date`, createDate)
         const created = await fetchJson<CreateSessionResponse>('/api/sessions', {
           method: 'POST',
-          body: JSON.stringify({ classId, date: todayIsoDate() }),
+          body: JSON.stringify({ id: targetRef.current, classId, date: createDate }),
         })
-        targetSessionId = created.sessionId
+        targetRef.current = created.sessionId
       }
 
       const payload: LogSessionRequest = {
-        attendance: Object.entries(attendance)
-          .filter(
-            (entry): entry is [string, 'present' | 'absent'] =>
-              entry[1] !== undefined
-          )
-          .map(([studentId, status]) => ({ studentId, status })),
+        requestId: requestRef.current.id,
+        expectedRevision: initialRevision,
+        attendance: students.map(student => ({ studentId: student.id, status: attendance[student.id] ?? 'unmarked' })),
         video: video
           ? { driveFileId: video.driveFileId, driveLink: video.driveLink }
           : undefined,
@@ -137,12 +168,15 @@ export function LogSessionForm({
       }
 
       return fetchJson<LogSessionResponse>(
-        `/api/sessions/${targetSessionId}/log`,
+        `/api/sessions/${targetRef.current}/log`,
         { method: 'PATCH', body: JSON.stringify(payload) }
       )
     },
     onSuccess: () => {
       window.localStorage.removeItem(draftKey)
+      window.localStorage.removeItem(`${draftKey}-session`)
+      window.localStorage.removeItem(`${draftKey}-request`)
+      window.localStorage.removeItem(`${draftKey}-date`)
       queryClient.invalidateQueries({ queryKey: ['schedule'] })
       queryClient.invalidateQueries({ queryKey: ['journey', classId] })
       toast.success(t('sessionLogged'))
@@ -166,6 +200,7 @@ export function LogSessionForm({
 
   return (
     <div className="flex flex-col gap-8">
+      <p className="text-sm text-muted-foreground">{creditBillable ? t('creditSessionHint') : t('creditExemptHint')}</p>
       <section>
         <h2 className="mb-3 text-sm font-semibold tracking-wide uppercase">
           {t('attendanceHeading')}
@@ -213,7 +248,7 @@ export function LogSessionForm({
         size="lg"
         onClick={handleSubmit}
         disabled={mutation.isPending}
-        className="sticky bottom-4 shadow-lg"
+        className="sticky bottom-4 min-h-11 shadow-lg"
       >
         {mutation.isPending ? t('loading') : t('submitSession')}
       </Button>

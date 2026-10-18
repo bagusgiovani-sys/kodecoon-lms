@@ -201,6 +201,8 @@ export interface Database {
           teacher_id: string
           session_date: string
           session_time: string | null
+          credit_billable: boolean
+          revision: number
           status: string
           notes: string | null
           created_at: string | null
@@ -212,6 +214,8 @@ export interface Database {
           teacher_id: string
           session_date: string
           session_time?: string | null
+          credit_billable?: boolean
+          revision?: number
           status?: string
           notes?: string | null
           created_at?: string | null
@@ -223,6 +227,8 @@ export interface Database {
           teacher_id?: string
           session_date?: string
           session_time?: string | null
+          credit_billable?: boolean
+          revision?: number
           status?: string
           notes?: string | null
           created_at?: string | null
@@ -527,6 +533,105 @@ export interface Database {
         }
         Relationships: []
       }
+      credit_accounts: {
+        Row: {
+          student_id: string
+          balance: number
+          revision: number
+        }
+        Insert: {
+          student_id: string
+          balance?: number
+          revision?: number
+        }
+        Update: {
+          student_id?: string
+          balance?: number
+          revision?: number
+        }
+        Relationships: []
+      }
+      credit_operations: {
+        Row: {
+          actor_id: string
+          request_id: string
+          payload: Json
+          result: Json
+          created_at: string
+        }
+        Insert: {
+          actor_id: string
+          request_id: string
+          payload: Json
+          result: Json
+          created_at?: string
+        }
+        Update: {
+          actor_id?: string
+          request_id?: string
+          payload?: Json
+          result?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      credit_entries: {
+        Row: {
+          id: string
+          student_id: string
+          amount: number
+          kind: string
+          reason: string
+          actor_id: string
+          request_id: string
+          session_id: string | null
+          effective_date: string
+          recorded_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          amount: number
+          kind: string
+          reason: string
+          actor_id: string
+          request_id: string
+          session_id?: string | null
+          effective_date: string
+          recorded_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          amount?: number
+          kind?: string
+          reason?: string
+          actor_id?: string
+          request_id?: string
+          session_id?: string | null
+          effective_date?: string
+          recorded_at?: string
+        }
+        Relationships: [{ foreignKeyName: 'credit_entries_session_id_fkey'; columns: ['session_id']; isOneToOne: false; referencedRelation: 'sessions'; referencedColumns: ['id'] }]
+      }
+      session_credit_state: {
+        Row: {
+          session_id: string
+          student_id: string
+          charged: boolean
+        }
+        Insert: {
+          session_id: string
+          student_id: string
+          charged: boolean
+        }
+        Update: {
+          session_id?: string
+          student_id?: string
+          charged?: boolean
+        }
+        Relationships: []
+      }
       student_guardians: {
         Row: {
           id: string
@@ -566,6 +671,9 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      can_read_credits: { Args: { p_student: string }; Returns: boolean }
+      adjust_credits: { Args: { p_student: string; p_amount: number; p_kind: string; p_reason: string; p_request: string }; Returns: Json }
+      log_session_credits: { Args: { p_session_id: string; p_notes: string | null; p_attendance: Json; p_lesson_completions: Json; p_request: string; p_expected_revision: number }; Returns: Json }
       can_manage_report: { Args: { p_student: string; p_class: string }; Returns: boolean }
       publish_report: { Args: { p_report_id: string }; Returns: string }
       withdraw_report: { Args: { p_publication_id: string }; Returns: undefined }

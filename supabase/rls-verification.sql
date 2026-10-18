@@ -171,6 +171,12 @@ insert into reports (student_id, class_id, template_id, final_text) values
   ('00000000-0000-4000-8000-000000000501', '00000000-0000-4000-8000-000000000c11', '00000000-0000-4000-8000-000000000301', 'report for s1'),
   ('00000000-0000-4000-8000-000000000502', '00000000-0000-4000-8000-000000000c12', '00000000-0000-4000-8000-000000000301', 'report for s2');
 
+-- Opening funding goes through the same audited admin RPC used by the API.
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a01","role":"authenticated"}', true);
+set local role authenticated;
+select public.adjust_credits('00000000-0000-4000-8000-000000000501', 5, 'top_up', 'Verified opening balance', '00000000-0000-4000-8000-000000000900');
+reset role;
+
 -- Force a failure after the RPC has updated the session and attendance rows.
 -- This proves that a later lesson-progress error rolls the earlier writes back.
 create function rls_abort_second_lesson_progress()
@@ -223,17 +229,15 @@ select rls_check('report_templates: staff can read the template',
 
 -- The transaction RPC is idempotent when the client retries the same log.
 select rls_expect_allowed('sessions: atomic logger accepts a valid session write',
-  $$select public.log_session(
+  $$select public.log_session_credits(
     '00000000-0000-4000-8000-000000000201', 'atomic baseline',
     '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"present"}]'::jsonb,
-    '[{"studentId":"00000000-0000-4000-8000-000000000501","lessonId":"00000000-0000-4000-8000-000000000101"}]'::jsonb
-  )$$);
+    '[{"studentId":"00000000-0000-4000-8000-000000000501","lessonId":"00000000-0000-4000-8000-000000000101"}]'::jsonb, '00000000-0000-4000-8000-000000000901', 0)$$);
 select rls_expect_allowed('sessions: retry accepts the same write',
-  $$select public.log_session(
+  $$select public.log_session_credits(
     '00000000-0000-4000-8000-000000000201', 'atomic baseline',
     '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"present"}]'::jsonb,
-    '[{"studentId":"00000000-0000-4000-8000-000000000501","lessonId":"00000000-0000-4000-8000-000000000101"}]'::jsonb
-  )$$);
+    '[{"studentId":"00000000-0000-4000-8000-000000000501","lessonId":"00000000-0000-4000-8000-000000000101"}]'::jsonb, '00000000-0000-4000-8000-000000000901', 0)$$);
 select rls_check('sessions: retry keeps one attendance and progress row',
   (select count(*) from attendance where session_id = '00000000-0000-4000-8000-000000000201' and student_id = '00000000-0000-4000-8000-000000000501') = 1
   and (select count(*) from student_lesson_progress where student_id = '00000000-0000-4000-8000-000000000501' and lesson_id = '00000000-0000-4000-8000-000000000101') = 1);
@@ -241,22 +245,20 @@ select rls_check('sessions: retry keeps one attendance and progress row',
 -- The trigger fails after the RPC has changed notes and attendance; both must
 -- return to their previous values when the PostgREST transaction aborts.
 select rls_expect_blocked('sessions: progress failure aborts the whole log',
-  $$select public.log_session(
+  $$select public.log_session_credits(
     '00000000-0000-4000-8000-000000000201', 'must roll back',
     '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"absent"}]'::jsonb,
-    '[{"studentId":"00000000-0000-4000-8000-000000000501","lessonId":"00000000-0000-4000-8000-000000000102"}]'::jsonb
-  )$$);
+    '[{"studentId":"00000000-0000-4000-8000-000000000501","lessonId":"00000000-0000-4000-8000-000000000102"}]'::jsonb, gen_random_uuid(), 1)$$);
 select rls_check('sessions: failed log preserves original notes and attendance',
   (select notes from sessions where id = '00000000-0000-4000-8000-000000000201') = 'atomic baseline'
   and (select status from attendance where session_id = '00000000-0000-4000-8000-000000000201' and student_id = '00000000-0000-4000-8000-000000000501') = 'present'
   and not exists (select 1 from student_lesson_progress where student_id = '00000000-0000-4000-8000-000000000501' and lesson_id = '00000000-0000-4000-8000-000000000102'));
 
 select rls_expect_blocked('sessions: atomic logger rejects an out-of-class student',
-  $$select public.log_session(
+  $$select public.log_session_credits(
     '00000000-0000-4000-8000-000000000201', 'unauthorized',
     '[{"studentId":"00000000-0000-4000-8000-000000000502","status":"present"}]'::jsonb,
-    '[]'::jsonb
-  )$$);
+    '[]'::jsonb, gen_random_uuid(), 1)$$);
 
 -- Regression, Session 5: Log Session trusted a client-sent studentId. Owning
 -- the session must not authorize writing rows about a student in another class.
@@ -413,9 +415,8 @@ set local role anon;
 
 select rls_check('anon: no users',    (select count(*) from users) = 0);
 select rls_expect_blocked('anon: cannot execute the session log RPC',
-  $$select public.log_session(
-    '00000000-0000-4000-8000-000000000201', null, '[]'::jsonb, '[]'::jsonb
-  )$$);
+  $$select public.log_session_credits(
+    '00000000-0000-4000-8000-000000000201', null, '[]'::jsonb, '[]'::jsonb, gen_random_uuid(), 0)$$);
 select rls_check('anon: no students', (select count(*) from students) = 0);
 select rls_check('anon: no classes',  (select count(*) from classes) = 0);
 select rls_check('anon: no sessions', (select count(*) from sessions) = 0);
@@ -504,6 +505,127 @@ set local role anon;
 select rls_check('publication: anon sees nothing', (select count(*) from published_reports) = 0);
 select rls_expect_blocked('publication: anon cannot call publisher',
   $$select public.publish_report(current_setting('test.report_a')::uuid)$$);
+
+-- Credit accounting, retries and permissions.
+reset role;
+create function rls_expect_state(t text, stmt text, expected text)
+returns void language plpgsql as $$
+begin
+  execute stmt;
+  perform rls_check(t, false, 'Expected an exception');
+exception when others then
+  perform rls_check(t, sqlstate = expected, 'SQLSTATE ' || sqlstate);
+end;
+$$;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a02","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('credits: attendance and its retry deducted only once',
+  (select balance from credit_accounts where student_id = '00000000-0000-4000-8000-000000000501') = 4);
+select rls_check('credits: failed progress write rolled back its refund',
+  (select count(*) from credit_entries) = 2);
+select rls_expect_state('credits: legacy session RPC is revoked',
+  $$select public.log_session('00000000-0000-4000-8000-000000000201',null,'[]','[]')$$,'42501');
+select rls_expect_state('credits: direct attendance update cannot bypass charging',
+  $$update attendance set status = 'absent' where session_id = '00000000-0000-4000-8000-000000000201'$$,'42501');
+select rls_expect_state('credits: billing exemption cannot be edited',
+  $$update sessions set credit_billable = false where id = '00000000-0000-4000-8000-000000000201'$$,'42501');
+select rls_expect_state('credits: teacher cannot top up',
+  $$select public.adjust_credits('00000000-0000-4000-8000-000000000501',1,'top_up','forged',gen_random_uuid())$$,'42501');
+select rls_expect_blocked('credits: direct balance update denied', $$update credit_accounts set balance = 999$$);
+select rls_expect_blocked('credits: ledger cannot be deleted', $$delete from credit_entries$$);
+select rls_expect_state('credits: stale session revision rejected',
+  $$select public.log_session_credits('00000000-0000-4000-8000-000000000201','stale','[]','[]',gen_random_uuid(),0)$$,'P0002');
+select rls_expect_state('credits: reused request with different payload rejected',
+  $$select public.log_session_credits('00000000-0000-4000-8000-000000000201','changed','[]','[]','00000000-0000-4000-8000-000000000901',0)$$,'P0002');
+select public.log_session_credits('00000000-0000-4000-8000-000000000201','refund',
+  '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"absent"}]','[]','00000000-0000-4000-8000-000000000902',1);
+select public.log_session_credits('00000000-0000-4000-8000-000000000201','refund',
+  '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"absent"}]','[]','00000000-0000-4000-8000-000000000902',1);
+select rls_check('credits: correction and identical retry refund once',
+  (select balance from credit_accounts) = 5 and (select count(*) from credit_entries) = 3);
+select rls_check('credits: refund preserves learning progress',
+  (select status from student_lesson_progress where lesson_id = '00000000-0000-4000-8000-000000000101') = 'completed');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a01","role":"authenticated"}', true);
+set local role authenticated;
+select public.adjust_credits('00000000-0000-4000-8000-000000000501',5,'top_up','Verified opening balance','00000000-0000-4000-8000-000000000900');
+select rls_check('credits: retry of original top-up does not add credits again', (select balance from credit_accounts) = 5);
+select rls_expect_state('credits: adjustment request cannot be reused for different amount',
+  $$select public.adjust_credits('00000000-0000-4000-8000-000000000501',6,'top_up','Verified opening balance','00000000-0000-4000-8000-000000000900')$$,'P0002');
+select rls_expect_state('credits: admin cannot top up another center',
+  $$select public.adjust_credits('00000000-0000-4000-8000-000000000503',1,'top_up','foreign',gen_random_uuid())$$,'42501');
+select rls_expect_state('credits: negative balance adjustment rejected',
+  $$select public.adjust_credits('00000000-0000-4000-8000-000000000501',-6,'adjustment','invalid',gen_random_uuid())$$,'P0001');
+select public.adjust_credits('00000000-0000-4000-8000-000000000501',-5,'adjustment','Correct opening balance',gen_random_uuid());
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a02","role":"authenticated"}', true);
+set local role authenticated;
+select rls_expect_state('credits: insufficient balance rejects attendance atomically',
+  $$select public.log_session_credits('00000000-0000-4000-8000-000000000201','must not save',
+  '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"present"}]','[]',gen_random_uuid(),2)$$,'P0001');
+select rls_check('credits: rejected log preserves attendance notes and revision',
+  (select status from attendance where session_id = '00000000-0000-4000-8000-000000000201') = 'absent'
+  and (select notes = 'refund' and revision = 2 from sessions where id = '00000000-0000-4000-8000-000000000201'));
+reset role;
+-- A pre-cutover session remains exempt even with zero credit.
+insert into sessions(id,class_id,teacher_id,session_date,credit_billable) values
+  ('00000000-0000-4000-8000-000000000203','00000000-0000-4000-8000-000000000c11','00000000-0000-4000-8000-000000000a02',current_date,false);
+set local role authenticated;
+select public.log_session_credits('00000000-0000-4000-8000-000000000203','legacy',
+  '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"present"}]','[]',gen_random_uuid(),0);
+select rls_check('credits: exempt historical session does not charge', (select balance from credit_accounts) = 0);
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a01","role":"authenticated"}', true);
+set local role authenticated;
+select public.adjust_credits('00000000-0000-4000-8000-000000000501',1,'top_up','One new credit',gen_random_uuid());
+select public.log_session_credits('00000000-0000-4000-8000-000000000201','admin log',
+  '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"present"}]','[]',gen_random_uuid(),2);
+select rls_check('credits: center admin can log attendance with charge', (select balance from credit_accounts) = 0);
+reset role;
+delete from enrollments where student_id = '00000000-0000-4000-8000-000000000501';
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a02","role":"authenticated"}', true);
+set local role authenticated;
+select public.log_session_credits('00000000-0000-4000-8000-000000000201','unenrolled refund',
+  '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"unmarked"}]','[]',gen_random_uuid(),3);
+select rls_expect_state('credits: cannot charge an unenrolled learner again',
+  $$select public.log_session_credits('00000000-0000-4000-8000-000000000201','invalid',
+  '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"present"}]','[]',gen_random_uuid(),4)$$,'42501');
+reset role;
+select rls_check('credits: unmark after unenrollment refunds the previous charge',
+  (select balance from credit_accounts where student_id = '00000000-0000-4000-8000-000000000501') = 1);
+insert into enrollments(student_id,class_id) values
+ ('00000000-0000-4000-8000-000000000501','00000000-0000-4000-8000-000000000c11'),
+ ('00000000-0000-4000-8000-000000000502','00000000-0000-4000-8000-000000000c11');
+set local role authenticated;
+select rls_expect_state('credits: one unfunded learner rolls back the whole class log',
+ $$select public.log_session_credits('00000000-0000-4000-8000-000000000201','partial must roll back',
+ '[{"studentId":"00000000-0000-4000-8000-000000000501","status":"present"},{"studentId":"00000000-0000-4000-8000-000000000502","status":"present"}]','[]',gen_random_uuid(),4)$$,'P0001');
+reset role;
+select rls_check('credits: partial charge account creation and revision all roll back',
+ (select balance from credit_accounts where student_id = '00000000-0000-4000-8000-000000000501') = 1
+ and not exists(select 1 from credit_accounts where student_id = '00000000-0000-4000-8000-000000000502')
+ and (select revision from sessions where id = '00000000-0000-4000-8000-000000000201') = 4);
+delete from enrollments where class_id = '00000000-0000-4000-8000-000000000c11';
+select rls_check('credits: balances reconcile exactly to append-only ledger',
+  not exists(select 1 from credit_accounts a where balance <> (select coalesce(sum(amount),0) from credit_entries e where e.student_id = a.student_id)));
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a05","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('credits: guardian can read own child after unenrollment', (select count(*) from credit_accounts) = 1);
+select rls_expect_state('credits: guardian cannot adjust balance',
+  $$select public.adjust_credits('00000000-0000-4000-8000-000000000501',1,'top_up','forged',gen_random_uuid())$$,'42501');
+select rls_check('credits: operation receipts are private', (select count(*) from credit_operations) = 0);
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a06","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('credits: another family sees no balance or ledger', (select count(*) from credit_accounts) = 0 and (select count(*) from credit_entries) = 0);
+reset role;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+set local role anon;
+select rls_check('credits: anonymous reads denied', (select count(*) from credit_accounts) = 0 and (select count(*) from credit_entries) = 0);
+select rls_expect_state('credits: anonymous RPC denied',
+  $$select public.adjust_credits('00000000-0000-4000-8000-000000000501',1,'top_up','forged',gen_random_uuid())$$,'42501');
+reset role;
+set constraints all immediate;
 
 -- ============================================================
 -- COVERAGE CHECK — every table must have RLS on

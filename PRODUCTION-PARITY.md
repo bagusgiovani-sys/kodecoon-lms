@@ -8,7 +8,12 @@ Implementation update: the report publication slice now exists locally with a
 forward migration, private exports, immutable published snapshots, withdrawal,
 authorized download routes, and teacher controls. See build-progress.md for
 verification and supabase/migrations/README.md for rollout limits. Feedback
-publication, credits, courses, and submission production parity remain pending.
+publication, courses, and submission production parity remain pending. The credit
+ledger and session transaction are now implemented locally (2026-10-18), including
+admin adjustments and staff/family balance/history views. Opening balances use
+verified top-ups rather than a separate opening-entry kind. Charge state shares
+the session revision rather than carrying an independent revision. Live service
+and separate-connection concurrency verification remain release gates.
 
 ## Scope and defaults
 

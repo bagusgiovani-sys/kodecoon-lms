@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     if (!result.success) {
       return NextResponse.json({ error: 'Invalid date' }, { status: 400 })
     }
-    const { classId, date, time } = result.data
+    const { classId, date, time, id } = result.data
 
     const { data: cls } = await supabase
       .from('classes')
@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     const { data, error } = await supabase
       .from('sessions')
       .insert({
+        ...(id ? { id } : {}),
         class_id: classId,
         teacher_id: cls.teacher_id,
         session_date: date,
@@ -37,6 +38,15 @@ export async function POST(request: Request) {
       .select('id')
       .single()
 
+    if (error?.code === '23505' && id) {
+      const { data: existing } = await supabase.from('sessions').select('id, class_id, session_date, session_time')
+        .eq('id', id).maybeSingle()
+      if (existing && existing.class_id === classId && existing.session_date === date &&
+        (existing.session_time?.slice(0,5) ?? null) === (time ?? null)) {
+        return NextResponse.json({ sessionId: existing.id })
+      }
+      return NextResponse.json({ error: 'Session ID already used' }, { status: 409 })
+    }
     if (error || !data) {
       console.error('[sessions POST]', error?.message)
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

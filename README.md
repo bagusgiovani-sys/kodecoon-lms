@@ -16,8 +16,9 @@ The browser-local demo is usable; live Supabase setup and verification remain pe
 - [AGENTS.md](AGENTS.md): repository working instructions.
 
 Read the current PRD/SDD addenda before their July baseline. Planned features are not proof of delivery.
-Next design work reconciles production models for paid credits, courses, assignments,
-versioned submissions, reviews, and publication permissions with the expanded demo.
+Reports and credits are implemented locally; live service and concurrency verification remain pending.
+Next implementation work covers courses, assignments,
+versioned submissions, reviews, and general feedback publication.
 
 ## Run locally
 
@@ -33,5 +34,7 @@ See .env.example for live configuration requirements.
 - `node scripts/mock-check.mjs`
 - `npm run rls:verify`
 - `npm run rls:graph`
+- `node scripts/credit-api-check.mjs`
+- `node scripts/report-download-check.mjs`
 
 The local SQL harness verifies policies, not live Supabase Auth, PostgREST, or Storage.

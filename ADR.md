@@ -89,6 +89,14 @@ matrix, transaction rules, API contracts, rollout, and acceptance gates.
 
 ## Design items now specified for implementation
 
+Credit portion of ADR-005 implemented locally on 2026-10-18. A new narrowly
+authorized security-definer session RPC supersedes ADR-002's invoker writer;
+the old writer is revoked. Append-only ledger and request receipts, account locks,
+session revisions, and direct-write guards keep attendance and balances together.
+Historical sessions are exempt at cutover. Only admins can record verified top-ups
+or signed corrections. No payment processing is included. Separate-connection
+race tests and live service verification remain pending before release.
+
 Report publication portion of ADR-005 completed locally on 2026-10-18:
 separate immutable snapshots, private exports, explicit publication/withdrawal,
 class-scoped teacher and center-scoped admin management, and authorized downloads

@@ -46,7 +46,7 @@ export function AttendanceList({ students, value, onChange }: AttendanceListProp
                 type="button"
                 size="sm"
                 variant={status === 'present' ? 'default' : 'outline'}
-                className={cn(status === 'present' && 'shadow-sm')}
+                className={cn('min-h-11', status === 'present' && 'shadow-sm')}
                 onClick={() => setStatus(student.id, 'present')}
                 aria-pressed={status === 'present'}
               >
@@ -56,6 +56,7 @@ export function AttendanceList({ students, value, onChange }: AttendanceListProp
                 type="button"
                 size="sm"
                 variant={status === 'absent' ? 'destructive' : 'outline'}
+                className="min-h-11"
                 onClick={() => setStatus(student.id, 'absent')}
                 aria-pressed={status === 'absent'}
               >

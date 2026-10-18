@@ -24,7 +24,12 @@ The July architecture below is the original baseline. Current differences:
 - The local SQL harness passes 75 checks, but does not verify live Auth,
   PostgREST, Storage, or deployment. There is no service worker.
 
-Next design work covers production parity for paid credits, courses, assignments,
+The paid-credit ledger is implemented locally with protected financial tables,
+request receipts, session revisions, and a security-definer session transaction;
+the original invoker writer is now revoked. See the credit migration README for
+cutover, permission boundaries, and outstanding live/concurrency release gates.
+
+Next design work covers production parity for courses, assignments,
 versioned submissions, reviews, and publication visibility. Demo state does not
 establish production contracts. See [ADR.md](ADR.md) for recorded decisions.
 

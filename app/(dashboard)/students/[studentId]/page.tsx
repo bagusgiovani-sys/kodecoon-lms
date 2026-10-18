@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { CreditPanel } from '@/components/students/CreditPanel'
 import { notFound } from 'next/navigation'
 import { FileText } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -17,7 +18,7 @@ export default async function StudentDetailPage({
 }: {
   params: Promise<{ studentId: string }>
 }) {
-  const { supabase } = await requireStaffPage()
+  const { supabase, role } = await requireStaffPage()
   const { studentId } = await params
   const t = await getT()
 
@@ -131,6 +132,7 @@ export default async function StudentDetailPage({
           <FileText className="size-4" /> {t('generateReport')}
         </Button>
       </div>
+      <CreditPanel studentId={studentId} canAdjust={role === 'admin'} />
       <StudentHistoryTabs detail={detail} />
     </>
   )

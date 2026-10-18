@@ -87,13 +87,16 @@ export interface CreateSessionResponse {
 }
 
 export interface LogSessionRequest {
-  attendance: Array<{ studentId: string; status: 'present' | 'absent' }>
+  requestId: string
+  expectedRevision: number
+  attendance: Array<{ studentId: string; status: 'present' | 'absent' | 'unmarked' }>
   video?: { driveFileId: string; driveLink: string }
   notes?: string
   lessonCompletions: Array<{ studentId: string; lessonId: string }>
 }
 
 export interface LogSessionResponse {
+  revision: number
   sessionId: string
   status: 'completed'
 }

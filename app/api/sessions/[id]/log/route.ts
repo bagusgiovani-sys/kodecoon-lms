@@ -21,7 +21,7 @@ export async function PATCH(
     if (!result.success) {
       return NextResponse.json({ error: 'Invalid session data' }, { status: 400 })
     }
-    const { attendance, video, notes, lessonCompletions } = result.data
+    const { attendance, video, notes, lessonCompletions, requestId, expectedRevision } = result.data
 
     const { data: session } = await supabase
       .from('sessions')
@@ -55,7 +55,7 @@ export async function PATCH(
     const classLessonIds = new Set((classLessonsRes.data ?? []).map((l) => l.id))
 
     const strayStudent =
-      attendance.find((entry) => !enrolledIds.has(entry.studentId)) ??
+      attendance.find((entry) => entry.status === 'present' && !enrolledIds.has(entry.studentId)) ??
       lessonCompletions.find((entry) => !enrolledIds.has(entry.studentId))
     if (strayStudent) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
@@ -67,7 +67,9 @@ export async function PATCH(
     // This RPC revalidates enrollment/lesson scope after locking the session,
     // then applies all core writes in a single transaction. A retry safely
     // overwrites the same attendance/progress rows instead of double-writing.
-    const { error: logError } = await supabase.rpc('log_session', {
+    const { data: logged, error: logError } = await supabase.rpc('log_session_credits', {
+      p_request: requestId,
+      p_expected_revision: expectedRevision,
       p_session_id: sessionId,
       p_notes: notes ?? null,
       p_attendance: attendance.map((entry) => ({
@@ -80,6 +82,15 @@ export async function PATCH(
       })),
     })
     if (logError) {
+      if (logError.code === 'P0002') {
+        return NextResponse.json({ error: 'Session changed or request ID was reused. Reload before saving.' }, { status: 409 })
+      }
+      if (logError.code === 'P0001') {
+        return NextResponse.json({ error: 'A learner needs a credit top-up before this session can be saved.' }, { status: 422 })
+      }
+      if (logError.code === '22023') {
+        return NextResponse.json({ error: 'Invalid session data' }, { status: 422 })
+      }
       if (logError.code === '42501') {
         return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
       }
@@ -113,7 +124,7 @@ export async function PATCH(
       }
     }
 
-    const response: LogSessionResponse = { sessionId, status: 'completed' }
+    const response: LogSessionResponse = { sessionId, status: 'completed', revision: (logged as { revision: number }).revision }
     return NextResponse.json(response)
   } catch (err) {
     console.error('[log PATCH]', err)

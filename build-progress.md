@@ -1,5 +1,44 @@
 # Build Progress — KOMS
 
+## 2026-10-18 — Production credit ledger and atomic attendance billing
+
+- Added protected student credit accounts, append-only entries, private request
+  receipts, and per-session charge state. Admins record verified top-ups or signed
+  corrections; staff and linked families have scoped balance/history access.
+  The new credit card includes pagination, original/recorded dates, and current
+  session date when visible and rescheduled. No payments are collected.
+- The security-definer log_session_credits RPC explicitly validates staff/class/
+  center/enrollment scope, locks session/accounts in consistent order, and commits
+  notes, attendance, progress, balance, ledger, and receipt together. Revisions
+  reject stale edits; request IDs prevent duplicate operations. Negative balances
+  roll back the entire class log. Refunds preserve independent learning progress.
+- Blocked direct attendance writes and billing-field edits; revoked the legacy
+  session writer. A charged learner can be refunded after unenrollment. Existing
+  sessions become exempt at migration cutover; no historical attendance is billed
+  and no demo balance is imported. Verified opening balances require admin entry.
+- Added credit read/adjustment APIs and wired live staff/parent pages. Session
+  creation accepts a stable client ID; the form preserves request metadata through
+  errors/refresh, including when the server discovers a newly created session and
+  the unsaved draft must move from a class key to a session key.
+- Verification: 126 SQL checks passed, including permission denial, exact retries,
+  request reuse, stale revisions, insufficient credit, whole-class rollback,
+  refunds, and ledger reconciliation. Both forward migrations passed preservation
+  checks. Actual API-handler adapter tests and existing mock/report checks passed.
+- Local Chrome verified credit history, admin/family controls, interrupted top-up/
+  session-create/session-save retries through refresh, and consistent request IDs.
+  No page errors or overflow at 360, 390, 768, 1024, 1440px; reviewed the phone
+  screenshot. In-app browser failed on sandbox metadata. Temporary QA page removed;
+  the fixture script/screenshots remain in Temp outside Git.
+- Release limits: live Supabase Auth/PostgREST/Storage and separate-connection
+  PostgreSQL race tests remain unverified. The local harness is sequential; locks
+  are implemented but this is not concurrency evidence. Migration notes contain
+  the required race scenarios. No remote migration/deployment was performed.
+- Resume verification: production build including TypeScript passed; lint has
+  zero errors and two existing graph-script warnings. Re-ran all 126 SQL checks,
+  both migration preservation checks, credit API, mock session/credit, and report
+  download regressions successfully. Browser evidence above is from the prior
+  implementation session; it was not repeated during this verification pass.
+
 ## 2026-10-18 — Private reports and explicit family publication
 
 - Production PDF export now stores a private object path and returns an
