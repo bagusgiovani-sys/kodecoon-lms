@@ -35,7 +35,15 @@ const cutover = await migrationDb.query(`select
  (select count(*) from credit_entries) as entries,
  (select status from attendance limit 1) as attendance`)
 if (cutover.rows[0].billable !== false || cutover.rows[0].balance !== 0 || cutover.rows[0].entries !== 0 || cutover.rows[0].attendance !== 'present') throw new Error('Credit cutover changed legacy attendance/balances')
+await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610190001_course_library.sql`))
+const library = await migrationDb.query(`select
+ (select count(*) from courses) as courses,
+ (select count(*) from course_lessons) as lessons,
+ (select count(*) from reports where raw_notes = 'Preserve private notes') as reports,
+ (select count(*) from attendance where status = 'present') as attendance`)
+if (library.rows[0].courses !== 0 || library.rows[0].lessons !== 0 || library.rows[0].reports !== 1 || library.rows[0].attendance !== 1) throw new Error('Course migration changed existing data')
 await migrationDb.close()
+console.log('OK  course migration adds an empty library and preserves existing data')
 console.log('OK  credit migration exempts existing sessions without retroactive charges')
 console.log('OK  forward migration preserves legacy reports as private')
 const db = await PGlite.create()
@@ -56,6 +64,7 @@ await stage('supabase bootstrap grants', read(here('grants.sql')))
 await stage('session RPC grants', read(here('session-rpc-grants.sql')))
 await stage('report RPC grants', read(here('report-rpc-grants.sql')))
 await stage('credit RPC grants', read(here('credit-rpc-grants.sql')))
+await stage('course RPC grants', read(here('course-rpc-grants.sql')))
 const res = await stage('rls-verification.sql', read(`${KOMS}/supabase/rls-verification.sql`))
 
 const sets = res.filter(r => r.rows && r.rows.length)

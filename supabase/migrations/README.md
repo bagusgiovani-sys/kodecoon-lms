@@ -49,6 +49,56 @@ These multi-connection checks and live service tests have not run locally. No
 remote migration was performed. Do not roll back to the legacy session writer
 after cutover; disable writes while rolling forward to a corrected migration.
 
+## Course library: 202610190001
+
+Apply `202610190001_course_library.sql` once after the report and credit migrations
+for an existing database. New databases use the matching `schema.sql` instead.
+The transactional migration creates empty reusable course/lesson tables and private
+retry receipts. It does not import demo content, map classes, or alter class lessons,
+attendance, credits, or learner progress. Rollback disables the API and retains data.
+
+Teachers read their center's library and edit their own courses. Same-center admins
+can edit all courses while preserving the original owner. Parents, center managers,
+and anonymous callers have no library access. Future assignment APIs must expose
+only the referenced lesson content to authorized families. Direct client mutations
+are denied; the authenticated RPC derives owner/center from the current profile.
+A composite foreign key keeps the owner and course in the same center; moving an
+owner to another center requires a separately designed ownership-transfer workflow.
+
+API contract:
+
+- `GET /api/courses`: `after` UUID, `limit` 1–100 (default 30), `archived=true|false`
+  (default false). Returns `courses` and `nextCursor`.
+- `GET /api/courses/:id`: one visible course, otherwise 404.
+- `POST /api/courses`: stable client `id`, `requestId`, `expectedRevision: 0`, and
+  complete `content`: title, category, age_range, level, description, prerequisites,
+  archived (boolean). Text fields can be empty except title.
+- `PATCH /api/courses/:id`: requestId, positive expectedRevision, and the same
+  complete content object. Owner, center, timestamps, and revision are server-owned.
+- `GET /api/courses/:id/lessons`: `after` UUID and bounded `limit`; includes archived
+  lessons, returns `lessons` and `nextCursor`. Both list endpoints use immutable ID
+  ordering so edits to lesson sequence cannot move the pagination cursor. Consumers
+  sort fetched lesson content by sequence for teaching order.
+- `PATCH /api/courses/:id/lessons/:lessonId`: stable client lesson ID, requestId,
+  expectedRevision (0 creates), and complete content: title, sequence (1–10000),
+  minutes (1–1440), objective, materials, steps, evidence, archived. Sequence remains
+  reserved when archived. Restore the course before editing its lessons.
+
+Use a new request UUID for each intended edit and retain it for retries. Identical
+retries return the original ID/revision without overwriting later edits; changed
+payloads, stale revisions, and duplicate sequence positions return 409. An old
+receipt result may have an older revision than the current row; reload after retry.
+The RPC rechecks current authorization before returning a receipt. Error responses
+contain no database details. Field lengths/types are enforced both in API and SQL.
+
+Validation: `node scripts/course-db-check.mjs`, `node scripts/course-api-check.mjs`,
+and `npm run rls:verify`. The last command also verifies forward migration data
+preservation. Local tests are sequential PGlite and isolated API adapters, not live
+Auth/PostgREST integration or concurrency proof. Before release, test simultaneous
+same-revision edits, same-key retries, same lesson ID creation across two courses,
+and course archive racing lesson edits using separate PostgreSQL connections.
+No production UI or remote migration/deployment is included in this slice.
+
 ## Report publications: 202610170001
 
 For an existing KodeHub database, apply `202610170001_report_publications.sql`

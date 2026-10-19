@@ -1,5 +1,28 @@
 # Build Progress — KOMS
 
+## 2026-10-19 — Production course library database and APIs
+
+- Added reusable courses/lessons with owner/center consistency, bounded content,
+  unique lesson positions, archive/restore, and server-generated audit timestamps.
+  Existing class lessons and learner progress are independent and unchanged.
+- Staff read their center library; teachers edit only owned courses and admins
+  edit within their center. Parents/managers/anonymous users cannot browse it.
+  Direct mutations and private receipt access are blocked by database policies.
+- Added an authenticated, revision-checked write RPC with actor/request receipts
+  for exact retries. Course and lesson-ID locks serialize edits and creation;
+  authorization is rechecked before returning a prior result. Archived courses
+  block lesson changes until restored. API lists use bounded stable-ID pagination.
+- Added the forward migration, matching fresh schema/types, API routes, rollback
+  and release notes. Migration preservation and all 126 existing SQL checks pass;
+  52 new course SQL assertions and actual-handler adapter tests pass. Credit API,
+  report download, and mock session/credit regressions also pass.
+- Production build/TypeScript passed; lint has zero errors and the two existing
+  graph-script warnings. No visual changes or browser QA in this backend slice.
+- Limits: class/course links, assignments, submissions/reviews, family lesson
+  access, and production library UI remain pending. No remote migration/deployment
+  occurred. Live Auth/PostgREST and separate-connection concurrency checks remain
+  release gates; sequential PGlite checks do not establish race safety.
+
 ## 2026-10-18 — Production credit ledger and atomic attendance billing
 
 - Added protected student credit accounts, append-only entries, private request

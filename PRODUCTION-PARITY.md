@@ -15,6 +15,14 @@ verified top-ups rather than a separate opening-entry kind. Charge state shares
 the session revision rather than carrying an independent revision. Live service
 and separate-connection concurrency verification remain release gates.
 
+2026-10-19: reusable courses and course lessons now have a local forward migration,
+staff-only library reads, owner/admin edits, archive/restore, revision checks,
+private retry receipts, and bounded API routes. This is the library portion of
+delivery step 3. Class course assignments, learner assignment snapshots, family
+lesson access, submissions/reviews, and production library UI remain pending.
+Existing class lessons and learner progress are unchanged. See migration notes
+for the full-content write contract and stable-ID pagination.
+
 ## Scope and defaults
 
 - Preserve center isolation and existing class/student IDs and lesson progress.

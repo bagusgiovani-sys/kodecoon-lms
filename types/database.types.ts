@@ -16,9 +16,39 @@ export type SessionStatus = 'scheduled' | 'completed'
 export type AttendanceStatus = 'present' | 'absent' | 'unmarked'
 export type LessonProgressStatus = 'locked' | 'unlocked' | 'completed'
 
+type CourseRow = {
+  id: string; center_id: string; owner_id: string; title: string; category: string
+  age_range: string; level: string; description: string; prerequisites: string
+  revision: number; archived_at: string | null; created_at: string; updated_at: string
+}
+type CourseLessonRow = {
+  id: string; course_id: string; sequence: number; title: string; minutes: number
+  objective: string; materials: string; steps: string; evidence: string
+  revision: number; archived_at: string | null; created_at: string; updated_at: string
+}
+type CourseDefaults = 'revision' | 'archived_at' | 'created_at' | 'updated_at'
+
 export interface Database {
   public: {
     Tables: {
+      courses: {
+        Row: CourseRow
+        Insert: Omit<CourseRow, CourseDefaults> & Partial<Pick<CourseRow, CourseDefaults>>
+        Update: Partial<CourseRow>
+        Relationships: []
+      }
+      course_lessons: {
+        Row: CourseLessonRow
+        Insert: Omit<CourseLessonRow, CourseDefaults> & Partial<Pick<CourseLessonRow, CourseDefaults>>
+        Update: Partial<CourseLessonRow>
+        Relationships: []
+      }
+      course_write_receipts: {
+        Row: { actor_id: string; request_id: string; payload: Json; result: Json; created_at: string }
+        Insert: { actor_id: string; request_id: string; payload: Json; result: Json; created_at?: string }
+        Update: { actor_id?: string; request_id?: string; payload?: Json; result?: Json; created_at?: string }
+        Relationships: []
+      }
       centers: {
         Row: {
           id: string
@@ -671,6 +701,7 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      save_course_content: { Args: { p_course: string; p_lesson: string | null; p_expected_revision: number; p_request: string; p_content: Json }; Returns: Json }
       can_read_credits: { Args: { p_student: string }; Returns: boolean }
       adjust_credits: { Args: { p_student: string; p_amount: number; p_kind: string; p_reason: string; p_request: string }; Returns: Json }
       log_session_credits: { Args: { p_session_id: string; p_notes: string | null; p_attendance: Json; p_lesson_completions: Json; p_request: string; p_expected_revision: number }; Returns: Json }

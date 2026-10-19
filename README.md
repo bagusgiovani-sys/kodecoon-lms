@@ -17,7 +17,8 @@ The browser-local demo is usable; live Supabase setup and verification remain pe
 
 Read the current PRD/SDD addenda before their July baseline. Planned features are not proof of delivery.
 Reports and credits are implemented locally; live service and concurrency verification remain pending.
-Next implementation work covers courses, assignments,
+The course library database/API is implemented locally; its production UI remains pending.
+Next implementation work covers class course links, assignments,
 versioned submissions, reviews, and general feedback publication.
 
 ## Run locally
@@ -36,5 +37,7 @@ See .env.example for live configuration requirements.
 - `npm run rls:graph`
 - `node scripts/credit-api-check.mjs`
 - `node scripts/report-download-check.mjs`
+- `node scripts/course-db-check.mjs`
+- `node scripts/course-api-check.mjs`
 
 The local SQL harness verifies policies, not live Supabase Auth, PostgREST, or Storage.
