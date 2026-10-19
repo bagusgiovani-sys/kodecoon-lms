@@ -18,6 +18,10 @@ const save = async (courseId, lessonId, revision, content, request = ++requestNu
     [id(courseId), lessonId === null ? null : id(lessonId), revision, id(request), JSON.stringify(content)])
   return result.rows[0].result
 }
+const link = async (classId, courseId, request = ++requestNumber) => {
+  const result = await db.query('select set_class_course($1,$2,$3) as result', [id(classId), courseId === null ? null : id(courseId), id(request)])
+  return result.rows[0].result
+}
 async function denied(code, action) {
   await assert.rejects(action, error => error.code === code)
   checks++
@@ -33,10 +37,24 @@ try {
       ('${id(14)}','d@invalid','Admin','admin','${id(1)}'),
       ('${id(15)}','e@invalid','Parent','parent',null),
       ('${id(16)}','f@invalid','Manager','center_manager','${id(1)}');`)
+  await db.exec(`insert into classes(id,center_id,teacher_id,name) values
+    ('${id(200)}','${id(1)}','${id(11)}','Owner class'),
+    ('${id(201)}','${id(1)}','${id(12)}','Peer class'),
+    ('${id(202)}','${id(2)}','${id(13)}','Other center class');`)
   await actor(11)
   check(await save(100,null,0,course,1000), { id: id(100), revision: 1 })
   check(await save(100,null,0,course,1000), { id: id(100), revision: 1 })
   await denied('P0002', () => save(100,null,0,{ ...course, title: 'Changed' },1000))
+  const initialLink = await link(200,100,1200)
+  assert.equal(initialLink.courseId, id(100)); assert.equal(initialLink.changed, true); checks++
+  check(await link(200,100,1200), initialLink)
+  const replay = await link(200,100,1200)
+  check(replay, initialLink)
+  const unchanged = await link(200,100)
+  assert.equal(unchanged.changed,false); checks++
+  await denied('P0002', () => link(200,null,1200))
+  await denied('42501', () => link(201,100))
+  check(await scalar(`select count(*)::int from class_course_assignments where ended_at is null and class_id='${id(200)}'`), 1)
   await denied('P0002', () => save(100,null,0,course))
   check(await save(100,101,0,lesson,1001), { id: id(101), revision: 1 })
   check(await save(100,101,0,lesson,1001), { id: id(101), revision: 1 })
@@ -60,6 +78,8 @@ try {
   check(await scalar('select count(*)::int from course_write_receipts'), 0)
   await denied('42501', () => db.exec('truncate courses,course_lessons,course_write_receipts'))
   await actor(12)
+  await denied('42501', () => link(200,null))
+  check(await scalar(`select count(*)::int from class_course_assignments where class_id='${id(200)}'`), 0)
   check(await scalar('select count(*)::int from courses'), 1)
   check(await scalar('select count(*)::int from course_lessons'), 1)
   await denied('42501', () => save(100,null,1,course))
@@ -72,6 +92,22 @@ try {
     check(await scalar('select count(*)::int from course_lessons'), 0)
     await denied('42501', () => save(100,null,1,course))
   }
+  await actor(14)
+  const replacement = await link(200,200)
+  assert.equal(replacement.courseId,id(200)); assert.equal(replacement.changed,true); checks++
+  check(await scalar(`select count(*)::int from class_course_assignments where class_id='${id(200)}' and ended_at is not null`),1)
+  check(await scalar(`select count(*)::int from class_course_assignments where class_id='${id(200)}' and ended_at is null`),1)
+  const removed = await link(200,null)
+  assert.equal(removed.courseId,null); assert.equal(removed.changed,true); checks++
+  const noLink = await link(200,null)
+  assert.equal(noLink.changed,false); checks++
+  const adminLink = await link(200,100)
+  assert.equal(adminLink.changed,true); checks++
+  await link(200,null)
+  await actor(13)
+  await denied('42501', () => link(202,100))
+  await actor(0,'anon')
+  await denied('42501', () => link(200,100))
   await actor(0,'anon')
   check(await scalar('select count(*)::int from courses'), 0)
   await denied('42501', () => save(100,null,1,course))
@@ -93,5 +129,5 @@ try {
   await denied('23503', () => db.query(`update courses set center_id='${id(2)}' where id='${id(100)}'`))
   check(await scalar('select count(*)::int from lessons'), 0)
   check(await scalar('select count(*)::int from student_lesson_progress'), 0)
-  console.log(`PASS: ${checks} course database assertions (RLS, owner/center constraints, retries, revisions, archive/restore, input validation, unchanged journey tables)`)
+  console.log(`PASS: ${checks} course database assertions (RLS, assignment history, retries, revisions, archive/restore, input validation, unchanged journey tables)`)
 } finally { await db.close() }

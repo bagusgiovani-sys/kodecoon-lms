@@ -27,6 +27,7 @@ type CourseLessonRow = {
   revision: number; archived_at: string | null; created_at: string; updated_at: string
 }
 type CourseDefaults = 'revision' | 'archived_at' | 'created_at' | 'updated_at'
+type ClassCourseRow = { id: string; class_id: string; center_id: string; course_id: string; assigned_by: string; assigned_at: string; ended_at: string | null }
 
 export interface Database {
   public: {
@@ -44,6 +45,18 @@ export interface Database {
         Relationships: []
       }
       course_write_receipts: {
+        Row: { actor_id: string; request_id: string; payload: Json; result: Json; created_at: string }
+        Insert: { actor_id: string; request_id: string; payload: Json; result: Json; created_at?: string }
+        Update: { actor_id?: string; request_id?: string; payload?: Json; result?: Json; created_at?: string }
+        Relationships: []
+      }
+      class_course_assignments: {
+        Row: ClassCourseRow
+        Insert: Omit<ClassCourseRow, 'id' | 'assigned_at' | 'ended_at'> & Partial<Pick<ClassCourseRow, 'id' | 'assigned_at' | 'ended_at'>>
+        Update: Partial<ClassCourseRow>
+        Relationships: []
+      }
+      class_course_write_receipts: {
         Row: { actor_id: string; request_id: string; payload: Json; result: Json; created_at: string }
         Insert: { actor_id: string; request_id: string; payload: Json; result: Json; created_at?: string }
         Update: { actor_id?: string; request_id?: string; payload?: Json; result?: Json; created_at?: string }
@@ -702,6 +715,7 @@ export interface Database {
     Views: Record<string, never>
     Functions: {
       save_course_content: { Args: { p_course: string; p_lesson: string | null; p_expected_revision: number; p_request: string; p_content: Json }; Returns: Json }
+      set_class_course: { Args: { p_class: string; p_course: string | null; p_request: string }; Returns: Json }
       can_read_credits: { Args: { p_student: string }; Returns: boolean }
       adjust_credits: { Args: { p_student: string; p_amount: number; p_kind: string; p_reason: string; p_request: string }; Returns: Json }
       log_session_credits: { Args: { p_session_id: string; p_notes: string | null; p_attendance: Json; p_lesson_completions: Json; p_request: string; p_expected_revision: number }; Returns: Json }

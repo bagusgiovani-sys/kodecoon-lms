@@ -18,7 +18,7 @@ The browser-local demo is usable; live Supabase setup and verification remain pe
 Read the current PRD/SDD addenda before their July baseline. Planned features are not proof of delivery.
 Reports and credits are implemented locally; live service and concurrency verification remain pending.
 The course library database/API is implemented locally; its production UI remains pending.
-Next implementation work covers class course links, assignments,
+Next implementation work covers assignments,
 versioned submissions, reviews, and general feedback publication.
 
 ## Run locally

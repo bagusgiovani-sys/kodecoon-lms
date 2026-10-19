@@ -40,6 +40,8 @@ const library = load('../app/api/courses/route.ts', extra)
 const detail = load('../app/api/courses/[id]/route.ts', extra)
 const lessons = load('../app/api/courses/[id]/lessons/route.ts', extra)
 const lesson = load('../app/api/courses/[id]/lessons/[lessonId]/route.ts', extra)
+extra['@/lib/validators/classCourse'] = load('../lib/validators/classCourse.ts')
+const classCourse = load('../app/api/classes/[id]/course/route.ts', extra)
 const content = { title: 'Robotics', category: '', age_range: '', level: '', description: '', prerequisites: '', archived: false }
 const body = { id, expectedRevision: 0, requestId: lessonId, content }
 const edit = { expectedRevision: 1, requestId: lessonId, content }
@@ -49,12 +51,25 @@ const get = query => new Request(`https://kodehub.example/api/courses${query}`)
 const context = { params: Promise.resolve({ id, lessonId }) }
 for (const status of [401,403]) {
   failure = { ok: false, response: NextResponse.json({ error: 'Denied' }, { status }) }
-  for (const [handler, payload] of [[library.POST,body],[detail.PATCH,edit],[lesson.PATCH,lessonBody]]) assert.equal((await handler(request(payload),context)).status,status)
-  for (const handler of [library.GET,detail.GET,lessons.GET]) assert.equal((await handler(get(''),context)).status,status)
+  for (const [handler, payload] of [[library.POST,body],[detail.PATCH,edit],[lesson.PATCH,lessonBody],[classCourse.PUT,{requestId:lessonId,courseId:id}]]) assert.equal((await handler(request(payload),context)).status,status)
+  for (const handler of [library.GET,detail.GET,lessons.GET,classCourse.GET]) assert.equal((await handler(get(''),context)).status,status)
 }
 assert.equal(calls.length,0)
 assert.equal(filters.length,0)
 failure = null
+assert.equal((await classCourse.PUT(request({requestId:'bad',courseId:id}),context)).status,422)
+assert.equal((await classCourse.PUT(request({requestId:lessonId,courseId:'bad'}),context)).status,422)
+assert.equal((await classCourse.PUT(request({requestId:lessonId,courseId:null}),context)).status,200)
+assert.equal(calls[0].name,'set_class_course')
+assert.equal(calls[0].args.p_class,id)
+assert.equal(calls[0].args.p_course,null)
+for (const [code,status] of [['42501',404],['P0002',409],['22023',422],['XX000',500]]) {
+  rpcError = { code, message: 'private database details' }
+  const response=await classCourse.PUT(request({requestId:lessonId,courseId:id}),context)
+  assert.equal(response.status,status)
+  assert.equal((await response.text()).includes('private database details'),false)
+}
+rpcError=null; calls=[]
 for (const invalid of [{ ...body, content: { ...content, owner_id: id } }, { ...body, expectedRevision: 1 }, { ...body, requestId: 'bad' }, { ...body, content: { ...content, title: '' } }]) assert.equal((await library.POST(request(invalid))).status,422)
 assert.equal((await library.POST(new Request('https://kodehub.example', { method: 'POST', body: '{' }))).status,422)
 assert.equal((await detail.PATCH(request({ ...edit, expectedRevision: 0 }),context)).status,422)

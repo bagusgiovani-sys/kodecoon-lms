@@ -18,7 +18,8 @@ and separate-connection concurrency verification remain release gates.
 2026-10-19: reusable courses and course lessons now have a local forward migration,
 staff-only library reads, owner/admin edits, archive/restore, revision checks,
 private retry receipts, and bounded API routes. This is the library portion of
-delivery step 3. Class course assignments, learner assignment snapshots, family
+delivery step 3. Class course link history, same-center validation, and the staff
+replacement/unlink API are implemented in migration 202610190002. Learner assignment snapshots, family
 lesson access, submissions/reviews, and production library UI remain pending.
 Existing class lessons and learner progress are unchanged. See migration notes
 for the full-content write contract and stable-ID pagination.

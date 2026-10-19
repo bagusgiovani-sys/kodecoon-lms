@@ -99,6 +99,26 @@ same-revision edits, same-key retries, same lesson ID creation across two course
 and course archive racing lesson edits using separate PostgreSQL connections.
 No production UI or remote migration/deployment is included in this slice.
 
+## Class course links: 202610190002
+
+Apply `202610190002_class_course_links.sql` after the course library migration.
+New databases use the matching appended section in `schema.sql`. Existing classes
+start with no course. The migration adds historical class/course assignments and a
+private write receipt table; it does not modify existing class lessons or progress.
+
+Use `GET /api/classes/:id/course` for the current course. `PUT` takes a request UUID
+and `courseId` UUID or null to unlink. Teachers can manage their own class and admins
+classes in their center. A course must be active and share the class center. Replacing
+a course ends the prior link and retains it in history. Repeating the same course is
+a no-op; unlinking preserves history. Identical retries return the first result,
+changed payload reuse returns 409, and authorization is checked before receipt lookup.
+Direct table writes are denied and the RPC is the only mutation path.
+
+Validation: the course database regression includes link/unlink, replacement history,
+teacher/admin scope, center isolation, anonymous denial, request replay, and migration
+preservation. This is a local sequential PGlite check; separate-connection races and
+live Auth/PostgREST remain release gates. No remote migration/deployment occurred.
+
 ## Report publications: 202610170001
 
 For an existing KodeHub database, apply `202610170001_report_publications.sql`

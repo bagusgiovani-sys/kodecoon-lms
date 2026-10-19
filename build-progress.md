@@ -1,5 +1,22 @@
 # Build Progress — KOMS
 
+## 2026-10-19 — Historical class course links
+
+- Added an active course link per class with retained assignment history. Existing
+  classes start unlinked. Course and class composite foreign keys enforce center
+  consistency; archived courses cannot be newly linked.
+- Teachers can change links for their assigned classes; admins are scoped to their
+  center. Reads and writes follow those checks in RLS and a narrow RPC. Direct writes,
+  receipt reads, and TRUNCATE are denied. Link, replacement, and unlink requests are
+  idempotent and preserve prior history.
+- Added `GET/PUT /api/classes/:id/course`, types, a forward migration, fresh schema,
+  grant harness, and migration/release notes. Existing class lessons and progress are
+  not changed. Existing 126 RLS checks pass; the course database suite passes 69
+  assertions and actual API adapter checks pass.
+- No UI changes. Build/lint and browser checks are pending for this slice. Live
+  Auth/PostgREST and separate-connection race checks remain release gates; no remote
+  database migration was applied.
+
 ## 2026-10-19 — Production course library database and APIs
 
 - Added reusable courses/lessons with owner/center consistency, bounded content,
