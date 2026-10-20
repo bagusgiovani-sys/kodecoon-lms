@@ -39,6 +39,8 @@ await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610190001_course_lib
 await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610190002_class_course_links.sql`))
 await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610190003_assignments.sql`))
 if ((await migrationDb.query('select count(*)::int as n from assignments')).rows[0].n !== 0) throw new Error('Assignment migration backfilled data')
+await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610200001_submissions.sql`))
+if ((await migrationDb.query('select count(*)::int as n from submission_threads')).rows[0].n !== 0) throw new Error('Submission migration backfilled data')
 const library = await migrationDb.query(`select
  (select count(*) from courses) as courses,
  (select count(*) from course_lessons) as lessons,
@@ -72,6 +74,7 @@ await stage('credit RPC grants', read(here('credit-rpc-grants.sql')))
 await stage('course RPC grants', read(here('course-rpc-grants.sql')))
 await stage('class course RPC grants', read(here('class-course-rpc-grants.sql')))
 await stage('assignment RPC grants', read(here('assignment-rpc-grants.sql')))
+await stage('submission RPC grants', read(here('submission-rpc-grants.sql')))
 const res = await stage('rls-verification.sql', read(`${KOMS}/supabase/rls-verification.sql`))
 
 const sets = res.filter(r => r.rows && r.rows.length)

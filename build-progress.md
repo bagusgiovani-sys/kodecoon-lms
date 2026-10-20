@@ -1,5 +1,28 @@
 # Build Progress — KOMS
 
+## 2026-10-20 - Versioned production submissions and reviews
+
+- Added parent/staff submission and history APIs, immutable versions, staff role
+  attribution, late flags, and append-only review corrections. Each new version
+  starts unreviewed; reviewing an older version or stale review returns conflict.
+- Database authorization scopes family history to the selected learner and staff
+  to the current class/center. Exact retries recheck authorization. Archived work
+  rejects new writes; unenrollment closes snapshots without deleting history.
+  Re-enrollment does not silently reopen submissions. URLs are references only.
+- Added forward migration, matching fresh schema/types, bounded validators,
+  authenticated RPCs, private receipts, and documented API/rollback contracts.
+- Verification: 77 fresh-schema and 81 forward-migration submission assertions;
+  migration fixture retains existing assignment/lesson snapshots and closes
+  already-unenrolled learners. Actual submission/review API adapter tests, 52
+  assignment assertions, assignment API tests, and all 126 existing RLS checks
+  pass. Production build/TypeScript pass. Lint: zero errors, two existing graph
+  warnings. Policy graph has no cycles. Course database, mock session/credit,
+  and report-download regressions also pass.
+- Backend only; no UI/browser verification or remote database/deployment changes.
+  Production UI, explicit roster adjustments, and general feedback publication
+  remain pending. Live Auth/PostgREST and separate-connection race tests remain
+  release gates; local sequential tests do not establish concurrency safety.
+
 ## 2026-10-20 ? Production assignment publication backend
 
 - Completed the unfinished assignment migration/validators with staff create,

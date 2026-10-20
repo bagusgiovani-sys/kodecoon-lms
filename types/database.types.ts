@@ -38,9 +38,17 @@ type AssignmentRow = {
 }
 type AssignmentLearnerRow = { assignment_id: string; class_id: string; center_id: string; student_id: string; assigned_at: string; submission_open: boolean }
 
+type SubmissionThreadRow = { id: string; assignment_id: string; student_id: string; next_version: number }
+type SubmissionVersionRow = { id: string; thread_id: string; version: number; project_url: string; reflection: string; submitted_by: string; submitted_role: 'parent' | 'teacher' | 'admin'; submitted_at: string; is_late: boolean; request_id: string }
+type SubmissionReviewRow = { id: string; submission_id: string; sequence: number; outcome: 'revision' | 'approved'; feedback: string; reviewed_by: string; reviewed_at: string; supersedes_id: string | null; request_id: string }
+
 export interface Database {
   public: {
     Tables: {
+      submission_threads: { Row: SubmissionThreadRow; Insert: Omit<SubmissionThreadRow, 'id' | 'next_version'> & Partial<SubmissionThreadRow>; Update: Partial<SubmissionThreadRow>; Relationships: [] }
+      submission_versions: { Row: SubmissionVersionRow; Insert: Omit<SubmissionVersionRow, 'id' | 'submitted_at'> & Partial<SubmissionVersionRow>; Update: Partial<SubmissionVersionRow>; Relationships: [] }
+      submission_reviews: { Row: SubmissionReviewRow; Insert: Omit<SubmissionReviewRow, 'id' | 'reviewed_at' | 'supersedes_id'> & Partial<SubmissionReviewRow>; Update: Partial<SubmissionReviewRow>; Relationships: [] }
+      submission_write_receipts: { Row: { actor_id: string; request_id: string; payload: Json; result: Json }; Insert: { actor_id: string; request_id: string; payload: Json; result: Json }; Update: { actor_id?: string; request_id?: string; payload?: Json; result?: Json }; Relationships: [] }
       assignments: {
         Row: AssignmentRow
         Insert: Pick<AssignmentRow, 'id' | 'class_id' | 'center_id' | 'course_assignment_id' | 'course_id' | 'title' | 'brief' | 'created_by' | 'updated_by'> & Partial<AssignmentRow>
@@ -741,6 +749,10 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      valid_submission_url: { Args: { p_url: string }; Returns: boolean }
+      can_read_submission_thread: { Args: { p_thread: string }; Returns: boolean }
+      submit_assignment: { Args: { p_assignment: string; p_student: string; p_request: string; p_url: string; p_reflection: string }; Returns: Json }
+      review_submission: { Args: { p_submission: string; p_expected_version: number; p_expected_review: string | null; p_request: string; p_outcome: string; p_feedback: string }; Returns: Json }
       can_manage_class: { Args: { p_class: string }; Returns: boolean }
       can_read_assignment: { Args: { p_assignment: string; p_student?: string | null }; Returns: boolean }
       manage_assignment: { Args: { p_action: string; p_assignment: string; p_class: string | null; p_expected_revision: number; p_request: string; p_content: Json }; Returns: Json }

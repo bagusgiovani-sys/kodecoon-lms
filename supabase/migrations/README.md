@@ -208,3 +208,70 @@ exists yet; its future authorization must check current enrollment as well as
 submission_open. Do not treat this flag alone as permission to submit.
 Rollback by disabling these endpoints and retaining snapshot/receipt data; do not
 drop historical tables or reopen direct writes.
+
+
+## Submission versions and reviews: 202610200001
+
+Apply after 202610190003, or use schema.sql for a fresh database. This adds empty
+submission threads, immutable versions, append-only reviews, and private retry
+receipts. Existing assignments and lesson snapshots remain unchanged. Learner
+snapshots whose enrollment has already ended are closed at cutover; a trigger
+closes them on later enrollment deletion or reassignment. Re-enrollment does not
+silently reopen a closed snapshot. An explicit roster-reopening workflow remains
+future work. Existing family history remains accessible while the guardian link
+exists.
+
+GET/POST `/api/assignments/:id/students/:studentId/submissions` requires a linked
+parent or authorized teacher/admin. POST accepts `{requestId, projectUrl,
+reflection}` and returns `{id, threadId, version, status: "submitted", isLate}`.
+The actor and role are recorded by the server; staff submissions retain their
+staff attribution. URLs are bounded HTTPS references with ASCII/punycode hosts,
+optional ports 1-65535, no credentials, whitespace, or backslashes. IPv6-literal
+hosts are outside this initial contract. URLs are never fetched on the server.
+Reflection is required (maximum 10,000 characters). Late work is allowed and its
+late flag is captured at submission time. Submitting again after approval creates
+a new unreviewed version; previous versions/reviews remain available.
+
+GET/POST `/api/submissions/:id/reviews` reads a version's review history and lets
+staff review the latest submitted version. POST requires `{requestId,
+expectedVersion, expectedReviewId, outcome, feedback}`. expectedReviewId is null
+for the first review or the ID of the current review for a correction. Outcomes
+are revision/approved; nonempty feedback is bounded to 10,000 characters. The
+response is `{id, submissionId, sequence, status}`. Each correction appends a row
+referencing the prior review; it never overwrites feedback. Reviews are immediately
+visible to the linked family. Archived assignments accept neither new submissions
+nor new reviews. Teachers can finish reviewing existing work after unenrollment
+while the assignment remains published.
+
+Both GET routes use descending integer cursors: `before` (version or review
+sequence), `limit` 1-100 (default 30), and nextCursor. Submission history returns
+submissions and latestVersion; review history returns reviews. Fetch review history
+for the selected submission version separately. An empty history is also returned
+for a hidden/nonexistent resource. Current status derives from the newest version's
+newest review, or submitted when that version has no review. Do not use an older
+version's approval as the current thread status. Reads across calls are not one
+transactional snapshot; write RPCs check the expected version/review again.
+
+Submission and review serialize on the thread; archive serializes through the
+assignment row. Enrollment is locked before the learner row to match deletion's
+lock order. Exact retries return their original result after current authorization
+is checked, including after archive or unenrollment. New requests fail when closed;
+revoked guardians/former teachers cannot replay old receipts. A request UUID is
+shared across submission/review writes per actor; using it for another payload
+conflicts. Ordinary clients cannot mutate tables or read receipts directly.
+
+Validation: `node scripts/submission-db-check.mjs` passes 77 fresh-schema checks;
+`node scripts/submission-db-check.mjs --migration` passes 81 checks including
+populated assignment preservation and cutover closure. API adapter checks use
+actual route handlers (`node scripts/submission-api-check.mjs`). The 52 assignment
+and 126 existing RLS assertions, migration smoke checks, production build, and
+lint pass (two pre-existing graph-script warnings). These are sequential PGlite
+checks, not proof of concurrent PostgreSQL behavior.
+
+Release gates: actual Supabase Auth/PostgREST and separate-connection tests for
+simultaneous submissions, duplicate requests, reviews racing resubmission,
+competing review corrections, archive, enrollment deletion/reassignment, and
+guardian/teacher revocation. No remote migration/deployment occurred. Production
+UI, explicit learner roster adjustments, and general feedback publication remain
+pending. Roll back by disabling endpoints and retaining history/receipts and the
+closure trigger; do not reopen direct writes or drop submitted work.
