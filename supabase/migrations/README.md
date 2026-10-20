@@ -158,3 +158,53 @@ private bucket. No migration has been applied remotely by this change.
 Rollback: disable the new report feature and retain its tables/audit data. Do not
 restore the old guardian policy or deploy the old export implementation. The
 report history UI currently shows the most recent 100 publications per student.
+
+
+## Assignment publication: 202610190003
+
+Apply after 202610190002 for an existing database; fresh installations use
+schema.sql only. This migration adds empty assignment, learner snapshot, and
+private receipt tables. It creates no assignments from existing classes and
+changes no lessons, progress, credits, or enrollment records. The added composite
+student key enforces same-center learner references.
+
+Staff endpoints: GET/POST `/api/classes/:id/assignments`, PATCH
+`/api/assignments/:id`, and POST `/api/assignments/:id/publish` or `/archive`.
+Creation requires `{id, requestId, expectedRevision: 0, content}`; edits use
+`{requestId, expectedRevision, content}`; transitions omit content. Content is
+`{title, brief, dueAt, courseLessonId}` with explicit nulls for optional date/lesson.
+Use stable UUIDs for exact retries; reuse with different payloads conflicts.
+Writes return `{id, revision, status}`; publication also returns learnerCount.
+Lists use ascending UUID `after` cursors and a limit of 1-100 (default 30).
+Responses contain assignments and nextCursor. Hidden classes return empty lists.
+
+Draft edits/publication require the original course link to remain active.
+Publication captures current enrolled learners and the selected lesson's title
+and objective. Published content is immutable. Later enrollment and reusable
+lesson changes do not rewrite snapshots. Archive closes submission_open and
+retains family history. There is no unpublish or restore action in this slice.
+Exact retries recheck staff authorization before returning the stored result,
+including creation retries after a class course is replaced or removed.
+
+Parents use GET `/api/student/:studentId/assignments`. RLS exposes only published
+or archived assignments for linked children in the publication snapshot. The API
+filters by the selected child before reading assignments and returns only public
+brief/snapshot fields. Removing a guardian link revokes access. Raw course lessons
+remain staff-only; snapshot title/objective supply family context.
+
+Verification: `node scripts/assignment-db-check.mjs` (52 assertions),
+`node scripts/assignment-api-check.mjs`, and `npm run rls:verify` (126 existing
+checks plus migration preservation). The harness simulates broad Supabase grants
+before restoring function/TRUNCATE restrictions. No live migration was applied.
+Before release, test actual Auth/PostgREST and separate PostgreSQL connections:
+concurrent exact retries, different requests sharing an assignment ID, competing
+edits/publication, course replacement during publication, lesson edits during
+publication, teacher/guardian reassignment, and enrollment changes at publication.
+Local sequential PGlite tests do not prove these races safe.
+
+Remaining work: production UI, explicit learner roster adjustments, submissions,
+reviews, and closing submission permission on unenrollment. No submission endpoint
+exists yet; its future authorization must check current enrollment as well as
+submission_open. Do not treat this flag alone as permission to submit.
+Rollback by disabling these endpoints and retaining snapshot/receipt data; do not
+drop historical tables or reopen direct writes.

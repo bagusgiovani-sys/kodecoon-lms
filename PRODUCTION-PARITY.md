@@ -19,8 +19,10 @@ and separate-connection concurrency verification remain release gates.
 staff-only library reads, owner/admin edits, archive/restore, revision checks,
 private retry receipts, and bounded API routes. This is the library portion of
 delivery step 3. Class course link history, same-center validation, and the staff
-replacement/unlink API are implemented in migration 202610190002. Learner assignment snapshots, family
-lesson access, submissions/reviews, and production library UI remain pending.
+replacement/unlink API are implemented in migration 202610190002. Assignment drafts, immutable publication snapshots, learner snapshots, archive,
+and child-scoped family brief reads are implemented locally (2026-10-20).
+Families read captured lesson title/objective; raw library lessons remain private.
+Submissions/reviews, roster adjustments, and production library/assignment UI remain pending.
 Existing class lessons and learner progress are unchanged. See migration notes
 for the full-content write contract and stable-ID pagination.
 
@@ -169,7 +171,7 @@ service role for ordinary learner/credit writes.
 | --- | --- |
 | List/create/edit course; edit lesson | GET/POST `/api/courses`, PATCH `/api/courses/:id`, PATCH `/api/courses/:id/lessons/:lessonId` |
 | Replace active class course | PUT `/api/classes/:id/course` |
-| List/create/edit/publish assignment | GET/POST `/api/assignments`, PATCH `/api/assignments/:id`, POST `/api/assignments/:id/publish` |
+| List/create/edit/publish assignment | GET/POST `/api/classes/:id/assignments`, PATCH `/api/assignments/:id`, POST `/api/assignments/:id/publish` or `/archive`; family GET `/api/student/:studentId/assignments` |
 | Read history / submit | GET/POST `/api/assignments/:id/students/:studentId/submissions` |
 | Review latest version | POST `/api/submissions/:id/reviews` |
 | Read account / record top-up or correction | GET `/api/students/:id/credits`, POST `/api/students/:id/credit-adjustments` |

@@ -29,9 +29,36 @@ type CourseLessonRow = {
 type CourseDefaults = 'revision' | 'archived_at' | 'created_at' | 'updated_at'
 type ClassCourseRow = { id: string; class_id: string; center_id: string; course_id: string; assigned_by: string; assigned_at: string; ended_at: string | null }
 
+type AssignmentRow = {
+  id: string; class_id: string; center_id: string; course_assignment_id: string; course_id: string
+  course_lesson_id: string | null; title: string; brief: string; due_at: string | null
+  status: 'draft' | 'published' | 'archived'; lesson_title_snapshot: string | null
+  lesson_objective_snapshot: string | null; revision: number; created_by: string; updated_by: string
+  created_at: string; updated_at: string; published_at: string | null
+}
+type AssignmentLearnerRow = { assignment_id: string; class_id: string; center_id: string; student_id: string; assigned_at: string; submission_open: boolean }
+
 export interface Database {
   public: {
     Tables: {
+      assignments: {
+        Row: AssignmentRow
+        Insert: Pick<AssignmentRow, 'id' | 'class_id' | 'center_id' | 'course_assignment_id' | 'course_id' | 'title' | 'brief' | 'created_by' | 'updated_by'> & Partial<AssignmentRow>
+        Update: Partial<AssignmentRow>
+        Relationships: []
+      }
+      assignment_learners: {
+        Row: AssignmentLearnerRow
+        Insert: Omit<AssignmentLearnerRow, 'assigned_at' | 'submission_open'> & Partial<AssignmentLearnerRow>
+        Update: Partial<AssignmentLearnerRow>
+        Relationships: []
+      }
+      assignment_write_receipts: {
+        Row: { actor_id: string; request_id: string; payload: Json; result: Json; created_at: string }
+        Insert: { actor_id: string; request_id: string; payload: Json; result: Json; created_at?: string }
+        Update: { actor_id?: string; request_id?: string; payload?: Json; result?: Json; created_at?: string }
+        Relationships: []
+      }
       courses: {
         Row: CourseRow
         Insert: Omit<CourseRow, CourseDefaults> & Partial<Pick<CourseRow, CourseDefaults>>
@@ -714,6 +741,9 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      can_manage_class: { Args: { p_class: string }; Returns: boolean }
+      can_read_assignment: { Args: { p_assignment: string; p_student?: string | null }; Returns: boolean }
+      manage_assignment: { Args: { p_action: string; p_assignment: string; p_class: string | null; p_expected_revision: number; p_request: string; p_content: Json }; Returns: Json }
       save_course_content: { Args: { p_course: string; p_lesson: string | null; p_expected_revision: number; p_request: string; p_content: Json }; Returns: Json }
       set_class_course: { Args: { p_class: string; p_course: string | null; p_request: string }; Returns: Json }
       can_read_credits: { Args: { p_student: string }; Returns: boolean }

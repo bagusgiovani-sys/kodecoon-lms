@@ -1,5 +1,24 @@
 # Build Progress — KOMS
 
+## 2026-10-20 ? Production assignment publication backend
+
+- Completed the unfinished assignment migration/validators with staff create,
+  list, edit, publish, and archive APIs; added child-scoped family brief reads.
+  Publication captures enrolled learners and lesson title/objective. Published
+  content stays immutable; archived work remains readable by linked families.
+- Added database types, composite center constraints, private retry receipts,
+  authorization checks on replay, and link/lesson locking. Fixed missing student
+  composite uniqueness and creation retries after course unlink/replacement.
+- Verification: 52 assignment SQL assertions, actual API-handler adapter checks,
+  all 126 existing RLS checks, forward migration preservation, and 69 course SQL
+  assertions pass. Course API regressions pass. Lint has zero errors and the two
+  existing graph-script warnings. Production build including TypeScript passed; mock session/credit and report
+  download regressions pass. The policy dependency graph has no cycles.
+- Backend only: no visual changes or browser QA. Production UI, submissions,
+  reviews, explicit learner roster changes, and unenrollment submission closure
+  remain pending. No remote migration/deployment. Live Auth/PostgREST and
+  separate-connection race tests remain release gates (see migration README).
+
 ## 2026-10-19 — Historical class course links
 
 - Added an active course link per class with retained assignment history. Existing
