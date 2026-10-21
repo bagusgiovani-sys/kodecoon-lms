@@ -3,6 +3,15 @@ import { z } from 'zod'
 import { requireStaff } from '@/lib/utils/apiAuth'
 import { setClassCourse } from '@/lib/validators/classCourse'
 
+const curriculumMappingSchema = z.object({
+  courseId: z.uuid(),
+  requestId: z.uuid(),
+  mappings: z.array(z.object({
+    courseLessonId: z.uuid(),
+    lessonId: z.union([z.uuid(), z.null()]),
+  })).min(1).max(100),
+})
+
 type Context = { params: Promise<{ id: string }> }
 export async function GET(_request: Request, { params }: Context) {
   const auth = await requireStaff()
@@ -36,6 +45,32 @@ export async function PUT(request: Request, { params }: Context) {
     return NextResponse.json({ error: status === 409 ? 'Request conflict. Reload before retrying.'
       : status === 422 ? 'Invalid course assignment.' : status === 404 ? 'Class or course unavailable.'
         : 'Unable to assign course.' }, { status })
+  }
+  return NextResponse.json(data)
+}
+
+export async function POST(request: Request, { params }: Context) {
+  const auth = await requireStaff()
+  if (!auth.ok) return auth.response
+  const { id } = await params
+  const parsed = curriculumMappingSchema.safeParse(await request.json().catch(() => null))
+  if (!z.uuid().safeParse(id).success || !parsed.success)
+    return NextResponse.json({ error: 'Choose valid course and class lessons.' }, { status: 422 })
+  const { data, error } = await auth.ctx.supabase.rpc('map_class_course_lessons', {
+    p_class: id,
+    p_course: parsed.data.courseId,
+    p_request: parsed.data.requestId,
+    p_mappings: parsed.data.mappings,
+  })
+  if (error) {
+    const status = error.code === '42501' ? 404
+      : ['P0002', '23505'].includes(error.code ?? '') ? 409
+        : ['22023', '23503', '23514'].includes(error.code ?? '') ? 422 : 500
+    return NextResponse.json({ error: status === 409
+      ? 'A mapping changed while you were editing. Reload and retry the exact request.'
+      : status === 422 ? 'One or more selected lessons are no longer available.'
+        : status === 404 ? 'Class or active course unavailable.'
+          : 'Unable to map course lessons.' }, { status })
   }
   return NextResponse.json(data)
 }

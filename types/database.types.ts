@@ -427,6 +427,8 @@ export interface Database {
           sequence_number: number
           title: string
           description: string | null
+          course_id: string | null
+          course_lesson_id: string | null
           created_at: string | null
         }
         Insert: {
@@ -435,6 +437,8 @@ export interface Database {
           sequence_number: number
           title: string
           description?: string | null
+          course_id?: string | null
+          course_lesson_id?: string | null
           created_at?: string | null
         }
         Update: {
@@ -443,6 +447,8 @@ export interface Database {
           sequence_number?: number
           title?: string
           description?: string | null
+          course_id?: string | null
+          course_lesson_id?: string | null
           created_at?: string | null
         }
         Relationships: [
@@ -780,6 +786,7 @@ export interface Database {
       manage_assignment: { Args: { p_action: string; p_assignment: string; p_class: string | null; p_expected_revision: number; p_request: string; p_content: Json }; Returns: Json }
       save_course_content: { Args: { p_course: string; p_lesson: string | null; p_expected_revision: number; p_request: string; p_content: Json }; Returns: Json }
       set_class_course: { Args: { p_class: string; p_course: string | null; p_request: string }; Returns: Json }
+      map_class_course_lessons: { Args: { p_class: string; p_course: string; p_request: string; p_mappings: Json }; Returns: Json }
       can_read_credits: { Args: { p_student: string }; Returns: boolean }
       adjust_credits: { Args: { p_student: string; p_amount: number; p_kind: string; p_reason: string; p_request: string }; Returns: Json }
       log_session_credits: { Args: { p_session_id: string; p_notes: string | null; p_attendance: Json; p_lesson_completions: Json; p_request: string; p_expected_revision: number }; Returns: Json }

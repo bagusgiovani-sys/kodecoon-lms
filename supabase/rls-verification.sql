@@ -257,6 +257,23 @@ select rls_expect_blocked('courses: target request cannot be replayed with a dif
     '00000000-0000-4000-8000-000000000d31',
     '{"title":"Independent target","lesson_count":25,"category":"","age_range":"","level":"","description":"","prerequisites":"","archived":false}'::jsonb)$$);
 
+select rls_expect_allowed('curriculum: staff maps lessons and appends missing journey nodes',
+  $$select public.map_class_course_lessons(
+    '00000000-0000-4000-8000-000000000c11','00000000-0000-4000-8000-000000000d01','00000000-0000-4000-8000-000000000d32',
+    '[{"courseLessonId":"00000000-0000-4000-8000-000000000d11","lessonId":"00000000-0000-4000-8000-000000000101"},{"courseLessonId":"00000000-0000-4000-8000-000000000d12","lessonId":null}]'::jsonb)$$);
+select rls_check('curriculum: mapping preserves existing progress and appends the new lesson',
+  (select count(*) from lessons where class_id='00000000-0000-4000-8000-000000000c11' and course_id='00000000-0000-4000-8000-000000000d01')=2
+  and (select sequence_number=3 and title='Second lesson' from lessons where course_lesson_id='00000000-0000-4000-8000-000000000d12')
+  and (select count(*) from student_lesson_progress where lesson_id='00000000-0000-4000-8000-000000000101' and status='completed')=1);
+select rls_expect_allowed('curriculum: exact retry returns the stored mapping result',
+  $$select public.map_class_course_lessons(
+    '00000000-0000-4000-8000-000000000c11','00000000-0000-4000-8000-000000000d01','00000000-0000-4000-8000-000000000d32',
+    '[{"courseLessonId":"00000000-0000-4000-8000-000000000d11","lessonId":"00000000-0000-4000-8000-000000000101"},{"courseLessonId":"00000000-0000-4000-8000-000000000d12","lessonId":null}]'::jsonb)$$);
+select rls_expect_blocked('curriculum: request cannot be replayed with different mappings',
+  $$select public.map_class_course_lessons(
+    '00000000-0000-4000-8000-000000000c11','00000000-0000-4000-8000-000000000d01','00000000-0000-4000-8000-000000000d32',
+    '[{"courseLessonId":"00000000-0000-4000-8000-000000000d11","lessonId":null}]'::jsonb)$$);
+
 -- The transaction RPC is idempotent when the client retries the same log.
 select rls_expect_allowed('sessions: atomic logger accepts a valid session write',
   $$select public.log_session_credits(
@@ -289,6 +306,10 @@ select rls_expect_blocked('sessions: atomic logger rejects an out-of-class stude
     '00000000-0000-4000-8000-000000000201', 'unauthorized',
     '[{"studentId":"00000000-0000-4000-8000-000000000502","status":"present"}]'::jsonb,
     '[]'::jsonb, gen_random_uuid(), 1)$$);
+select rls_expect_blocked('curriculum: teacher cannot map lessons in a peer class',
+  $$select public.map_class_course_lessons(
+    '00000000-0000-4000-8000-000000000c12','00000000-0000-4000-8000-000000000d02','00000000-0000-4000-8000-000000000d33',
+    '[{"courseLessonId":"00000000-0000-4000-8000-000000000d13","lessonId":null}]'::jsonb)$$);
 
 -- Regression, Session 5: Log Session trusted a client-sent studentId. Owning
 -- the session must not authorize writing rows about a student in another class.
@@ -354,7 +375,7 @@ select rls_check('sessions: parent sees only their child''s class sessions',
 select rls_check('attendance: parent sees only their own child''s attendance',
   (select count(*) from attendance) = 1);
 select rls_check('lessons: parent sees their child''s lesson plan',
-  (select count(*) from lessons) = 2);
+  (select count(*) from lessons) = 3);
 select rls_check('course links: parent sees only the linked module for their child',
   (select count(*) from class_course_assignments) = 1);
 select rls_check('courses: parent can read the active enrolled module only',
@@ -431,7 +452,7 @@ select rls_check('classes: admin sees every class in their center',
 select rls_check('sessions: admin sees every session in their center',
   (select count(*) from sessions) = 2);
 select rls_check('lessons: admin sees every lesson in their center',
-  (select count(*) from lessons) = 3);
+  (select count(*) from lessons) = 4);
 select rls_check('students: admin sees every student in their center',
   (select count(*) from students) = 2);
 select rls_check('classes: admin does not see the other center''s class',

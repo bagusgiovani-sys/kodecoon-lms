@@ -43,7 +43,7 @@ export default async function StudentProfilePage({
       .eq('student_id', student.id),
     supabase
       .from('student_lesson_progress')
-      .select('lesson_id, lessons(class_id)')
+      .select('lesson_id, lessons(class_id,course_id)')
       .eq('student_id', student.id)
       .eq('status', 'completed'),
     supabase
@@ -56,8 +56,8 @@ export default async function StudentProfilePage({
 
   const classIds = (enrollmentsRes.data ?? []).map((e) => e.class_id)
   const { data: lessons } = classIds.length
-    ? await supabase.from('lessons').select('id, class_id').in('class_id', classIds)
-    : { data: [] as Array<{ id: string; class_id: string }> }
+    ? await supabase.from('lessons').select('id, class_id,course_id').in('class_id', classIds)
+    : { data: [] as Array<{ id: string; class_id: string; course_id: string | null }> }
 
   const { data: courseLinks } = process.env.LEARNING_UI_ENABLED === 'true' && classIds.length
     ? await supabase.from('class_course_assignments').select('class_id,course_id').in('class_id', classIds).is('ended_at', null)
@@ -72,10 +72,18 @@ export default async function StudentProfilePage({
     totalByClass.set(lesson.class_id, (totalByClass.get(lesson.class_id) ?? 0) + 1)
   }
   const completedByClass = new Map<string, number>()
+  const activeCourseByClass = new Map((courseLinks ?? []).map((link) => [link.class_id, link.course_id]))
+  const mappedCourseByClass = new Map<string, string>()
+  for (const lesson of lessons ?? []) {
+    if (lesson.course_id && lesson.course_id === activeCourseByClass.get(lesson.class_id)) mappedCourseByClass.set(lesson.class_id, lesson.course_id)
+  }
   for (const row of progressRes.data ?? []) {
     const classId = row.lessons?.class_id
     if (classId) {
-      completedByClass.set(classId, (completedByClass.get(classId) ?? 0) + 1)
+      const mappedCourseId = mappedCourseByClass.get(classId)
+      if (!mappedCourseId || row.lessons?.course_id === mappedCourseId) {
+        completedByClass.set(classId, (completedByClass.get(classId) ?? 0) + 1)
+      }
     }
   }
 

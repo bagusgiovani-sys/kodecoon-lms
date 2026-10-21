@@ -437,3 +437,7 @@ refresh. Layout checks passed at 360, 390, 768, 1024, and 1440px. No live Supaba
 session or migration was used. The temporary fixture page was removed; screenshots
 and the browser script stay in Temp outside Git. Disable FEEDBACK_UI_ENABLED to
 roll back the screens without changing any stored feedback.
+
+## Course curriculum mapping: 202610210005
+
+Apply `202610210005_course_curriculum_mapping.sql` after the course lesson-target migration. It adds source references from class journey lessons to reusable course lessons and a retry-safe staff RPC for linking existing journey lessons or appending new ones. Existing lesson titles, sequence, and progress remain unchanged when linked. The migration adds no mappings automatically. Verify the RPC grants, teacher/class ownership checks, exact-request retries, and family progress view before enabling `LEARNING_UI_ENABLED`.

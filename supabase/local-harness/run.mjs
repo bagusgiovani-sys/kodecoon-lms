@@ -57,6 +57,13 @@ await migrationDb.exec(`
     ('00000000-0000-4000-8000-000000000008','00000000-0000-4000-8000-000000000006',2,'Two',45,'','','','');
 `)
 await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610210004_course_lesson_targets.sql`))
+await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610210005_course_curriculum_mapping.sql`))
+const curriculumSchema = await migrationDb.query(`select
+  (select count(*)::int from information_schema.columns where table_name='lessons' and column_name in ('course_id','course_lesson_id')) as columns,
+  (select count(*)::int from pg_proc where proname='map_class_course_lessons') as rpc,
+  (select count(*)::int from pg_tables where tablename='course_curriculum_write_receipts') as receipts`)
+if (curriculumSchema.rows[0].columns !== 2 || curriculumSchema.rows[0].rpc !== 1 || curriculumSchema.rows[0].receipts !== 1) throw new Error('Course curriculum mapping migration is incomplete')
+console.log('OK  course curriculum mapping migration adds guarded lesson links and retry receipts')
 const lessonTargetBackfill = await migrationDb.query(`select lesson_count from courses where id='00000000-0000-4000-8000-000000000006'`)
 if (lessonTargetBackfill.rows[0].lesson_count !== 2) throw new Error('Course lesson target migration did not backfill existing lessons')
 console.log('OK  course lesson target migration preserves the lesson-based total for existing modules')

@@ -551,3 +551,12 @@ phase checklist and status notes below describe the original Supabase build.
 Steps 8, 28, and 29 have now been taken as far as static analysis allows (see those steps above). What remains genuinely needs a running app against real data: executing the RLS harness, rendering each of the three route groups to check contrast and layering in situ, and exercising desktop/tablet/mobile breakpoints on screens whose height depends on row counts (roster, schedule calendar, journey with a full 24-lesson plan). Step 30 (Vercel deploy) also waits on Steps 7–9, since the deploy needs the same env vars.
 
 **A note on how much static review is left worth doing.** Three passes over the same schema have now found three separate critical defects, and the third — a policy that would have made the app unbootable — sat in the most-reviewed file in the repo through two prior audits. The honest read is not that a fourth pass would find nothing, but that the returns have shifted: what is left is the class of bug that only a running Postgres reports. Step 7 is now the highest-value unblock in the project by some distance, ahead of any further reading.
+
+## 2026-10-21 - Explicit course curriculum mapping
+
+- Staff can map each detailed course lesson to an existing class journey lesson or append it as a new journey node from the class roster. Mapping preserves existing titles, order, and completion history; it never creates assignments.
+- New class journey nodes copy the course lesson title and objective at mapping time. Later course edits do not silently rewrite class plans.
+- Staff and family `Lesson X/Y` views count only journey lessons mapped to the active course once mapping starts, and retain the existing lesson count until the first mapping is made.
+- Migration `202610210005_course_curriculum_mapping.sql` adds guarded mapping columns and retry receipts. No mappings are backfilled. Screens remain gated by `LEARNING_UI_ENABLED`.
+- Verification: `npm run rls:verify` passes 142 checks, including active-class authorization, peer-class denial, progress preservation, append behavior, and exact retry protection; `npx tsc --noEmit` and `npm run build` pass. Lint has zero errors and two pre-existing graph-harness warnings.
+- Limitation: mapping uses the currently active class course and does not automatically reconcile edits or archive changes into a class journey.

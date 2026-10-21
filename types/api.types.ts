@@ -181,7 +181,17 @@ export interface AdminLessonsResponse {
     sequenceNumber: number
     title: string
     description: string | null
+    courseId?: string | null
+    courseLessonId?: string | null
   }>
+}
+
+export interface CourseCurriculumMappingResponse {
+  classId: string
+  courseId: string
+  mappedCount: number
+  createdCount: number
+  mappings: Array<{ courseLessonId: string; lessonId: string; sequenceNumber: number }>
 }
 
 export interface AddLessonRequest {

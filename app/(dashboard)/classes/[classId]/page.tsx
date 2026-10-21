@@ -15,6 +15,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { requireStaffPage } from '@/lib/utils/pageAuth'
 import { getT } from '@/lib/i18n/server'
+import { CurriculumMapper } from '@/components/courses/CurriculumMapper'
 
 // Class Roster — students and their lesson progress at a glance (PRD).
 // Same queries as GET /api/classes/:id/roster.
@@ -40,28 +41,12 @@ export default async function ClassRosterPage({
       .from('enrollments')
       .select('student_id, students(id, name)')
       .eq('class_id', classId),
-    supabase.from('lessons').select('id').eq('class_id', classId),
+    supabase.from('lessons').select('id,sequence_number,title,description,course_id,course_lesson_id').eq('class_id', classId).order('sequence_number'),
   ])
 
-  const lessonIds = (lessonsRes.data ?? []).map((lesson) => lesson.id)
+  const classLessons = lessonsRes.data ?? []
+  const lessonIds = classLessons.map((lesson) => lesson.id)
   const studentIds = (enrollmentsRes.data ?? []).map((e) => e.student_id)
-
-  // Derived, never stored (CLAUDE.md §6)
-  const completedByStudent = new Map<string, number>()
-  if (lessonIds.length > 0 && studentIds.length > 0) {
-    const { data: progress } = await supabase
-      .from('student_lesson_progress')
-      .select('student_id, lesson_id')
-      .in('student_id', studentIds)
-      .in('lesson_id', lessonIds)
-      .eq('status', 'completed')
-    for (const row of progress ?? []) {
-      completedByStudent.set(
-        row.student_id,
-        (completedByStudent.get(row.student_id) ?? 0) + 1
-      )
-    }
-  }
 
   const { data: courseLink } = process.env.LEARNING_UI_ENABLED === 'true'
     ? await supabase.from('class_course_assignments')
@@ -70,6 +55,20 @@ export default async function ClassRosterPage({
   const { data: activeCourse } = courseLink?.course_id
     ? await supabase.from('courses').select('id,title,lesson_count').eq('id', courseLink.course_id).maybeSingle()
     : { data: null }
+  const { data: courseLessonRows } = activeCourse && process.env.LEARNING_UI_ENABLED === 'true'
+    ? await supabase.from('course_lessons').select('id,sequence,title,objective').eq('course_id', activeCourse.id).is('archived_at', null).order('sequence').limit(100)
+    : { data: [] as Array<{ id: string; sequence: number; title: string; objective: string }> }
+  const mappedLessonIds = activeCourse
+    ? classLessons.filter((lesson) => lesson.course_id === activeCourse.id && lesson.course_lesson_id).map((lesson) => lesson.id)
+    : []
+  const progressLessonIds = mappedLessonIds.length ? mappedLessonIds : lessonIds
+  // Derived, never stored (CLAUDE.md §6)
+  const completedByStudent = new Map<string, number>()
+  if (progressLessonIds.length > 0 && studentIds.length > 0) {
+    const { data: progress } = await supabase.from('student_lesson_progress').select('student_id,lesson_id')
+      .in('student_id', studentIds).in('lesson_id', progressLessonIds).eq('status', 'completed')
+    for (const row of progress ?? []) completedByStudent.set(row.student_id, (completedByStudent.get(row.student_id) ?? 0) + 1)
+  }
   const students = (enrollmentsRes.data ?? [])
     .filter((e) => e.students !== null)
     .map((e) => ({
@@ -159,6 +158,13 @@ export default async function ClassRosterPage({
           </Table>
         </div>
       )}
+      {activeCourse && process.env.LEARNING_UI_ENABLED === 'true' ? <CurriculumMapper
+        classId={classId}
+        courseId={activeCourse.id}
+        courseTitle={activeCourse.title}
+        courseLessons={courseLessonRows ?? []}
+        classLessons={classLessons}
+      /> : null}
     </>
   )
 }
