@@ -7,8 +7,10 @@ are implementation assumptions and can be revised without changing demo data.
 Implementation update: the report publication slice now exists locally with a
 forward migration, private exports, immutable published snapshots, withdrawal,
 authorized download routes, and teacher controls. See build-progress.md for
-verification and supabase/migrations/README.md for rollout limits. Feedback
-publication and production learning UI remain pending; course/assignment and
+verification and supabase/migrations/README.md for rollout limits. General feedback
+draft/publication APIs are implemented locally (2026-10-21), with private drafts,
+immutable snapshots, withdrawal, revision checks, and retry receipts. Feedback UI
+and production learning UI remain pending; course/assignment and
 submission backend delivery is recorded below. The credit
 ledger and session transaction are now implemented locally (2026-10-18), including
 admin adjustments and staff/family balance/history views. Opening balances use
@@ -187,6 +189,7 @@ service role for ordinary learner/credit writes.
 | Publish / withdraw report | POST `/api/reports/:id/publications`, POST `/api/report-publications/:id/withdraw` |
 | Authorized PDF download | GET `/api/report-publications/:id/download` |
 | Draft/publish/withdraw feedback | POST `/api/students/:id/feedback`, PATCH `/api/feedback/:id`, POST `/api/feedback/:id/publications`, POST `/api/feedback-publications/:id/withdraw` |
+| Read feedback | Staff GET `/api/students/:id/feedback` and `/api/feedback/:id/publications`; family GET `/api/student/:id/feedback` |
 
 Use 401 for no session, 404 for invisible resources, 403 for a forbidden operation
 on a visible resource, 422 for invalid input/insufficient credit, and 409 for stale

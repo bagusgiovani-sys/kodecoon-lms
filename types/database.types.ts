@@ -42,9 +42,23 @@ type SubmissionThreadRow = { id: string; assignment_id: string; student_id: stri
 type SubmissionVersionRow = { id: string; thread_id: string; version: number; project_url: string; reflection: string; submitted_by: string; submitted_role: 'parent' | 'teacher' | 'admin'; submitted_at: string; is_late: boolean; request_id: string }
 type SubmissionReviewRow = { id: string; submission_id: string; sequence: number; outcome: 'revision' | 'approved'; feedback: string; reviewed_by: string; reviewed_at: string; supersedes_id: string | null; request_id: string }
 
+type FeedbackRow = {
+  id: string; student_id: string; class_id: string; center_id: string; lesson_id: string | null;
+  title: string; strengths: string; next_steps: string; rating: string; revision: number;
+  created_by: string; updated_by: string; created_at: string; updated_at: string;
+}
+type PublishedFeedbackRow = {
+  id: string; feedback_id: string; student_id: string; class_id: string; center_id: string;
+  draft_revision: number; title: string; strengths: string; next_steps: string; rating: string;
+  published_by: string; published_at: string; withdrawn_by: string | null; withdrawn_at: string | null;
+}
+
 export interface Database {
   public: {
     Tables: {
+      student_feedback: { Row: FeedbackRow; Insert: Omit<FeedbackRow, 'created_at' | 'updated_at' | 'revision'> & Partial<FeedbackRow>; Update: Partial<FeedbackRow>; Relationships: [] }
+      published_feedback: { Row: PublishedFeedbackRow; Insert: Omit<PublishedFeedbackRow, 'id' | 'published_at' | 'withdrawn_at' | 'withdrawn_by'> & Partial<PublishedFeedbackRow>; Update: Partial<PublishedFeedbackRow>; Relationships: [] }
+      feedback_write_receipts: { Row: { actor_id: string; request_id: string; payload: Json; result: Json; created_at: string }; Insert: { actor_id: string; request_id: string; payload: Json; result: Json; created_at?: string }; Update: { payload?: Json; result?: Json }; Relationships: [] }
       submission_threads: { Row: SubmissionThreadRow; Insert: Omit<SubmissionThreadRow, 'id' | 'next_version'> & Partial<SubmissionThreadRow>; Update: Partial<SubmissionThreadRow>; Relationships: [] }
       submission_versions: { Row: SubmissionVersionRow; Insert: Omit<SubmissionVersionRow, 'id' | 'submitted_at'> & Partial<SubmissionVersionRow>; Update: Partial<SubmissionVersionRow>; Relationships: [] }
       submission_reviews: { Row: SubmissionReviewRow; Insert: Omit<SubmissionReviewRow, 'id' | 'reviewed_at' | 'supersedes_id'> & Partial<SubmissionReviewRow>; Update: Partial<SubmissionReviewRow>; Relationships: [] }
@@ -756,6 +770,7 @@ export interface Database {
       can_manage_class: { Args: { p_class: string }; Returns: boolean }
       can_read_assignment: { Args: { p_assignment: string; p_student?: string | null }; Returns: boolean }
       set_assignment_learner: { Args: { p_assignment: string; p_student: string; p_open: boolean; p_expected_revision: number; p_request: string }; Returns: Json }
+      manage_feedback: { Args: { p_action: string; p_id: string; p_student: string | null; p_class: string | null; p_expected_revision: number; p_request: string; p_content: Json }; Returns: Json }
       manage_assignment: { Args: { p_action: string; p_assignment: string; p_class: string | null; p_expected_revision: number; p_request: string; p_content: Json }; Returns: Json }
       save_course_content: { Args: { p_course: string; p_lesson: string | null; p_expected_revision: number; p_request: string; p_content: Json }; Returns: Json }
       set_class_course: { Args: { p_class: string; p_course: string | null; p_request: string }; Returns: Json }

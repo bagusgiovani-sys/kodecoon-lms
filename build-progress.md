@@ -1,5 +1,27 @@
 # Build Progress — KOMS
 
+## 2026-10-21 - General feedback drafts and publication backend
+
+- Added private staff feedback drafts, explicit publication of a selected revision,
+  immutable family-visible snapshots, and withdrawal with retained history. Later
+  draft edits remain private; publishing another revision creates a new snapshot.
+  Families read only their selected child's non-withdrawn publications, including
+  after unenrollment while the guardian link remains.
+- Added bounded staff/family APIs, revision checks, actor-scoped retry receipts,
+  same-center and lesson/class constraints, database permissions, matching types,
+  fresh schema, forward migration, and rollout/rollback documentation. New drafts
+  require enrollment; authorized staff can correct existing historical feedback.
+- Verification: 91 fresh-schema and 95 forward-migration database assertions;
+  actual feedback API-handler adapter checks; all 126 existing RLS assertions;
+  assignment (52), roster (52), submission (77), and report-download regressions
+  pass. Policy graph has no cycles. Production build/TypeScript pass after fixing
+  a duplicate type declaration. Lint has zero errors and two existing graph-script
+  warnings. Git diff whitespace checks pass.
+- Backend only: no remote migration/deployment, UI changes, or browser QA.
+  Production feedback/learning UI and live Auth/PostgREST plus separate-connection
+  PostgreSQL race verification remain pending. Local sequential checks do not
+  establish concurrency safety. Browser demo feedback was not imported.
+
 ## 2026-10-21 - Explicit assignment roster adjustments
 
 - Added staff roster reads and revision-checked learner add/close/reopen APIs.

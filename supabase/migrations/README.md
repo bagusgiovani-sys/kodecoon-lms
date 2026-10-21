@@ -320,3 +320,69 @@ roster changes, submission versus close, unenrollment versus reopen, archive, ex
 retries, and teacher/guardian revocation. No remote migration or UI delivery occurs
 in this slice. Rollback disables the new endpoints and retains revisions, receipts,
 and history; do not drop learner snapshots or reopen direct writes.
+
+## General feedback publication: 202610210002
+
+Apply once after 202610210001, or use schema.sql for a fresh database. Adds empty
+student_feedback, published_feedback, and private feedback_write_receipts tables,
+plus composite lesson/class integrity. No demo feedback or legacy report content
+is imported or published. The transactional migration is not repeatable.
+
+Staff GET/POST `/api/students/:studentId/feedback` reads private drafts or creates
+one with `{id, classId, requestId, expectedRevision: 0, content}`. Content requires
+`{title, lessonId, strengths, nextSteps, rating}`. lessonId is null or an existing
+class journey lesson, not a reusable course lesson. Referenced lessons cannot be
+deleted while a draft links to them; clear the optional lesson link through a draft
+edit first. Published content does not depend on the lesson row. Title is 1-200
+characters; strengths and nextSteps are nonempty, at most 10,000 characters. Rating is exactly
+Getting started, Growing, Confident, or Independent, matching the demo labels.
+New drafts require current enrollment and matching class/student center. Staff
+scope is the assigned teacher or same-center admin; managers gain no permission.
+
+PATCH `/api/feedback/:id` accepts `{requestId, expectedRevision, content}` and
+returns `{id, revision}`. Student/class scope is immutable. Historical drafts may
+be corrected and published after unenrollment while staff retains class access.
+POST `/api/feedback/:id/publications` accepts `{requestId, expectedRevision}` and
+copies the selected current draft into an immutable public snapshot. Returns
+`{id, feedbackId, draftRevision, withdrawn}`; id identifies the publication.
+Editing the draft afterward never changes an existing snapshot. A revision can
+be published once; another request for that revision returns 409. Publishing a
+newer revision creates another visible historical snapshot and does not silently
+withdraw older ones. Withdraw an older snapshot explicitly when appropriate.
+
+Staff GET `/api/feedback/:id/publications` includes withdrawn publication history.
+POST `/api/feedback-publications/:id/withdraw` accepts `{requestId, expectedRevision}`
+where expectedRevision is the publication's draftRevision, not the latest draft.
+Withdrawal retains content and records its actor/time; repeating it cannot reopen
+the record. To publish again after withdrawal, save a new draft revision first.
+
+Family GET `/api/student/:studentId/feedback` selects only that child's non-withdrawn
+snapshots and explicit public fields. Families cannot read the private draft table
+through direct database access. History survives unenrollment while the guardian
+link remains; unlinking the guardian revokes reads. All lists use stable UUID `after`
+and `limit` 1-100 (default 30), and return nextCursor. Draft/family lists return
+feedback; staff publication lists return publications. Hidden resources yield empty
+lists. UUID order is pagination order, not chronological publication order.
+
+All mutations use authenticated manage_feedback, pinned search_path, database
+authorization and constraints, per-actor request locks, and private receipts. Exact
+retries recheck current staff authorization and return the original result without
+reapplying it; a publish retry does not reverse later withdrawal. Reload to obtain
+current state. Reused keys with a different payload, stale drafts, and duplicate
+publication return 409; invalid input/relationships return 422; unavailable targets
+return 404. Direct client inserts/updates/deletes and TRUNCATE remain denied. Draft
+edits, publication, and withdrawal serialize on the draft row. No service-role key
+is used in the API. Snapshots do not contain internal draft metadata or references
+to mutable lesson text; the explicit feedback title supplies module context.
+
+Verification: `node scripts/feedback-db-check.mjs` (91 assertions), the same command
+with `--migration` (95 including populated lesson/enrollment preservation), and
+`node scripts/feedback-api-check.mjs` exercise actual handlers with isolated adapters.
+Local PGlite checks cover role/center/family isolation, private drafts, later edits,
+withdrawal, retained history, revoked access, immutable content, stale revisions,
+and exact/changed-payload retries. Before release, verify live Auth/PostgREST and
+separate-connection races between create retries, edit/publish, duplicate publish,
+withdraw/publish, enrollment deletion, and teacher/guardian revocation. No live
+migration, deployment, or feedback UI is included. Rollback disables these endpoints
+and retains private drafts, snapshots, and receipts; do not expose drafts to families
+or drop history.
