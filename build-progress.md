@@ -8,7 +8,8 @@
 - Added a forward migration and matching fresh-schema RLS policies so a guardian
   can read only the active module and its non-archived lessons when their linked
   child is enrolled in the class. Historical links and other families' modules
-  remain hidden. The UI stays behind `LEARNING_UI_ENABLED=false` by default.
+  remain hidden. The UI stays behind `LEARNING_UI_ENABLED=false` by default;
+  class-roster reads also skip all course tables while the flag is off.
 - Added two-family fixtures and six scoped-read assertions. `npm run rls:verify`
   passes all 132 checks, including migration application. Production build and
   TypeScript pass; lint has zero errors and the two existing graph-harness

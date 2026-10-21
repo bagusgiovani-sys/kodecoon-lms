@@ -63,8 +63,10 @@ export default async function ClassRosterPage({
     }
   }
 
-  const { data: courseLink } = await supabase.from('class_course_assignments')
-    .select('course_id').eq('class_id', classId).is('ended_at', null).maybeSingle()
+  const { data: courseLink } = process.env.LEARNING_UI_ENABLED === 'true'
+    ? await supabase.from('class_course_assignments')
+        .select('course_id').eq('class_id', classId).is('ended_at', null).maybeSingle()
+    : { data: null }
   const [{ data: activeCourse }, { data: courseLessons }] = courseLink?.course_id
     ? await Promise.all([
         supabase.from('courses').select('id,title').eq('id', courseLink.course_id).maybeSingle(),
