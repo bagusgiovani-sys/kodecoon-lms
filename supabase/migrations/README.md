@@ -202,10 +202,10 @@ edits/publication, course replacement during publication, lesson edits during
 publication, teacher/guardian reassignment, and enrollment changes at publication.
 Local sequential PGlite tests do not prove these races safe.
 
-Remaining work: production UI, explicit learner roster adjustments, submissions,
-reviews, and closing submission permission on unenrollment. No submission endpoint
-exists yet; its future authorization must check current enrollment as well as
-submission_open. Do not treat this flag alone as permission to submit.
+Submissions/reviews and unenrollment closure are delivered in 202610200001;
+explicit learner roster adjustments are delivered in 202610210001 below.
+Production UI remains pending. Submission authorization checks current enrollment
+as well as submission_open; the flag alone is not permission to submit.
 Rollback by disabling these endpoints and retaining snapshot/receipt data; do not
 drop historical tables or reopen direct writes.
 
@@ -217,8 +217,8 @@ submission threads, immutable versions, append-only reviews, and private retry
 receipts. Existing assignments and lesson snapshots remain unchanged. Learner
 snapshots whose enrollment has already ended are closed at cutover; a trigger
 closes them on later enrollment deletion or reassignment. Re-enrollment does not
-silently reopen a closed snapshot. An explicit roster-reopening workflow remains
-future work. Existing family history remains accessible while the guardian link
+silently reopen a closed snapshot. Explicit roster reopening is added by migration
+202610210001 below. Existing family history remains accessible while the guardian link
 exists.
 
 GET/POST `/api/assignments/:id/students/:studentId/submissions` requires a linked
@@ -272,6 +272,51 @@ Release gates: actual Supabase Auth/PostgREST and separate-connection tests for
 simultaneous submissions, duplicate requests, reviews racing resubmission,
 competing review corrections, archive, enrollment deletion/reassignment, and
 guardian/teacher revocation. No remote migration/deployment occurred. Production
-UI, explicit learner roster adjustments, and general feedback publication remain
+UI and general feedback publication remain
 pending. Roll back by disabling endpoints and retaining history/receipts and the
 closure trigger; do not reopen direct writes or drop submitted work.
+
+## Explicit assignment roster changes: 202610210001
+
+Apply once after 202610200001, or use schema.sql for a fresh database. Existing
+learner rows gain revision 1; no learners are added, reopened, or removed. Existing
+assignment snapshots, submissions, and reviews are preserved. This migration is
+transactional and not intended to be reapplied.
+
+Staff GET `/api/assignments/:id/learners` returns `{learners, nextCursor}`. Each
+learner has student_id, assigned_at, submission_open, and revision. The stable UUID
+cursor is `after`; limit is 1-100, default 30. Hidden assignments return an empty
+list. RLS limits staff to their assigned class or admin center.
+
+Staff PUT `/api/assignments/:id/learners/:studentId` accepts
+`{requestId, expectedRevision, submissionOpen}`. Use revision 0 and true to add a
+currently enrolled learner not yet in the published assignment snapshot. Use the
+current learner revision to close or reopen an existing snapshot. Opening requires
+current enrollment; closing works after enrollment ends. Only published assignments
+accept new operations. No hard removal is provided: family history stays available
+while the guardian link exists. This operation does not change class enrollment.
+
+The response is `{assignmentId, studentId, submissionOpen, revision}`. Revisions
+advance on permission changes, including automatic unenrollment closure and archive;
+setting the current value is a no-op. Re-enrollment alone does not reopen permission.
+Assignment content revisions are independent. Exact retries return the original
+result after current staff authorization is checked, even after archive or later
+roster edits; reload the roster for current state. Receipts share the assignment
+request namespace and retain actor, request payload, result, and timestamp privately.
+Changed-payload retries and stale revisions return 409. Invalid enrollment returns
+422; unavailable assignments return 404. Direct client writes remain denied.
+
+The RPC locks the assignment against archive, then enrollment before learner to
+match submission/deletion lock order. An advisory lock serializes absent learner
+creation. No submission or review rows are changed. The revision trigger also covers
+the existing enrollment closure trigger and assignment archive RPC.
+
+Verification: `node scripts/assignment-roster-db-check.mjs` (52 fresh-schema
+assertions), the same command with `--migration` (55 assertions including populated
+snapshot/submission preservation), and `node scripts/assignment-roster-api-check.mjs`.
+These use sequential PGlite and isolated API adapters, not live Auth/PostgREST.
+Before release, test separate PostgreSQL connections for concurrent adds, opposing
+roster changes, submission versus close, unenrollment versus reopen, archive, exact
+retries, and teacher/guardian revocation. No remote migration or UI delivery occurs
+in this slice. Rollback disables the new endpoints and retains revisions, receipts,
+and history; do not drop learner snapshots or reopen direct writes.

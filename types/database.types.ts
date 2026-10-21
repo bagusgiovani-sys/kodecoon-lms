@@ -36,7 +36,7 @@ type AssignmentRow = {
   lesson_objective_snapshot: string | null; revision: number; created_by: string; updated_by: string
   created_at: string; updated_at: string; published_at: string | null
 }
-type AssignmentLearnerRow = { assignment_id: string; class_id: string; center_id: string; student_id: string; assigned_at: string; submission_open: boolean }
+type AssignmentLearnerRow = { assignment_id: string; class_id: string; center_id: string; student_id: string; assigned_at: string; submission_open: boolean; revision: number }
 
 type SubmissionThreadRow = { id: string; assignment_id: string; student_id: string; next_version: number }
 type SubmissionVersionRow = { id: string; thread_id: string; version: number; project_url: string; reflection: string; submitted_by: string; submitted_role: 'parent' | 'teacher' | 'admin'; submitted_at: string; is_late: boolean; request_id: string }
@@ -57,7 +57,7 @@ export interface Database {
       }
       assignment_learners: {
         Row: AssignmentLearnerRow
-        Insert: Omit<AssignmentLearnerRow, 'assigned_at' | 'submission_open'> & Partial<AssignmentLearnerRow>
+        Insert: Omit<AssignmentLearnerRow, 'assigned_at' | 'submission_open' | 'revision'> & Partial<AssignmentLearnerRow>
         Update: Partial<AssignmentLearnerRow>
         Relationships: []
       }
@@ -755,6 +755,7 @@ export interface Database {
       review_submission: { Args: { p_submission: string; p_expected_version: number; p_expected_review: string | null; p_request: string; p_outcome: string; p_feedback: string }; Returns: Json }
       can_manage_class: { Args: { p_class: string }; Returns: boolean }
       can_read_assignment: { Args: { p_assignment: string; p_student?: string | null }; Returns: boolean }
+      set_assignment_learner: { Args: { p_assignment: string; p_student: string; p_open: boolean; p_expected_revision: number; p_request: string }; Returns: Json }
       manage_assignment: { Args: { p_action: string; p_assignment: string; p_class: string | null; p_expected_revision: number; p_request: string; p_content: Json }; Returns: Json }
       save_course_content: { Args: { p_course: string; p_lesson: string | null; p_expected_revision: number; p_request: string; p_content: Json }; Returns: Json }
       set_class_course: { Args: { p_class: string; p_course: string | null; p_request: string }; Returns: Json }

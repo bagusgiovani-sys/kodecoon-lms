@@ -8,3 +8,6 @@ export const createAssignment = z.strictObject({ id: z.uuid(), requestId: z.uuid
 export const editAssignment = z.strictObject({ requestId: z.uuid(), expectedRevision: z.number().int().min(1), content: assignmentContent })
 export const assignmentListQuery = z.strictObject({ after: z.uuid().optional(), limit: z.coerce.number().int().min(1).max(100).default(30) })
 export const assignmentTransition = z.strictObject({ requestId: z.uuid(), expectedRevision: z.number().int().min(1) })
+export const assignmentRosterChange = z.strictObject({
+  requestId: z.uuid(), expectedRevision: z.number().int().min(0).max(2147483647), submissionOpen: z.boolean(),
+})

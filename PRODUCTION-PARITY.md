@@ -25,8 +25,11 @@ and child-scoped family brief reads are implemented locally (2026-10-20).
 Families read captured lesson title/objective; raw library lessons remain private.
 Versioned submissions, review/correction history, late flags, retry receipts, and
 unenrollment submission closure are implemented locally in migration 202610200001.
-Explicit roster adjustments, production library/assignment/submission UI, and
-live integration/concurrency verification remain pending.
+Explicit roster adjustments are implemented locally (2026-10-21): staff can add
+currently enrolled learners and close/reopen submission permission with per-learner
+revisions. Closure retains family history; re-enrollment requires deliberate reopening.
+Production library/assignment/submission UI and live integration/concurrency
+verification remain pending.
 Existing class lessons and learner progress are unchanged. See migration notes
 for the full-content write contract and stable-ID pagination.
 
@@ -177,6 +180,7 @@ service role for ordinary learner/credit writes.
 | Replace active class course | PUT `/api/classes/:id/course` |
 | List/create/edit/publish assignment | GET/POST `/api/classes/:id/assignments`, PATCH `/api/assignments/:id`, POST `/api/assignments/:id/publish` or `/archive`; family GET `/api/student/:studentId/assignments` |
 | Read history / submit | GET/POST `/api/assignments/:id/students/:studentId/submissions` |
+| Read / adjust assignment roster | GET `/api/assignments/:id/learners`, PUT `/api/assignments/:id/learners/:studentId` |
 | Read reviews / review latest version | GET/POST `/api/submissions/:id/reviews` |
 | Read account / record top-up or correction | GET `/api/students/:id/credits`, POST `/api/students/:id/credit-adjustments` |
 | Atomic attendance and credits | Existing POST `/api/sessions/:id/log`, upgraded contract |

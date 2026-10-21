@@ -1,5 +1,27 @@
 # Build Progress — KOMS
 
+## 2026-10-21 - Explicit assignment roster adjustments
+
+- Added staff roster reads and revision-checked learner add/close/reopen APIs.
+  Adding or reopening requires current class enrollment; closing retains learner
+  snapshots and submission/review history. Draft/archived assignments reject new
+  roster operations. Re-enrollment does not silently reopen submissions.
+- Per-learner revisions also advance on automatic unenrollment closure and archive.
+  Private assignment receipts make retries safe and preserve actor/payload/result;
+  current class/center authorization is rechecked before returning old receipts.
+- Added a forward migration, matching fresh schema/types, API validators, grant
+  harness, and rollout/rollback contracts. No remote migration or deployment.
+- Verification: 52 fresh-schema and 55 populated forward-migration roster checks;
+  actual roster API-handler adapter checks; 77/81 submission database checks and
+  submission API checks; 52 assignment database checks and assignment API checks;
+  all 126 existing RLS assertions and migration smoke checks pass. Policy graph
+  has no cycles. Production build/TypeScript pass; lint has zero errors and two
+  existing graph-harness warnings. Git diff whitespace check passes.
+- Backend only, with no visual changes or browser QA. Production learning UI and
+  general feedback publication remain pending. Live Auth/PostgREST and concurrent
+  PostgreSQL tests remain release gates; sequential local checks are not evidence
+  of concurrency safety.
+
 ## 2026-10-20 - Versioned production submissions and reviews
 
 - Added parent/staff submission and history APIs, immutable versions, staff role
