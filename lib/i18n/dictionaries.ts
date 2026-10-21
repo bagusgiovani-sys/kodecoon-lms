@@ -14,6 +14,7 @@ const en = {
   // Nav
   navDashboard: 'My Classes',
   navSchedule: 'My Schedule',
+  navCourses: 'Course Library',
   navAdmin: 'Admin',
   navAdminTeachers: 'Manage Teachers',
   navAdminSchedule: 'Academy Schedule',
@@ -64,6 +65,7 @@ const en = {
   logSession: 'Log Session',
   noStudentsYet: 'No students enrolled yet',
   lessonsProgress: 'lessons completed',
+  lessonProgressLabel: 'Lesson',
   studentNameLabel: 'Student name',
   parentEmailLabel: 'Parent email',
   saveStudent: 'Save student',
@@ -189,6 +191,7 @@ const id: Record<DictKey, string> = {
 
   navDashboard: 'Kelas Saya',
   navSchedule: 'Jadwal Saya',
+  navCourses: 'Pustaka Kursus',
   navAdmin: 'Admin',
   navAdminTeachers: 'Kelola Guru',
   navAdminSchedule: 'Jadwal Akademi',
@@ -235,6 +238,7 @@ const id: Record<DictKey, string> = {
   logSession: 'Catat Sesi',
   noStudentsYet: 'Belum ada siswa terdaftar',
   lessonsProgress: 'pelajaran selesai',
+  lessonProgressLabel: 'Pelajaran',
   studentNameLabel: 'Nama siswa',
   parentEmailLabel: 'Email orang tua',
   saveStudent: 'Simpan siswa',

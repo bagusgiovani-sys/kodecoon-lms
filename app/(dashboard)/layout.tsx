@@ -11,7 +11,7 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <AppNav role={role === 'admin' ? 'admin' : 'teacher'} userName={name} />
+      <AppNav role={role === 'admin' ? 'admin' : 'teacher'} userName={name} learningEnabled={process.env.LEARNING_UI_ENABLED === 'true'} />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
         {children}
       </main>

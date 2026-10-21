@@ -1,5 +1,25 @@
 # Build Progress — KOMS
 
+## 2026-10-21 - Staff course library and module progress display
+
+- Added production staff course library and course workspace for creating and
+  editing named modules, defining lesson plans, archiving/restoring lessons and
+  courses, and linking a module to a class. The active lesson entries determine
+  the module lesson total; staff can adjust it by adding or archiving lessons.
+- Class rosters show the linked module name and each learner's `Lesson X/Y`
+  progress. The denominator follows the module's active lesson count; without a
+  linked module, the roster retains its class lesson count. Course screens and
+  navigation are gated by server-only `LEARNING_UI_ENABLED` (default false).
+- Assignment UI and parent assignment submission were explicitly left out of
+  this slice. Existing backend and mock assignment behavior is unchanged.
+- Verification: production `npm run build` and TypeScript passed. `npm run lint`
+  reports zero errors and the two existing graph-harness warnings. No live DB,
+  browser viewport, or migration QA was performed. Enable only after applying
+  the existing course migrations and completing live QA.
+- Limitation: learner completions still come from the existing class lesson
+  progress records; the course module controls the displayed total. Live data
+  should be checked to ensure each class's lesson progress aligns with its module.
+
 ## 2026-10-21 - Production feedback staff and family screens
 
 - Added a shared feedback panel to authenticated staff student records and family

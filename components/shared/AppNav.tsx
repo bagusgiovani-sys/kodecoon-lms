@@ -22,22 +22,25 @@ import type { LogoutResponse } from '@/types/api.types'
 interface AppNavProps {
   role: 'teacher' | 'admin'
   userName: string
+  learningEnabled?: boolean
 }
 
 interface NavTab {
   href: string
   labelKey: DictKey
   adminOnly?: boolean
+  learningOnly?: boolean
 }
 
 const TABS: NavTab[] = [
   { href: '/dashboard', labelKey: 'navDashboard' },
   { href: '/schedule', labelKey: 'navSchedule' },
+  { href: '/courses', labelKey: 'navCourses', learningOnly: true },
   { href: '/admin/teachers', labelKey: 'navAdminTeachers', adminOnly: true },
   { href: '/admin/schedule', labelKey: 'navAdminSchedule', adminOnly: true },
 ]
 
-export function AppNav({ role, userName }: AppNavProps) {
+export function AppNav({ role, userName, learningEnabled = false }: AppNavProps) {
   const { t } = useLanguage()
   const pathname = usePathname() ?? ''
   const router = useRouter()
@@ -54,7 +57,7 @@ export function AppNav({ role, userName }: AppNavProps) {
     }
   }
 
-  const tabs = TABS.filter((tab) => !tab.adminOnly || role === 'admin')
+  const tabs = TABS.filter((tab) => (!tab.adminOnly || role === 'admin') && (!tab.learningOnly || learningEnabled))
 
   return (
     <header className="border-border/60 bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
