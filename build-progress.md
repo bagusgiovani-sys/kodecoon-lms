@@ -560,3 +560,10 @@ Steps 8, 28, and 29 have now been taken as far as static analysis allows (see th
 - Migration `202610210005_course_curriculum_mapping.sql` adds guarded mapping columns and retry receipts. No mappings are backfilled. Screens remain gated by `LEARNING_UI_ENABLED`.
 - Verification: `npm run rls:verify` passes 142 checks, including active-class authorization, peer-class denial, progress preservation, append behavior, and exact retry protection; `npx tsc --noEmit` and `npm run build` pass. Lint has zero errors and two pre-existing graph-harness warnings.
 - Limitation: mapping uses the currently active class course and does not automatically reconcile edits or archive changes into a class journey.
+
+## 2026-10-21 - Family Journey follows the active module
+
+- The family Journey path now shows only lessons mapped to the active course once mapping begins; before the first mapping it keeps the existing class journey. The progress summary uses mapped completions over the staff-configured module target (for example, `Lesson 1/24`) and identifies the mapped path-node count separately.
+- The authenticated Journey API returns the same active-module filtering and a course progress summary. Families still receive only class journey lesson titles and progress; detailed reusable course lesson content remains staff-only.
+- Verification: `npm run rls:verify` passes 143 checks, TypeScript and production build pass, and lint has zero errors with two existing graph-harness warnings. No live Supabase session or multi-width browser session was used.
+- Limitation: unmapped target lessons have no visual node until staff adds or maps a class journey lesson for them.

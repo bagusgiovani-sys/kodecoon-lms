@@ -36,9 +36,19 @@ export async function GET(
       }
     }
 
-    const { data: lessons, error: lessonsError } = await supabase
+    const { data: courseLink, error: courseLinkError } = process.env.LEARNING_UI_ENABLED === 'true'
+      ? await supabase.from('class_course_assignments').select('course_id')
+        .eq('class_id', classId).is('ended_at', null).maybeSingle()
+      : { data: null, error: null }
+    if (courseLinkError) return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    const { data: activeCourse, error: courseError } = courseLink?.course_id
+      ? await supabase.from('courses').select('id,title,lesson_count').eq('id', courseLink.course_id).maybeSingle()
+      : { data: null, error: null }
+    if (courseError) return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+
+    const { data: allLessons, error: lessonsError } = await supabase
       .from('lessons')
-      .select('id, sequence_number, title')
+      .select('id, sequence_number, title, course_id')
       .eq('class_id', classId)
       .order('sequence_number')
 
@@ -46,7 +56,11 @@ export async function GET(
       console.error('[journey GET]', lessonsError.message)
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
-    if (!lessons || lessons.length === 0) {
+    const mappedLessons = activeCourse
+      ? (allLessons ?? []).filter((lesson) => lesson.course_id === activeCourse.id)
+      : []
+    const lessons = mappedLessons.length > 0 ? mappedLessons : (allLessons ?? [])
+    if (lessons.length === 0) {
       // No lesson plan defined yet — the client renders the empty state,
       // not a broken path (PRD edge case)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -91,6 +105,12 @@ export async function GET(
     // is surfaced as 'unlocked' ("up next") for the path render
     let unlockedAssigned = false
     const response: JourneyResponse = {
+      courseProgress: activeCourse ? {
+        courseTitle: activeCourse.title,
+        completed: lessons.filter((lesson) => progressByLesson.get(lesson.id)?.status === 'completed').length,
+        total: activeCourse.lesson_count,
+        mappedLessonCount: mappedLessons.length,
+      } : null,
       lessons: lessons.map((lesson) => {
         const row = progressByLesson.get(lesson.id)
         let status: 'locked' | 'unlocked' | 'completed'

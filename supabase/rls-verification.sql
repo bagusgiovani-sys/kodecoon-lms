@@ -376,6 +376,9 @@ select rls_check('attendance: parent sees only their own child''s attendance',
   (select count(*) from attendance) = 1);
 select rls_check('lessons: parent sees their child''s lesson plan',
   (select count(*) from lessons) = 3);
+select rls_check('curriculum: family can identify active mapped journey lessons only',
+  (select count(*) from lessons where course_id='00000000-0000-4000-8000-000000000d01')=2
+  and (select count(*) from lessons where course_id='00000000-0000-4000-8000-000000000d02')=0);
 select rls_check('course links: parent sees only the linked module for their child',
   (select count(*) from class_course_assignments) = 1);
 select rls_check('courses: parent can read the active enrolled module only',

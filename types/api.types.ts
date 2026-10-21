@@ -242,6 +242,12 @@ export interface StudentProfileResponse {
 }
 
 export interface JourneyResponse {
+  courseProgress?: {
+    courseTitle: string
+    completed: number
+    total: number
+    mappedLessonCount: number
+  } | null
   lessons: Array<{
     id: string
     sequenceNumber: number
