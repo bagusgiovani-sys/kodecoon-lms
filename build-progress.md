@@ -1,5 +1,33 @@
 # Build Progress — KOMS
 
+## 2026-10-21 - Production feedback staff and family screens
+
+- Added a shared feedback panel to authenticated staff student records and family
+  profiles, gated by server-only FEEDBACK_UI_ENABLED (default off). Staff create
+  and edit private drafts, preview/share a saved version, inspect publication
+  history, and withdraw snapshots. Families see child-scoped published content.
+- Added paginated lists/history, loading/empty/error/retry states, readable navy
+  cards, mobile-sized inputs/actions, and explicit private-versus-shared wording.
+  Optional lessons come from the enrolled class journey. Existing historical
+  drafts remain editable; new drafts require a visible enrolled class.
+- Exact pending operations persist in actor/student-scoped sessionStorage before
+  sending. Ambiguous failures retain the payload for retry through refresh;
+  successful/definitively rejected operations clear it. This is tab-scoped retry
+  recovery, not offline storage or automatic unsaved-form backup.
+- Verification: local Chrome with intercepted fixture APIs exercised create/edit,
+  preview/share/withdraw, exact create/publish/withdraw retries after lost responses
+  and refresh, unchanged publication text after draft edits, pagination, read-error
+  recovery, and family empty states. No page errors or horizontal overflow at 360,
+  390, 768, 1024, and 1440px. Reviewed phone form and desktop sharing screenshots.
+  Fixed nested form labels discovered by the editor check. Temporary fixture page
+  removed; browser script/screenshots remain in Temp. In-app browser failed on
+  sandbox metadata, so local Chrome provided verification.
+- Production build/TypeScript, actual feedback API adapter checks, and 91 feedback
+  database assertions pass. Lint: zero errors, two existing harness warnings.
+  No live migration/deployment. Enable the flag only after live permission and
+  staging checks. English feedback copy, course/assignment/submission UI, and live
+  Auth/PostgREST/concurrency verification remain rollout limitations or pending work.
+
 ## 2026-10-21 - General feedback drafts and publication backend
 
 - Added private staff feedback drafts, explicit publication of a selected revision,

@@ -386,3 +386,36 @@ withdraw/publish, enrollment deletion, and teacher/guardian revocation. No live
 migration, deployment, or feedback UI is included. Rollback disables these endpoints
 and retains private drafts, snapshots, and receipts; do not expose drafts to families
 or drop history.
+
+### Feedback screen rollout (2026-10-21)
+
+Staff student records and family profiles now include FeedbackPanel when the
+server-only `FEEDBACK_UI_ENABLED=true` flag is set. It defaults off. Enable only
+after the migrations above, live Auth/PostgREST permission checks, and staging
+verification; mock mode still renders the separate browser-local demo. The new
+panel currently uses English copy. Course/assignment/submission screens remain
+separate pending work.
+
+Staff can create/edit private drafts, preview a saved version, explicitly share it,
+read publication history, and withdraw a shared version. New drafts offer enrolled
+classes visible to the staff member and optional class journey lessons. Existing
+historical drafts remain editable even without current enrollment. Families fetch
+only child-scoped publications. Lists and history paginate; read failures show a
+retry action instead of stale content. An already-published version cannot be shared
+again; saving an edit creates the next draft version.
+
+Before a write is sent, its exact validated payload and request UUID are stored in
+sessionStorage under actor/student scope. Ambiguous failures block further writes
+and offer an exact retry, including after refresh. Successful/definitively rejected
+operations remove the pending payload. This includes private draft text while a
+write is pending, lasts only within the browser tab session, and is not offline
+storage or an automatic unsaved-form backup. Closing the tab can lose unresolved
+retry metadata; check server records before repeating an uncertain creation.
+
+Local Chrome used the real component with intercepted fixture API responses to
+verify drafts/edits, preview/share/withdraw, pagination/read-error recovery, published
+content preservation, and create/publish/withdraw response-loss retries through
+refresh. Layout checks passed at 360, 390, 768, 1024, and 1440px. No live Supabase
+session or migration was used. The temporary fixture page was removed; screenshots
+and the browser script stay in Temp outside Git. Disable FEEDBACK_UI_ENABLED to
+roll back the screens without changing any stored feedback.

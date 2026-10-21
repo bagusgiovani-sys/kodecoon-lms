@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { CreditPanel } from '@/components/students/CreditPanel'
+import { FeedbackPanel } from '@/components/students/FeedbackPanel'
 import { notFound } from 'next/navigation'
 import { FileText } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -18,7 +19,7 @@ export default async function StudentDetailPage({
 }: {
   params: Promise<{ studentId: string }>
 }) {
-  const { supabase, role } = await requireStaffPage()
+  const { supabase, role, userId } = await requireStaffPage()
   const { studentId } = await params
   const t = await getT()
 
@@ -47,8 +48,8 @@ export default async function StudentDetailPage({
 
   const classIds = (enrollmentsRes.data ?? []).map((e) => e.class_id)
   const { data: lessons } = classIds.length
-    ? await supabase.from('lessons').select('id, class_id').in('class_id', classIds)
-    : { data: [] as Array<{ id: string; class_id: string }> }
+    ? await supabase.from('lessons').select('id, class_id, title').in('class_id', classIds)
+    : { data: [] as Array<{ id: string; class_id: string; title: string }> }
 
   const lessonsTotalByClass = new Map<string, number>()
   for (const lesson of lessons ?? []) {
@@ -133,6 +134,8 @@ export default async function StudentDetailPage({
         </Button>
       </div>
       <CreditPanel studentId={studentId} canAdjust={role === 'admin'} />
+      {process.env.FEEDBACK_UI_ENABLED === 'true' && <FeedbackPanel key={`${userId}:${studentId}`} studentId={studentId} actorId={userId} staff
+        classes={detail.enrollments.map(item => ({id:item.classId,name:item.className}))} lessons={lessons ?? []} />}
       <StudentHistoryTabs detail={detail} />
     </>
   )

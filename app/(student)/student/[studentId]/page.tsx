@@ -1,4 +1,5 @@
 import { CreditPanel } from '@/components/students/CreditPanel'
+import { FeedbackPanel } from '@/components/students/FeedbackPanel'
 import { notFound } from 'next/navigation'
 import { GraduationCap } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -127,6 +128,7 @@ export default async function StudentProfilePage({
       </div>
 
       <CreditPanel studentId={student.id} />
+      {process.env.FEEDBACK_UI_ENABLED === 'true' && <FeedbackPanel key={`${userId}:${student.id}`} studentId={student.id} actorId={userId} />}
       <section>
         <h2 className="mb-3 text-sm font-semibold tracking-wide uppercase">
           {t('activePrograms')}
