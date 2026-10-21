@@ -119,6 +119,24 @@ teacher/admin scope, center isolation, anonymous denial, request replay, and mig
 preservation. This is a local sequential PGlite check; separate-connection races and
 live Auth/PostgREST remain release gates. No remote migration/deployment occurred.
 
+## Staff-configurable lesson targets: 202610210004
+
+For an existing database, apply `202610210004_course_lesson_targets.sql` after
+`202610210003_family_course_reads.sql`. New databases use the matching
+`schema.sql`; do not apply the forward migration on top of a fresh schema. The
+migration adds `courses.lesson_count` (0–10,000), backfills each course from its
+currently active lesson plans, and lets staff maintain the expected total
+independently of optional detailed lesson entries. Class rosters and family
+program cards use that configured total for `Lesson X/Y`.
+
+Guardians can read the title and target for their child's active class module;
+detailed reusable lesson plans remain staff-only. Target edits use the course
+content RPC with the same owner/center checks and retry protections as other
+course edits. Keep `LEARNING_UI_ENABLED=false` until migrations through this one
+are applied and live Auth/PostgREST checks and staff/family QA pass. The local
+PGlite harness verifies backfill, scoped reads, target writes, retries, and the
+137 RLS assertions; it does not verify a live Supabase project.
+
 ## Report publications: 202610170001
 
 For an existing KodeHub database, apply `202610170001_report_publications.sql`
