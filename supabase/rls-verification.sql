@@ -149,6 +149,19 @@ insert into lessons (id, class_id, sequence_number, title) values
   ('00000000-0000-4000-8000-000000000102', '00000000-0000-4000-8000-000000000c11', 2, 'A-2'),
   ('00000000-0000-4000-8000-000000000103', '00000000-0000-4000-8000-000000000c12', 1, 'B-1');
 
+insert into courses (id, center_id, owner_id, title, category, age_range, level, description, prerequisites)
+values
+  ('00000000-0000-4000-8000-000000000d01','00000000-0000-4000-8000-000000000c01','00000000-0000-4000-8000-000000000a02','Python Coder Basic 1','Coding','8-12','Basic','',''),
+  ('00000000-0000-4000-8000-000000000d02','00000000-0000-4000-8000-000000000c01','00000000-0000-4000-8000-000000000a03','Python Coder Basic 2','Coding','8-12','Basic','','');
+insert into course_lessons (id,course_id,sequence,title,minutes,objective,materials,steps,evidence) values
+  ('00000000-0000-4000-8000-000000000d11','00000000-0000-4000-8000-000000000d01',1,'First lesson',45,'','','',''),
+  ('00000000-0000-4000-8000-000000000d12','00000000-0000-4000-8000-000000000d01',2,'Second lesson',45,'','','',''),
+  ('00000000-0000-4000-8000-000000000d13','00000000-0000-4000-8000-000000000d02',1,'Other family lesson',45,'','','','');
+insert into class_course_assignments (id,class_id,center_id,course_id,assigned_by)
+values
+  ('00000000-0000-4000-8000-000000000d21','00000000-0000-4000-8000-000000000c11','00000000-0000-4000-8000-000000000c01','00000000-0000-4000-8000-000000000d01','00000000-0000-4000-8000-000000000a02'),
+  ('00000000-0000-4000-8000-000000000d22','00000000-0000-4000-8000-000000000c12','00000000-0000-4000-8000-000000000c01','00000000-0000-4000-8000-000000000d02','00000000-0000-4000-8000-000000000a03');
+
 insert into sessions (id, class_id, teacher_id, session_date, status) values
   ('00000000-0000-4000-8000-000000000201', '00000000-0000-4000-8000-000000000c11', '00000000-0000-4000-8000-000000000a02', current_date, 'completed'),
   ('00000000-0000-4000-8000-000000000202', '00000000-0000-4000-8000-000000000c12', '00000000-0000-4000-8000-000000000a03', current_date, 'completed');
@@ -325,6 +338,12 @@ select rls_check('attendance: parent sees only their own child''s attendance',
   (select count(*) from attendance) = 1);
 select rls_check('lessons: parent sees their child''s lesson plan',
   (select count(*) from lessons) = 2);
+select rls_check('course links: parent sees only the linked module for their child',
+  (select count(*) from class_course_assignments) = 1);
+select rls_check('courses: parent can read the active enrolled module only',
+  (select count(*) from courses where title = 'Python Coder Basic 1') = 1 and (select count(*) from courses) = 1);
+select rls_check('course lessons: parent sees the active lessons for that module',
+  (select count(*) from course_lessons) = 2);
 select rls_check('progress: parent sees only their own child''s progress',
   (select count(*) from student_lesson_progress) = 1);
 select rls_check('reports: parent cannot read private report rows',
@@ -337,6 +356,18 @@ select rls_check('centers: parent sees no center rows (staff-only policy)',
   (select count(*) from centers) = 0);
 select rls_check('report_templates: parent sees no academy templates',
   (select count(*) from report_templates) = 0);
+
+-- PARENT B cannot see Parent A's module or course content.
+reset role;
+select set_config('request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000000a06","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('course links: second family sees only its own active module',
+  (select count(*) from class_course_assignments) = 1);
+select rls_check('courses: second family cannot read another family''s module',
+  (select count(*) from courses where title = 'Python Coder Basic 2') = 1 and (select count(*) from courses) = 1);
+select rls_check('course lessons: second family cannot read another family''s lessons',
+  (select count(*) from course_lessons) = 1 and (select count(*) from course_lessons where title = 'First lesson') = 0);
 
 -- Regression, Session 5, CRITICAL. This is the escalation that would have
 -- handed a parent every student record in the academy.

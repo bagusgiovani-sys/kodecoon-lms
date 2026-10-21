@@ -1198,6 +1198,32 @@ using (
   (public.current_user_role() = 'teacher' and public.is_teacher_of_class(class_id)) or
   (public.current_user_role() = 'admin' and center_id = public.current_user_center())
 );
+create policy "class_course_assignments_read_guardian_active_class" on class_course_assignments for select to authenticated
+using (
+  ended_at is null and exists (
+    select 1 from enrollments e
+    join student_guardians sg on sg.student_id = e.student_id
+    where e.class_id = class_course_assignments.class_id and sg.guardian_id = auth.uid()
+  )
+);
+create policy "courses_read_guardian_active_class" on courses for select to authenticated
+using (
+  archived_at is null and exists (
+    select 1 from class_course_assignments ca
+    join enrollments e on e.class_id = ca.class_id
+    join student_guardians sg on sg.student_id = e.student_id
+    where ca.course_id = courses.id and ca.ended_at is null and sg.guardian_id = auth.uid()
+  )
+);
+create policy "course_lessons_read_guardian_active_class" on course_lessons for select to authenticated
+using (
+  archived_at is null and exists (
+    select 1 from class_course_assignments ca
+    join enrollments e on e.class_id = ca.class_id
+    join student_guardians sg on sg.student_id = e.student_id
+    where ca.course_id = course_lessons.course_id and ca.ended_at is null and sg.guardian_id = auth.uid()
+  )
+);
 create policy "class_course_receipts_private" on class_course_write_receipts for select to authenticated using (false);
 grant select on class_course_assignments to authenticated;
 revoke truncate on class_course_assignments,class_course_write_receipts from public,anon,authenticated;

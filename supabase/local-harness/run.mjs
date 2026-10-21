@@ -42,6 +42,13 @@ if ((await migrationDb.query('select count(*)::int as n from assignments')).rows
 await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610200001_submissions.sql`))
 await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610210001_assignment_roster.sql`))
 await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610210002_feedback_publications.sql`))
+await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610210003_family_course_reads.sql`))
+const familyCoursePolicies = await migrationDb.query(`select count(*)::int as n from pg_policies where policyname in (
+  'courses_read_guardian_active_class',
+  'course_lessons_read_guardian_active_class',
+  'class_course_assignments_read_guardian_active_class'
+)`)
+if (familyCoursePolicies.rows[0].n !== 3) throw new Error('Family course read migration is incomplete')
 if ((await migrationDb.query('select count(*)::int as n from published_feedback')).rows[0].n !== 0) throw new Error('Feedback migration published data')
 if ((await migrationDb.query('select count(*)::int as n from submission_threads')).rows[0].n !== 0) throw new Error('Submission migration backfilled data')
 const library = await migrationDb.query(`select

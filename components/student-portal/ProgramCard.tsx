@@ -11,6 +11,7 @@ interface ProgramCardProps {
   studentId: string
   classId: string
   className: string
+  moduleName?: string
   lessonsCompleted?: number
   lessonsTotal?: number
   completed?: boolean
@@ -22,6 +23,7 @@ export function ProgramCard({
   studentId,
   classId,
   className,
+  moduleName,
   lessonsCompleted,
   lessonsTotal,
   completed = false,
@@ -49,6 +51,7 @@ export function ProgramCard({
               <Badge className="shrink-0">{t('journeyCompleted')}</Badge>
             ) : null}
           </div>
+          {moduleName && <p className="mt-1 truncate text-xs text-primary">{moduleName}</p>}
           {!completed && lessonsTotal !== undefined ? (
             <>
               <Progress
@@ -60,7 +63,7 @@ export function ProgramCard({
                 }
               />
               <p className="text-muted-foreground mt-1 text-xs">
-                {lessonsCompleted}/{lessonsTotal} {t('lessonsProgress')}
+                {moduleName ? `${t('lessonProgressLabel')} ${lessonsCompleted ?? 0}/${lessonsTotal}` : `${lessonsCompleted}/${lessonsTotal} ${t('lessonsProgress')}`}
               </p>
             </>
           ) : null}

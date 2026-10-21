@@ -1,5 +1,22 @@
 # Build Progress — KOMS
 
+## 2026-10-21 - Family module and lesson progress visibility
+
+- Family program cards now show the active module name and `Lesson X/Y` for a
+  learner's enrolled class. Existing completion records supply X; active course
+  lessons supply Y. Classes without an assigned module keep existing totals.
+- Added a forward migration and matching fresh-schema RLS policies so a guardian
+  can read only the active module and its non-archived lessons when their linked
+  child is enrolled in the class. Historical links and other families' modules
+  remain hidden. The UI stays behind `LEARNING_UI_ENABLED=false` by default.
+- Added two-family fixtures and six scoped-read assertions. `npm run rls:verify`
+  passes all 132 checks, including migration application. Production build and
+  TypeScript pass; lint has zero errors and the two existing graph-harness
+  warnings. No live migration or real-account QA was performed.
+- Limitation: progress completion comes from the existing class lesson log while
+  the displayed total comes from the active module. Verify the class lesson plan
+  matches the assigned module before enabling this in a live center.
+
 ## 2026-10-21 - Staff course library and module progress display
 
 - Added production staff course library and course workspace for creating and
