@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const courseContent = z.strictObject({
   title: z.string().trim().min(1).max(200),
+  lesson_count: z.number().int().min(0).max(10000),
   category: z.string().max(100), age_range: z.string().max(100), level: z.string().max(100),
   description: z.string().max(10000), prerequisites: z.string().max(10000), archived: z.boolean(),
 })

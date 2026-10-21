@@ -49,6 +49,17 @@ const familyCoursePolicies = await migrationDb.query(`select count(*)::int as n 
   'class_course_assignments_read_guardian_active_class'
 )`)
 if (familyCoursePolicies.rows[0].n !== 3) throw new Error('Family course read migration is incomplete')
+await migrationDb.exec(`
+  insert into courses(id,center_id,owner_id,title,category,age_range,level,description,prerequisites)
+    values ('00000000-0000-4000-8000-000000000006','00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003','Existing module','','','','','');
+  insert into course_lessons(id,course_id,sequence,title,minutes,objective,materials,steps,evidence) values
+    ('00000000-0000-4000-8000-000000000007','00000000-0000-4000-8000-000000000006',1,'One',45,'','','',''),
+    ('00000000-0000-4000-8000-000000000008','00000000-0000-4000-8000-000000000006',2,'Two',45,'','','','');
+`)
+await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610210004_course_lesson_targets.sql`))
+const lessonTargetBackfill = await migrationDb.query(`select lesson_count from courses where id='00000000-0000-4000-8000-000000000006'`)
+if (lessonTargetBackfill.rows[0].lesson_count !== 2) throw new Error('Course lesson target migration did not backfill existing lessons')
+console.log('OK  course lesson target migration preserves the lesson-based total for existing modules')
 if ((await migrationDb.query('select count(*)::int as n from published_feedback')).rows[0].n !== 0) throw new Error('Feedback migration published data')
 if ((await migrationDb.query('select count(*)::int as n from submission_threads')).rows[0].n !== 0) throw new Error('Submission migration backfilled data')
 const library = await migrationDb.query(`select
@@ -57,7 +68,7 @@ const library = await migrationDb.query(`select
  (select count(*) from reports where raw_notes = 'Preserve private notes') as reports,
   (select count(*) from attendance where status = 'present') as attendance,
   (select count(*) from class_course_assignments) as links`)
-if (library.rows[0].courses !== 0 || library.rows[0].lessons !== 0 || library.rows[0].reports !== 1 || library.rows[0].attendance !== 1 || library.rows[0].links !== 0) throw new Error('Course migration changed existing data')
+if (library.rows[0].courses !== 1 || library.rows[0].lessons !== 2 || library.rows[0].reports !== 1 || library.rows[0].attendance !== 1 || library.rows[0].links !== 0) throw new Error('Course target migration changed preserved data')
 await migrationDb.close()
 console.log('OK  course migration adds an empty library and preserves existing data')
 console.log('OK  class course link migration adds no links or changes to existing data')

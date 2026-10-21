@@ -149,10 +149,10 @@ insert into lessons (id, class_id, sequence_number, title) values
   ('00000000-0000-4000-8000-000000000102', '00000000-0000-4000-8000-000000000c11', 2, 'A-2'),
   ('00000000-0000-4000-8000-000000000103', '00000000-0000-4000-8000-000000000c12', 1, 'B-1');
 
-insert into courses (id, center_id, owner_id, title, category, age_range, level, description, prerequisites)
+insert into courses (id, center_id, owner_id, title, category, age_range, level, description, prerequisites, lesson_count)
 values
-  ('00000000-0000-4000-8000-000000000d01','00000000-0000-4000-8000-000000000c01','00000000-0000-4000-8000-000000000a02','Python Coder Basic 1','Coding','8-12','Basic','',''),
-  ('00000000-0000-4000-8000-000000000d02','00000000-0000-4000-8000-000000000c01','00000000-0000-4000-8000-000000000a03','Python Coder Basic 2','Coding','8-12','Basic','','');
+  ('00000000-0000-4000-8000-000000000d01','00000000-0000-4000-8000-000000000c01','00000000-0000-4000-8000-000000000a02','Python Coder Basic 1','Coding','8-12','Basic','','',24),
+  ('00000000-0000-4000-8000-000000000d02','00000000-0000-4000-8000-000000000c01','00000000-0000-4000-8000-000000000a03','Python Coder Basic 2','Coding','8-12','Basic','','',12);
 insert into course_lessons (id,course_id,sequence,title,minutes,objective,materials,steps,evidence) values
   ('00000000-0000-4000-8000-000000000d11','00000000-0000-4000-8000-000000000d01',1,'First lesson',45,'','','',''),
   ('00000000-0000-4000-8000-000000000d12','00000000-0000-4000-8000-000000000d01',2,'Second lesson',45,'','','',''),
@@ -231,6 +231,8 @@ select rls_check('attendance: teacher sees only their own session''s rows',
   (select count(*) from attendance) = 1);
 select rls_check('lessons: teacher sees only their own class''s lessons',
   (select count(*) from lessons) = 2);
+select rls_check('course lessons: teacher can read their center''s reusable lesson plans',
+  (select count(*) from course_lessons) = 3);
 select rls_check('progress: teacher sees only their own class''s progress',
   (select count(*) from student_lesson_progress) = 1);
 select rls_check('reports: teacher sees only reports for students they teach',
@@ -239,6 +241,21 @@ select rls_check('session_videos: teacher sees only their own session''s video',
   (select count(*) from session_videos) = 1);
 select rls_check('report_templates: staff can read the template',
   (select count(*) from report_templates) = 1);
+
+select rls_expect_allowed('courses: staff can set a module lesson target independently of lesson plans',
+  $$select public.save_course_content('00000000-0000-4000-8000-000000000d03',null,0,
+    '00000000-0000-4000-8000-000000000d31',
+    '{"title":"Independent target","lesson_count":24,"category":"","age_range":"","level":"","description":"","prerequisites":"","archived":false}'::jsonb)$$);
+select rls_check('courses: lesson target is stored as configured',
+  (select lesson_count=24 from courses where id='00000000-0000-4000-8000-000000000d03'));
+select rls_expect_allowed('courses: target update retry returns the original result',
+  $$select public.save_course_content('00000000-0000-4000-8000-000000000d03',null,0,
+    '00000000-0000-4000-8000-000000000d31',
+    '{"title":"Independent target","lesson_count":24,"category":"","age_range":"","level":"","description":"","prerequisites":"","archived":false}'::jsonb)$$);
+select rls_expect_blocked('courses: target request cannot be replayed with a different count',
+  $$select public.save_course_content('00000000-0000-4000-8000-000000000d03',null,0,
+    '00000000-0000-4000-8000-000000000d31',
+    '{"title":"Independent target","lesson_count":25,"category":"","age_range":"","level":"","description":"","prerequisites":"","archived":false}'::jsonb)$$);
 
 -- The transaction RPC is idempotent when the client retries the same log.
 select rls_expect_allowed('sessions: atomic logger accepts a valid session write',
@@ -341,9 +358,8 @@ select rls_check('lessons: parent sees their child''s lesson plan',
 select rls_check('course links: parent sees only the linked module for their child',
   (select count(*) from class_course_assignments) = 1);
 select rls_check('courses: parent can read the active enrolled module only',
-  (select count(*) from courses where title = 'Python Coder Basic 1') = 1 and (select count(*) from courses) = 1);
-select rls_check('course lessons: parent sees the active lessons for that module',
-  (select count(*) from course_lessons) = 2);
+  (select count(*) from courses where title = 'Python Coder Basic 1' and lesson_count=24) = 1 and (select count(*) from courses) = 1);
+select rls_check('course lesson details remain staff-only', (select count(*) from course_lessons) = 0);
 select rls_check('progress: parent sees only their own child''s progress',
   (select count(*) from student_lesson_progress) = 1);
 select rls_check('reports: parent cannot read private report rows',
@@ -365,9 +381,8 @@ set local role authenticated;
 select rls_check('course links: second family sees only its own active module',
   (select count(*) from class_course_assignments) = 1);
 select rls_check('courses: second family cannot read another family''s module',
-  (select count(*) from courses where title = 'Python Coder Basic 2') = 1 and (select count(*) from courses) = 1);
-select rls_check('course lessons: second family cannot read another family''s lessons',
-  (select count(*) from course_lessons) = 1 and (select count(*) from course_lessons where title = 'First lesson') = 0);
+  (select count(*) from courses where title = 'Python Coder Basic 2' and lesson_count=12) = 1 and (select count(*) from courses) = 1);
+select rls_check('course lesson details remain hidden from the second family', (select count(*) from course_lessons) = 0);
 
 -- Regression, Session 5, CRITICAL. This is the escalation that would have
 -- handed a parent every student record in the academy.

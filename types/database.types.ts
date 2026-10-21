@@ -19,7 +19,7 @@ export type LessonProgressStatus = 'locked' | 'unlocked' | 'completed'
 type CourseRow = {
   id: string; center_id: string; owner_id: string; title: string; category: string
   age_range: string; level: string; description: string; prerequisites: string
-  revision: number; archived_at: string | null; created_at: string; updated_at: string
+  lesson_count: number; revision: number; archived_at: string | null; created_at: string; updated_at: string
 }
 type CourseLessonRow = {
   id: string; course_id: string; sequence: number; title: string; minutes: number
@@ -94,6 +94,12 @@ export interface Database {
         Relationships: []
       }
       course_write_receipts: {
+        Row: { actor_id: string; request_id: string; payload: Json; result: Json; created_at: string }
+        Insert: { actor_id: string; request_id: string; payload: Json; result: Json; created_at?: string }
+        Update: { actor_id?: string; request_id?: string; payload?: Json; result?: Json; created_at?: string }
+        Relationships: []
+      }
+      course_target_write_receipts: {
         Row: { actor_id: string; request_id: string; payload: Json; result: Json; created_at: string }
         Insert: { actor_id: string; request_id: string; payload: Json; result: Json; created_at?: string }
         Update: { actor_id?: string; request_id?: string; payload?: Json; result?: Json; created_at?: string }

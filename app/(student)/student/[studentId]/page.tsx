@@ -63,12 +63,9 @@ export default async function StudentProfilePage({
     ? await supabase.from('class_course_assignments').select('class_id,course_id').in('class_id', classIds).is('ended_at', null)
     : { data: [] as Array<{ class_id: string; course_id: string }> }
   const courseIds = [...new Set((courseLinks ?? []).map((link) => link.course_id))]
-  const [{ data: courses }, { data: courseLessons }] = process.env.LEARNING_UI_ENABLED === 'true' && courseIds.length
-    ? await Promise.all([
-        supabase.from('courses').select('id,title').in('id', courseIds),
-        supabase.from('course_lessons').select('id,course_id').in('course_id', courseIds).is('archived_at', null).limit(10001),
-      ])
-    : [{ data: [] as Array<{ id: string; title: string }> }, { data: [] as Array<{ id: string; course_id: string }> }]
+  const { data: courses } = process.env.LEARNING_UI_ENABLED === 'true' && courseIds.length
+    ? await supabase.from('courses').select('id,title,lesson_count').in('id', courseIds)
+    : { data: [] as Array<{ id: string; title: string; lesson_count: number }> }
 
   const totalByClass = new Map<string, number>()
   for (const lesson of lessons ?? []) {
@@ -84,7 +81,7 @@ export default async function StudentProfilePage({
 
   const moduleByClass = new Map((courseLinks ?? []).map((link) => {
     const course = courses?.find((item) => item.id === link.course_id)
-    const total = (courseLessons ?? []).filter((lesson) => lesson.course_id === link.course_id).length
+    const total = course?.lesson_count ?? 0
     return [link.class_id, { name: course?.title ?? '', total }] as const
   }))
 

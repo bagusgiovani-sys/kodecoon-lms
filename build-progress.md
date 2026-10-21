@@ -2,30 +2,33 @@
 
 ## 2026-10-21 - Family module and lesson progress visibility
 
-- Family program cards now show the active module name and `Lesson X/Y` for a
-  learner's enrolled class. Existing completion records supply X; active course
-  lessons supply Y. Classes without an assigned module keep existing totals.
-- Added a forward migration and matching fresh-schema RLS policies so a guardian
-  can read only the active module and its non-archived lessons when their linked
-  child is enrolled in the class. Historical links and other families' modules
-  remain hidden. The UI stays behind `LEARNING_UI_ENABLED=false` by default;
-  class-roster reads also skip all course tables while the flag is off.
-- Added two-family fixtures and six scoped-read assertions. `npm run rls:verify`
-  passes all 132 checks, including migration application. Production build and
-  TypeScript pass; lint has zero errors and the two existing graph-harness
-  warnings. No live migration or real-account QA was performed.
+- Family program cards show the active module name and `Lesson X/Y` for a
+  learner's enrolled class. Existing completion records supply X; the staff-set
+  module target supplies Y. Classes without an assigned module keep existing totals.
+- Family access is limited to the active module row. Detailed lesson plans remain
+  staff-only; course reads are skipped while `LEARNING_UI_ENABLED=false`.
+- Migration `202610210004_course_lesson_targets.sql` adds the independent target
+  (0–10,000), backfills existing modules from active lessons, and persists target
+  updates through the secure course-content RPC with retry protection. Two-family
+  fixtures and six scoped-read assertions verify that guardians see only the
+  assigned module's title and target.
+- Verification after the target-count change: `npm run rls:verify` passes 137
+  checks including migration application; `npx tsc --noEmit` passes; lint has zero
+  errors and two existing graph-harness warnings. The first `npm run build` attempt
+  could not fetch Google Fonts in the restricted network; rerunning with network
+  access passed. No live migration or real-account QA was performed.
 - Limitation: progress completion comes from the existing class lesson log while
-  the displayed total comes from the active module. Verify the class lesson plan
-  matches the assigned module before enabling this in a live center.
+  the displayed total is now explicitly configured by staff. Keep the target
+  aligned with the class's lesson plan before enabling this in a live center.
 
 ## 2026-10-21 - Staff course library and module progress display
 
 - Added production staff course library and course workspace for creating and
-  editing named modules, defining lesson plans, archiving/restoring lessons and
-  courses, and linking a module to a class. The active lesson entries determine
-  the module lesson total; staff can adjust it by adding or archiving lessons.
+  editing named modules, setting the expected lesson total independently of
+  optional detailed lesson plans, archiving/restoring lessons and courses, and
+  linking a module to a class.
 - Class rosters show the linked module name and each learner's `Lesson X/Y`
-  progress. The denominator follows the module's active lesson count; without a
+  progress. The denominator follows the staff-configured module target; without a
   linked module, the roster retains its class lesson count. Course screens and
   navigation are gated by server-only `LEARNING_UI_ENABLED` (default false).
 - Assignment UI and parent assignment submission were explicitly left out of

@@ -67,19 +67,16 @@ export default async function ClassRosterPage({
     ? await supabase.from('class_course_assignments')
         .select('course_id').eq('class_id', classId).is('ended_at', null).maybeSingle()
     : { data: null }
-  const [{ data: activeCourse }, { data: courseLessons }] = courseLink?.course_id
-    ? await Promise.all([
-        supabase.from('courses').select('id,title').eq('id', courseLink.course_id).maybeSingle(),
-        supabase.from('course_lessons').select('id').eq('course_id', courseLink.course_id).is('archived_at', null).limit(10001),
-      ])
-    : [{ data: null }, { data: [] as Array<{ id: string }> }]
+  const { data: activeCourse } = courseLink?.course_id
+    ? await supabase.from('courses').select('id,title,lesson_count').eq('id', courseLink.course_id).maybeSingle()
+    : { data: null }
   const students = (enrollmentsRes.data ?? [])
     .filter((e) => e.students !== null)
     .map((e) => ({
       id: e.students!.id,
       name: e.students!.name,
-      lessonsCompleted: Math.min(completedByStudent.get(e.student_id) ?? 0, activeCourse ? (courseLessons?.length ?? 0) : lessonIds.length),
-      lessonsTotal: activeCourse ? (courseLessons?.length ?? 0) : lessonIds.length,
+      lessonsCompleted: Math.min(completedByStudent.get(e.student_id) ?? 0, activeCourse?.lesson_count ?? lessonIds.length),
+      lessonsTotal: activeCourse?.lesson_count ?? lessonIds.length,
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
 
@@ -96,7 +93,7 @@ export default async function ClassRosterPage({
     <>
       <PageHeader
         title={cls.name}
-        subtitle={[cls.age_bracket, activeCourse ? `${activeCourse.title} · ${courseLessons?.length ?? 0} lessons` : null].filter(Boolean).join(' · ') || undefined}
+        subtitle={[cls.age_bracket, activeCourse ? `${activeCourse.title} · ${activeCourse.lesson_count} lessons` : null].filter(Boolean).join(' · ') || undefined}
         action={
           <>
             {role === 'admin' ? (
