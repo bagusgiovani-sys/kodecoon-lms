@@ -35,6 +35,7 @@ interface NavTab {
 const TABS: NavTab[] = [
   { href: '/dashboard', labelKey: 'navDashboard' },
   { href: '/schedule', labelKey: 'navSchedule' },
+  { href: '/attendance', labelKey: 'navAttendance' },
   { href: '/courses', labelKey: 'navCourses', learningOnly: true },
   { href: '/admin/teachers', labelKey: 'navAdminTeachers', adminOnly: true },
   { href: '/admin/schedule', labelKey: 'navAdminSchedule', adminOnly: true },

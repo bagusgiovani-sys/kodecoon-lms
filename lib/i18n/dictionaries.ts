@@ -13,6 +13,7 @@ const en = {
 
   // Nav
   navDashboard: 'My Classes',
+  navAttendance: 'Daily Attendance',
   navSchedule: 'My Schedule',
   navCourses: 'Course Library',
   navAdmin: 'Admin',
@@ -190,6 +191,7 @@ const id: Record<DictKey, string> = {
   appName: 'KOMS',
   appTagline: 'Sistem Manajemen Operasional Kodecoon',
 
+  navAttendance: 'Absensi Harian',
   navDashboard: 'Kelas Saya',
   navSchedule: 'Jadwal Saya',
   navCourses: 'Pustaka Kursus',

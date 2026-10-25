@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { ArrowUpRight, BookOpen, Check, CheckCircle2, Coins, Download, MessageSquare, Pencil, Play, Plus, Video } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -7,6 +8,8 @@ import { mockId, mockToday, type MockFeedback, type MockStudent, type MockVideo 
 import { createLearningData, safeProjectUrl, type LearningAssignment, type LearningData } from '@/lib/mock/learning'
 import { readMockVideo, saveMockVideo } from '@/lib/mock/videoStorage'
 import { useMock } from './MockProvider'
+import { DailyAttendance } from './DailyAttendance'
+import { attendanceLabel } from '@/lib/attendance'
 import { ReportPrintButton } from './ReportPrintButton'
 import { Action, Avatar, Back, dateLabel, Empty, Field, Heading, inputStyle, LinkAction, Modal, Panel, Pill } from './MockUI'
 
@@ -25,9 +28,9 @@ export function StudentRecord({ student, parent }: { student: MockStudent; paren
   const openFeedback = (item?: MockFeedback) => { setEditingFeedback(item); setDialog('feedback') }
 
   return <><Back href={parent ? '/student' : '/students'} text={parent ? 'My children' : 'All students'} />
-    <div className="mock-panel mb-6 flex flex-wrap items-center gap-4 rounded-2xl border bg-card p-5 sm:p-6"><Avatar name={student.name} large /><div className="min-w-0 flex-1"><p className="mb-1 text-xs font-medium text-primary">STUDENT LEARNING RECORD</p><h1 className="text-3xl font-semibold tracking-tight">{student.name}</h1><p className="mt-2 text-sm text-muted-foreground">Age {student.age} · {student.parentName}{!parent && <button onClick={() => setDialog('edit')} className="ml-3 inline-flex items-center gap-1 text-xs text-primary"><Pencil className="size-3" />Edit profile</button>}</p></div>{!parent && <div className="flex flex-wrap gap-2"><LinkAction secondary href={`/student/${student.id}`}>Parent view<ArrowUpRight className="size-4" /></LinkAction><Action onClick={() => setDialog('video')}><Plus className="size-4" />Add video</Action></div>}</div>
+    <div className="mock-panel mb-6 flex flex-wrap items-center gap-4 rounded-2xl border bg-card p-5 sm:p-6"><ProfilePhoto student={student} /><div className="min-w-0 flex-1"><p className="mb-1 text-xs font-medium text-primary">STUDENT LEARNING RECORD</p><h1 className="text-3xl font-semibold tracking-tight">{student.name}</h1><p className="mt-2 text-sm text-muted-foreground">Age {student.age} · {student.parentName}{!parent && <button onClick={() => setDialog('edit')} className="ml-3 inline-flex items-center gap-1 text-xs text-primary"><Pencil className="size-3" />Edit profile</button>}</p></div>{!parent && <div className="flex flex-wrap gap-2"><LinkAction secondary href={`/student/${student.id}`}>Parent view<ArrowUpRight className="size-4" /></LinkAction><Action onClick={() => setDialog('video')}><Plus className="size-4" />Add video</Action><LinkAction href={`/students/${student.id}/report`}>Student Feedback</LinkAction></div>}</div>
     <div className="mb-7 grid grid-cols-2 gap-3 lg:grid-cols-4">{[
-      { label: 'Credits left', value: student.credits, note: '1 attended session = 1 credit', icon: Coins },
+      { label: 'Credits left', value: student.credits, note: 'Attend or MIA = 1 credit', icon: Coins },
       { label: 'Module progress', value: `${completed}/${totalModules}`, note: 'Milestones completed', icon: BookOpen },
       { label: 'Sessions attended', value: attended, note: `${sessions.length} sessions recorded`, icon: CheckCircle2 },
       { label: 'Video documentation', value: videos.length, note: 'Moments worth keeping', icon: Video },
@@ -44,14 +47,15 @@ export function StudentRecord({ student, parent }: { student: MockStudent; paren
       }} className={cn('min-h-11 rounded-lg px-3 text-xs font-medium', done ? 'bg-primary/10 text-primary' : 'border text-muted-foreground hover:text-primary')}>{done ? 'Completed ✓' : 'Mark complete'}</button>}</li>
     })}</ol></Panel>)}
     <Panel title="Latest video moment" action={!parent && <Action secondary onClick={() => setDialog('video')}><Plus className="size-4" />Add video</Action>}>{videos[0] ? <VideoCard video={videos[0]} /> : <Empty title="Their story is just beginning" description="Add a session video to document their next breakthrough." />}</Panel></div>
-    <div className="space-y-6"><Panel title="Package balance" className="border-primary/20 bg-primary/5"><div className="flex items-baseline gap-2"><p className="text-5xl font-semibold tracking-tight text-primary">{student.credits}</p><span className="text-sm text-muted-foreground">credits remaining</span></div><p className="my-4 text-xs leading-6 text-muted-foreground">Credits are used when a session is marked present. Absences do not use credits.</p>{student.credits <= 2 && <p className="mb-4 text-xs text-destructive">Your package is running low.</p>}{!parent && <Action secondary onClick={() => setDialog('credits')}><Plus className="size-4" />Top up credits</Action>}</Panel>
+    <div className="space-y-6"><Panel title="Package balance" className="border-primary/20 bg-primary/5"><div className="flex items-baseline gap-2"><p className="text-5xl font-semibold tracking-tight text-primary">{student.credits}</p><span className="text-sm text-muted-foreground">credits remaining</span></div><p className="my-4 text-xs leading-6 text-muted-foreground">Attend and MIA use one credit. Izin and unmarked do not use credits.</p>{student.credits <= 2 && <p className="mb-4 text-xs text-destructive">Your package is running low.</p>}{!parent && <Action secondary onClick={() => setDialog('credits')}><Plus className="size-4" />Top up credits</Action>}</Panel>
     <Panel title="Teacher’s latest feedback" action={<MessageSquare className="size-5 text-primary" />}>{feedback[0] ? <FeedbackCard feedback={feedback[0]} edit={!parent ? () => openFeedback(feedback[0]) : undefined} /> : <Empty title="Feedback coming soon" description="End-of-module notes from the teacher will appear here." />}{!parent && <Action secondary className="mt-4 w-full" onClick={() => openFeedback()}><Plus className="size-4" />Write module feedback</Action>}</Panel>
     {parent && <ParentAssignmentProgress student={student} />}
     <Panel title="Progress reports"><p className="mb-4 text-sm leading-6 text-muted-foreground">A thoughtful summary of progress, attendance, and teacher feedback.</p>{!parent && <LinkAction secondary href={`/students/${student.id}/report`}><Download className="size-4" />Create report</LinkAction>}{data.reports.filter(r => r.studentId === student.id).map(report => <article key={report.id} className="mt-4 rounded-xl border p-4"><p className="text-xs text-primary">{dateLabel(report.date)}</p><p className="mt-2 whitespace-pre-line text-sm leading-6">{report.text}</p><div className="mt-3"><ReportPrintButton studentName={student.name} date={report.date} text={report.text} /></div></article>)}{parent && !data.reports.some(r => r.studentId === student.id) && <p className="text-xs text-muted-foreground">No reports published yet.</p>}</Panel></div></div>}
 
     {tab === 'videos' && <><Heading title="Learning in motion." description="Projects, experiments, and proud little moments from class." action={!parent && <Action onClick={() => setDialog('video')}><Plus className="size-4" />Add video documentation</Action>} /><div className="grid gap-5 md:grid-cols-2">{videos.map(video => <Panel key={video.id}><VideoCard video={video} /></Panel>)}</div>{!videos.length && <Empty title="No videos yet" description="Upload a video or paste a Drive, YouTube, or video file link." />}</>}
     {tab === 'feedback' && <><Heading title="A teacher’s perspective." description="End-of-module reflections: what went well, and what’s next." action={!parent && <Action onClick={() => openFeedback()}><Plus className="size-4" />Write feedback</Action>} /><div className="grid gap-5 md:grid-cols-2">{feedback.map(item => <Panel key={item.id}><FeedbackCard feedback={item} edit={!parent ? () => openFeedback(item) : undefined} /></Panel>)}</div>{!feedback.length && <Empty title="No module feedback yet" description="Teacher reflections will appear after a module is completed." />}</>}
-    {tab === 'credits' && <div className="grid gap-6 lg:grid-cols-2"><Panel title="Credit history" subtitle="A clear record of each top-up and attended session" action={!parent && <Action secondary onClick={() => setDialog('credits')}><Plus className="size-4" />Top up</Action>}><div className="divide-y">{[...student.creditHistory].reverse().map(entry => <div key={entry.id} className="flex items-start gap-4 py-4"><Coins className="mt-1 size-4 shrink-0 text-primary" /><div className="min-w-0 flex-1"><p className="text-sm">{entry.reason}</p><p className="mt-1 text-xs text-muted-foreground">{dateLabel(entry.date)}</p></div><span className={cn('text-sm font-semibold', entry.amount > 0 ? 'text-primary' : 'text-muted-foreground')}>{entry.amount > 0 ? '+' : ''}{entry.amount}</span></div>)}</div></Panel><Panel title="Attendance history" subtitle="Present, absent, and the notes that go with it">{sessions.length ? <div className="divide-y">{[...sessions].sort((a, b) => b.date.localeCompare(a.date)).map(session => <div key={session.id} className="py-4"><div className="flex items-center justify-between gap-3"><p className="text-sm font-medium">{data.classes.find(c => c.id === session.classId)?.name}</p><Pill tone={session.attendance[student.id] === 'present' ? 'good' : 'default'}>{session.attendance[student.id]}</Pill></div><p className="mt-1 text-xs text-muted-foreground">{dateLabel(session.date)} · {session.time}</p>{session.notes && <p className="mt-3 text-sm leading-6 text-muted-foreground">{session.notes}</p>}</div>)}</div> : <Empty title="No sessions recorded yet" description="Attendance appears here as your teacher logs sessions." />}</Panel></div>}
+    {!parent && tab === 'credits' && <DailyAttendance studentId={student.id} />}
+    {tab === 'credits' && <div className="grid gap-6 lg:grid-cols-2"><Panel title="Credit history" subtitle="A clear record of each top-up and attended session" action={!parent && <Action secondary onClick={() => setDialog('credits')}><Plus className="size-4" />Top up</Action>}><div className="divide-y">{[...student.creditHistory].reverse().map(entry => <div key={entry.id} className="flex items-start gap-4 py-4"><Coins className="mt-1 size-4 shrink-0 text-primary" /><div className="min-w-0 flex-1"><p className="text-sm">{entry.reason}</p><p className="mt-1 text-xs text-muted-foreground">{dateLabel(entry.date)}</p></div><span className={cn('text-sm font-semibold', entry.amount > 0 ? 'text-primary' : 'text-muted-foreground')}>{entry.amount > 0 ? '+' : ''}{entry.amount}</span></div>)}</div></Panel><Panel title="Attendance history" subtitle="Present, absent, and the notes that go with it">{sessions.length ? <div className="divide-y">{[...sessions].sort((a, b) => b.date.localeCompare(a.date)).map(session => <div key={session.id} className="py-4"><div className="flex items-center justify-between gap-3"><p className="text-sm font-medium">{data.classes.find(c => c.id === session.classId)?.name}</p><Pill tone={session.attendance[student.id] === 'present' ? 'good' : 'default'}>{attendanceLabel(session.attendance[student.id])}</Pill></div><p className="mt-1 text-xs text-muted-foreground">{dateLabel(session.date)} · {session.time}</p>{session.notes && <p className="mt-3 text-sm leading-6 text-muted-foreground">{session.notes}</p>}</div>)}</div> : <Empty title="No sessions recorded yet" description="Attendance appears here as your teacher logs sessions." />}</Panel></div>}
 
     <Modal open={dialog === 'video'} close={() => setDialog(null)} title="Add video documentation" description="Keep a record of a project, a session, or a proud moment.">{dialog === 'video' && <VideoForm student={student} close={() => setDialog(null)} />}</Modal>
     <Modal open={dialog === 'feedback'} close={() => setDialog(null)} title={editingFeedback ? 'Edit module feedback' : 'End-of-module feedback'} description="Celebrate the progress. Give a clear next step.">{dialog === 'feedback' && <FeedbackForm student={student} existing={editingFeedback} close={() => setDialog(null)} />}</Modal>
@@ -194,14 +198,33 @@ function CreditsForm({ student, close }: { student: MockStudent; close: () => vo
   }}><Field title="Credits to add"><input name="amount" type="number" required min="1" max="100" step="1" defaultValue="8" className={inputStyle} /></Field><Field title="Package note"><input name="reason" placeholder="e.g. 8-session robotics package" className={inputStyle} /></Field><p className="text-xs text-muted-foreground">Current balance: {student.credits} credits. This demo records the package; it does not process a payment.</p><Action type="submit">Add credits</Action></form>
 }
 
+function ProfilePhoto({student}:{student:MockStudent}) {
+ const [url,setUrl]=useState('')
+ useEffect(()=>{
+  if(!student.photo)return
+  let disposed=false,source=''
+  readMockVideo(student.photo).then(blob=>{if(blob&&!disposed){source=URL.createObjectURL(blob);setUrl(source)}}).catch(()=>{})
+  return ()=>{disposed=true;if(source)URL.revokeObjectURL(source)}
+ },[student.photo])
+ return url?<Image unoptimized src={url} alt={`${student.name}'s profile photo`} width={64} height={64} className="size-16 rounded-xl object-cover"/>:<Avatar name={student.name} large />
+}
+
 function ProfileForm({ student, close }: { student: MockStudent; close: () => void }) {
-  const { update } = useMock()
-  return <form className="grid gap-4" onSubmit={event => {
-    event.preventDefault()
-    const fields = new FormData(event.currentTarget)
-    const name = String(fields.get('name')).trim()
-    const parentName = String(fields.get('parentName')).trim()
-    if (!name || !parentName) { toast.error('Student and parent names cannot be blank.'); return }
-    if (update(current => ({ ...current, students: current.students.map(s => s.id === student.id ? { ...s, name, age: Number(fields.get('age')), parentName, parentEmail: String(fields.get('email')).trim() } : s) }))) { toast.success('Profile updated'); close() }
-  }}><Field title="Student name"><input name="name" defaultValue={student.name} required className={inputStyle} /></Field><Field title="Age"><input name="age" type="number" min="3" max="25" required defaultValue={student.age} className={inputStyle} /></Field><Field title="Parent name"><input name="parentName" required defaultValue={student.parentName} className={inputStyle} /></Field><Field title="Parent email"><input name="email" type="email" required defaultValue={student.parentEmail} className={inputStyle} /></Field><Action type="submit">Save profile</Action></form>
+ const {update}=useMock()
+ const [file,setFile]=useState<File|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('')
+ return <form className="grid gap-4" onSubmit={async event=>{
+  event.preventDefault();const fields=new FormData(event.currentTarget)
+  const name=String(fields.get('name')).trim(),parentName=String(fields.get('parentName')).trim()
+  if(!name||!parentName){setError('Student and parent names cannot be blank.');return}
+  setBusy(true);setError('')
+  try {
+   let photo=student.photo
+   if(file){
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024)throw new Error('Choose a JPEG, PNG, or WebP photo under 5 MB.')
+    photo=mockId();await saveMockVideo(photo,file)
+   }
+   if(update(current=>({...current,students:current.students.map(s=>s.id===student.id?{...s,name,parentName,age:Number(fields.get('age')),parentEmail:String(fields.get('email')).trim(),photo}:s)}))){toast.success('Profile updated');close()}
+  }catch(e){setError(e instanceof Error?e.message:'Could not save profile.')}
+  finally{setBusy(false)}
+ }}><Field title="Profile photo"><input type="file" accept="image/jpeg,image/png,image/webp" className={inputStyle} onChange={e=>setFile(e.target.files?.[0]??null)}/></Field><p className="text-xs text-muted-foreground">Up to 5 MB. The demo photo stays in this browser.</p><Field title="Student name"><input name="name" defaultValue={student.name} required className={inputStyle}/></Field><Field title="Age"><input name="age" type="number" min="3" max="25" required defaultValue={student.age} className={inputStyle}/></Field><Field title="Parent name"><input name="parentName" required defaultValue={student.parentName} className={inputStyle}/></Field><Field title="Parent email"><input name="email" type="email" required defaultValue={student.parentEmail} className={inputStyle}/></Field>{error&&<p role="alert" className="text-destructive">{error}</p>}<Action type="submit" disabled={busy}>{busy?'Saving...':'Save profile'}</Action></form>
 }

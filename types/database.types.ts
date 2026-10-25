@@ -56,6 +56,13 @@ type PublishedFeedbackRow = {
 export interface Database {
   public: {
     Tables: {
+      student_media: {
+        Row: { id: string; student_id: string; kind: string; storage_path: string; description: string; recorded_date: string; ready: boolean; created_by: string; created_at: string }
+        Insert: { id: string; student_id: string; kind: string; storage_path: string; description?: string; recorded_date: string; ready?: boolean; created_by: string; created_at?: string }
+        Update: { ready?: boolean }
+        Relationships: []
+      }
+
       student_feedback: { Row: FeedbackRow; Insert: Omit<FeedbackRow, 'created_at' | 'updated_at' | 'revision'> & Partial<FeedbackRow>; Update: Partial<FeedbackRow>; Relationships: [] }
       published_feedback: { Row: PublishedFeedbackRow; Insert: Omit<PublishedFeedbackRow, 'id' | 'published_at' | 'withdrawn_at' | 'withdrawn_by'> & Partial<PublishedFeedbackRow>; Update: Partial<PublishedFeedbackRow>; Relationships: [] }
       feedback_write_receipts: { Row: { actor_id: string; request_id: string; payload: Json; result: Json; created_at: string }; Insert: { actor_id: string; request_id: string; payload: Json; result: Json; created_at?: string }; Update: { payload?: Json; result?: Json }; Relationships: [] }
@@ -775,6 +782,8 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      daily_attendance_workspace: { Args: { p_date: string }; Returns: Json }
+      change_daily_attendance: { Args: { p_action: string; p_data: Json }; Returns: Json }
       valid_submission_url: { Args: { p_url: string }; Returns: boolean }
       can_read_submission_thread: { Args: { p_thread: string }; Returns: boolean }
       submit_assignment: { Args: { p_assignment: string; p_student: string; p_request: string; p_url: string; p_reflection: string }; Returns: Json }

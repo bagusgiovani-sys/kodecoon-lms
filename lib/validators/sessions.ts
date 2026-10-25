@@ -13,7 +13,7 @@ export const logSessionSchema = z.object({
   attendance: z.array(
     z.object({
       studentId: z.uuid(),
-      status: z.enum(['present', 'absent', 'unmarked']),
+      status: z.enum(['present', 'mia', 'excused', 'unmarked']),
     })
   ),
   video: z

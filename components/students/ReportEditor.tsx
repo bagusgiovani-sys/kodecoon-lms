@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ExternalLink, Sparkles, TriangleAlert } from 'lucide-react'
 import { toast } from 'sonner'
@@ -33,6 +33,8 @@ export function ReportEditor({
 }: ReportEditorProps) {
   const { t } = useLanguage()
   const [rawNotes, setRawNotes] = useState('')
+  const [template,setTemplate]=useState('standard')
+  const reportRef=useRef<HTMLTextAreaElement>(null)
   const [reportText, setReportText] = useState('')
   const [exportedUrl, setExportedUrl] = useState<string | null>(null)
   const [exportedReport, setExportedReport] = useState<{ id: string; text: string } | null>(null)
@@ -96,6 +98,19 @@ export function ReportEditor({
     onError: () => toast.error(t('genericError')),
   })
 
+  function formatSelection(before:string,after=before) {
+    const field=reportRef.current
+    if(!field)return
+    const start=field.selectionStart,end=field.selectionEnd,selected=reportText.slice(start,end)||'your text'
+    const next=reportText.slice(0,start)+before+selected+after+reportText.slice(end)
+    setReportText(next);requestAnimationFrame(()=>{field.focus();field.setSelectionRange(start+before.length,start+before.length+selected.length)})
+  }
+  function applyTemplate(value:string) {
+    setTemplate(value)
+    const presets:Record<string,string>={standard:'What went well:\n\n\nSkills and progress:\n\n\nNext steps:\n',celebration:'A moment to celebrate:\n\n\nWhat your child learned:\n\n\nWhat comes next:\n',custom:''}
+    setRawNotes(presets[value]??'')
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {sparseData ? (
@@ -106,6 +121,10 @@ export function ReportEditor({
       ) : null}
 
       <div className="grid gap-2">
+        <Label htmlFor="report-template">Feedback template</Label>
+        <select id="report-template" className="min-h-11 rounded-lg border bg-background px-3" value={template} onChange={event=>applyTemplate(event.target.value)}>
+          <option value="standard">Standard: strengths, progress, next steps</option><option value="celebration">Celebration: achievement, learning, next steps</option><option value="custom">Custom: write your own structure</option>
+        </select>
         <Label htmlFor="raw-notes">{t('rawNotesLabel')}</Label>
         <Textarea
           id="raw-notes"
@@ -128,7 +147,9 @@ export function ReportEditor({
 
       <div className="grid gap-2">
         <Label htmlFor="report-text">{t('reportTextLabel')}</Label>
+        <div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" onClick={()=>formatSelection('**')}>Bold words</Button><Button type="button" size="sm" variant="outline" onClick={()=>formatSelection('*')}>Italic words</Button><Button type="button" size="sm" variant="outline" onClick={()=>formatSelection('## ','')}>Heading</Button><Button type="button" size="sm" variant="outline" onClick={()=>formatSelection('\n\n','')}>New paragraph</Button></div>
         <Textarea
+          ref={reportRef}
           id="report-text"
           value={reportText}
           disabled={exportMutation.isPending}

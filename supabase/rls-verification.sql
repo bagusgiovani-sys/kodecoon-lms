@@ -697,6 +697,62 @@ select rls_expect_state('credits: anonymous RPC denied',
 reset role;
 set constraints all immediate;
 
+-- Daily attendance exercises the same writer used by profiles and session logs.
+set constraints all deferred;
+reset role;
+insert into enrollments(student_id,class_id,enrolled_date) values ('00000000-0000-4000-8000-000000000501','00000000-0000-4000-8000-000000000c11','2026-01-01') on conflict do nothing;
+insert into sessions(id,class_id,teacher_id,session_date,session_time) values ('00000000-0000-4000-8000-000000000901','00000000-0000-4000-8000-000000000c11','00000000-0000-4000-8000-000000000a02','2026-10-26','15:00');
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a01","role":"authenticated"}', true);
+set local role authenticated;
+select adjust_credits('00000000-0000-4000-8000-000000000501',10,'top_up','Daily tests','00000000-0000-4000-8000-000000000910');
+reset role;
+select set_config('test.daily_balance',(select balance::text from credit_accounts where student_id='00000000-0000-4000-8000-000000000501'),true);
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a02","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('daily: peer learner balance is redacted', (select value->'credits'='null'::jsonb from jsonb_array_elements(daily_attendance_workspace('2026-10-26')->'students') where value->>'id'='00000000-0000-4000-8000-000000000502'));
+select rls_expect_state('daily: direct weekly slot access denied', $$select * from weekly_class_slots$$,'42501');
+select change_daily_attendance('create_slot','{"id":"00000000-0000-4000-8000-000000000902","classId":"00000000-0000-4000-8000-000000000c11","weekday":1,"time":"15:00","date":"2026-10-26"}');
+select change_daily_attendance('roster','{"slotId":"00000000-0000-4000-8000-000000000902","studentId":"00000000-0000-4000-8000-000000000501","date":"2026-10-26","included":true}');
+select change_daily_attendance('mark','{"slotId":"00000000-0000-4000-8000-000000000902","studentId":"00000000-0000-4000-8000-000000000501","date":"2026-10-26","status":"mia","revision":0,"requestId":"00000000-0000-4000-8000-000000000920"}');
+select change_daily_attendance('mark','{"slotId":"00000000-0000-4000-8000-000000000902","studentId":"00000000-0000-4000-8000-000000000501","date":"2026-10-26","status":"mia","revision":0,"requestId":"00000000-0000-4000-8000-000000000920"}');
+select rls_check('daily: mia and exact retry reconcile credits', (select balance from credit_accounts where student_id='00000000-0000-4000-8000-000000000501')=current_setting('test.daily_balance')::int-1);
+select change_daily_attendance('mark','{"slotId":"00000000-0000-4000-8000-000000000902","studentId":"00000000-0000-4000-8000-000000000501","date":"2026-10-26","status":"present","revision":1,"requestId":"00000000-0000-4000-8000-000000000921"}');
+select change_daily_attendance('mark','{"slotId":"00000000-0000-4000-8000-000000000902","studentId":"00000000-0000-4000-8000-000000000501","date":"2026-10-26","status":"present","revision":1,"requestId":"00000000-0000-4000-8000-000000000921"}');
+select rls_check('daily: present and exact retry reconcile credits', (select balance from credit_accounts where student_id='00000000-0000-4000-8000-000000000501')=current_setting('test.daily_balance')::int-1);
+select change_daily_attendance('mark','{"slotId":"00000000-0000-4000-8000-000000000902","studentId":"00000000-0000-4000-8000-000000000501","date":"2026-10-26","status":"excused","revision":2,"requestId":"00000000-0000-4000-8000-000000000922"}');
+select change_daily_attendance('mark','{"slotId":"00000000-0000-4000-8000-000000000902","studentId":"00000000-0000-4000-8000-000000000501","date":"2026-10-26","status":"excused","revision":2,"requestId":"00000000-0000-4000-8000-000000000922"}');
+select rls_check('daily: excused and exact retry reconcile credits', (select balance from credit_accounts where student_id='00000000-0000-4000-8000-000000000501')=current_setting('test.daily_balance')::int-0);
+select rls_check('daily: matching manual session reused', (select count(*) from sessions where class_id='00000000-0000-4000-8000-000000000c11' and session_date='2026-10-26')=1);
+select rls_expect_state('daily: MIA cannot complete lessons', $$select log_session_credits('00000000-0000-4000-8000-000000000901',null,'[{"studentId":"00000000-0000-4000-8000-000000000501","status":"mia"}]','[{"studentId":"00000000-0000-4000-8000-000000000501","lessonId":"00000000-0000-4000-8000-000000000101"}]','00000000-0000-4000-8000-000000000930',3)$$,'42501');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a05","role":"authenticated"}', true);
+set local role authenticated;
+select rls_expect_state('daily: parent workspace denied', $$select daily_attendance_workspace('2026-10-26')$$,'42501');
+select rls_expect_state('daily: parent cannot create slots', $$select change_daily_attendance('create_slot','{"id":"00000000-0000-4000-8000-000000000903","classId":"00000000-0000-4000-8000-000000000c11","weekday":1,"time":"15:00","date":"2026-10-26"}')$$,'42501');
+reset role;
+
+-- Uploaded media remains private until the server verifies storage metadata.
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a02","role":"authenticated"}', true);
+set local role authenticated;
+select rls_expect_allowed('media: teacher creates pending media for assigned learner', $$insert into student_media(id,student_id,kind,storage_path,recorded_date,created_by) values ('00000000-0000-4000-8000-000000000941','00000000-0000-4000-8000-000000000501','photo','00000000-0000-4000-8000-000000000501/00000000-0000-4000-8000-000000000941.png',current_date,auth.uid())$$);
+select rls_expect_blocked('media: teacher cannot bypass finalization', $$update student_media set ready=true$$);
+select rls_expect_blocked('media: teacher cannot upload for peer learner', $$insert into student_media(id,student_id,kind,storage_path,recorded_date,created_by) values ('00000000-0000-4000-8000-000000000942','00000000-0000-4000-8000-000000000502','video','00000000-0000-4000-8000-000000000502/00000000-0000-4000-8000-000000000942.mp4',current_date,auth.uid())$$);
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a05","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('media: family cannot read unfinished upload',(select count(*) from student_media)=0);
+reset role;
+update student_media set ready=true where id='00000000-0000-4000-8000-000000000941';
+set local role authenticated;
+select rls_check('media: family reads own ready media',(select count(*) from student_media)=1);
+select rls_expect_blocked('media: family cannot upload', $$insert into student_media(id,student_id,kind,storage_path,recorded_date,created_by) values ('00000000-0000-4000-8000-000000000943','00000000-0000-4000-8000-000000000501','photo','00000000-0000-4000-8000-000000000501/00000000-0000-4000-8000-000000000943.png',current_date,auth.uid())$$);
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-000000000a06","role":"authenticated"}', true);
+set local role authenticated;
+select rls_check('media: unrelated family cannot read media',(select count(*) from student_media)=0);
+reset role;
+set constraints all immediate;
+
 -- ============================================================
 -- COVERAGE CHECK — every table must have RLS on
 -- ============================================================

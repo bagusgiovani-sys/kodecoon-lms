@@ -1,4 +1,6 @@
+import { StudentMediaPanel } from '@/components/students/StudentMediaPanel'
 import Link from 'next/link'
+import { DailyAttendancePanel } from '@/components/attendance/DailyAttendancePanel'
 import { CreditPanel } from '@/components/students/CreditPanel'
 import { FeedbackPanel } from '@/components/students/FeedbackPanel'
 import { notFound } from 'next/navigation'
@@ -134,8 +136,10 @@ export default async function StudentDetailPage({
         </Button>
       </div>
       <CreditPanel studentId={studentId} canAdjust={role === 'admin'} />
+      <StudentMediaPanel studentId={studentId} actorId={userId} staff />
       {process.env.FEEDBACK_UI_ENABLED === 'true' && <FeedbackPanel key={`${userId}:${studentId}`} studentId={studentId} actorId={userId} staff
         classes={detail.enrollments.map(item => ({id:item.classId,name:item.className}))} lessons={lessons ?? []} />}
+      <DailyAttendancePanel actorId={userId} studentId={studentId} />
       <StudentHistoryTabs detail={detail} />
     </>
   )

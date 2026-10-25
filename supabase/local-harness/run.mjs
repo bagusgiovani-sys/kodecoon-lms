@@ -58,6 +58,9 @@ await migrationDb.exec(`
 `)
 await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610210004_course_lesson_targets.sql`))
 await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610210005_course_curriculum_mapping.sql`))
+await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610240001_daily_attendance.sql`))
+await migrationDb.exec(read(`${KOMS}/supabase/migrations/202610240002_student_media.sql`))
+console.log('OK  daily attendance and media forward migrations')
 const curriculumSchema = await migrationDb.query(`select
   (select count(*)::int from information_schema.columns where table_name='lessons' and column_name in ('course_id','course_lesson_id')) as columns,
   (select count(*)::int from pg_proc where proname='map_class_course_lessons') as rpc,
@@ -105,6 +108,7 @@ await stage('assignment RPC grants', read(here('assignment-rpc-grants.sql')))
 await stage('submission RPC grants', read(here('submission-rpc-grants.sql')))
 await stage('assignment roster RPC grants', read(here('assignment-roster-rpc-grants.sql')))
 await stage('feedback RPC grants', read(here('feedback-rpc-grants.sql')))
+await stage('daily attendance RPC grants', `revoke all on weekly_class_slots,weekly_slot_members from public,anon,authenticated; revoke all on function public.daily_attendance_workspace(date),public.change_daily_attendance(text,jsonb),public.can_manage_daily_class(uuid) from public,anon;`)
 const res = await stage('rls-verification.sql', read(`${KOMS}/supabase/rls-verification.sql`))
 
 const sets = res.filter(r => r.rows && r.rows.length)

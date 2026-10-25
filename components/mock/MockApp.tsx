@@ -6,6 +6,7 @@ import { ArrowRight, ArrowUpRight, BookOpen, Bot, CalendarDays, CheckCircle2, Co
 import { cn } from '@/lib/utils'
 import { MockProvider, useMock } from './MockProvider'
 import { Avatar, Empty, Heading, inputStyle, LinkAction, Panel, Pill, StudentLink } from './MockUI'
+import { DailyAttendance } from './DailyAttendance'
 import { StudentRecord } from './StudentRecord'
 import { StudentCard } from './StudentCard'
 import { LearningScreen } from './LearningPages'
@@ -42,6 +43,7 @@ function MockShell({ path, children }: { path: string; children: React.ReactNode
     { href: '/students', label: 'Students', icon: Users },
     { href: '/courses', label: 'Courses', icon: BookOpen },
     { href: '/assignments', label: 'Assignments', icon: CheckCircle2 },
+    { href: '/attendance', label: 'Daily Attendance', icon: CalendarDays },
     { href: '/schedule', label: 'Schedule', icon: CalendarDays },
     { href: '/admin/teachers', label: 'Teachers', icon: GraduationCap },
   ]
@@ -55,6 +57,7 @@ function MockScreen({ path, sessionId }: { path: string; sessionId?: string }) {
   const { data } = useMock()
   if (path === '/dashboard' || path === '/admin') return <Dashboard />
   if (path === '/courses' || path.startsWith('/courses/') || path === '/assignments' || path.startsWith('/assignments/')) return <LearningScreen path={path} />
+  if (path === '/attendance') return <DailyAttendance />
   if (path === '/students') return <Students />
   if (path === '/schedule' || path === '/admin/schedule') return <SchedulePage />
   if (path === '/admin/teachers') return <TeacherPage />

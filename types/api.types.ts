@@ -89,7 +89,7 @@ export interface CreateSessionResponse {
 export interface LogSessionRequest {
   requestId: string
   expectedRevision: number
-  attendance: Array<{ studentId: string; status: 'present' | 'absent' | 'unmarked' }>
+  attendance: Array<{ studentId: string; status: 'present' | 'mia' | 'excused' | 'absent' | 'unmarked' }>
   video?: { driveFileId: string; driveLink: string }
   notes?: string
   lessonCompletions: Array<{ studentId: string; lessonId: string }>

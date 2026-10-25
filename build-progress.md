@@ -1,5 +1,26 @@
 # Build Progress — KOMS
 
+## 2026-10-25 - Daily attendance, private student media, and feedback formatting (in progress)
+
+- Added production and demo daily attendance views, shared profile controls, credit-safe MIA/Attend/Izin corrections, weekly rosters, profile photos, private media upload/read paths, a staff learner selector, feedback outlines and PDF word styling.
+- Hardened data access: peer balances are redacted, MIA lesson completion is rejected, manual sessions are reused, RPC-only tables have deny policies, and family media reads only finalized records for their linked child.
+- Local PGlite RLS harness: 159/159 checks pass, including migration, billing/retry, roster access, pending/final media, and parent/peer boundaries. TypeScript and production build pass. Lint has zero errors and two existing graph-harness warnings. `git diff --check` passes.
+- Headless Chrome confirms MIA deduction, Attend correction without a second deduction, Izin refund, shared profile attendance, and no overflow at 360/390/768/1024/1440px. Browser testing ran against demo-local records, not Supabase. No project, credentials, live schema, or storage bucket were accessed.
+- Still open: broader authorized multi-center access; retry/race hardening and production-route tests; live storage upload verification; review generated feedback publication across staff/family profiles; multilingual and production responsive QA. Apply `supabase/student-media-storage.sql` in the Supabase SQL Editor only after the project bucket exists. The user has explicitly requested a push of this in-progress slice; do not describe it as fully complete or deployed. Live Supabase setup remains pending.
+
+## 2026-10-24 - Daily attendance and student profile expansion (paused)
+
+- User requested Daily Attendance by date/time and center, editable rosters,
+  Attend/MIA/Izin status controls, shared profile attendance, profile photos,
+  video uploads with descriptions, and customizable feedback/PDF generation.
+- Confirmed billing: Attend and MIA cost one credit; Izin and unmarked cost zero.
+  Started local demo/production attendance components, weekly roster RPCs,
+  migration changes, and private media metadata/storage setup SQL.
+- Work is unfinished and unverified. No live Supabase changes, deployment,
+  commit, or push. User explicitly paused the session.
+- See SESSION-HANDOFF.md for the full saved scope, changed files, known security
+  and integration gaps, pending checks, and manual-dashboard Supabase preference.
+
 ## 2026-10-21 - Family module and lesson progress visibility
 
 - Family program cards show the active module name and `Lesson X/Y` for a

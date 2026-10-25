@@ -1,5 +1,6 @@
 'use client'
 
+import { attendanceLabel } from '@/lib/attendance'
 import { ExternalLink, History } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -90,11 +91,7 @@ export function StudentHistoryTabs({ detail }: StudentHistoryTabsProps) {
                               : 'secondary'
                         }
                       >
-                        {entry.status === 'present'
-                          ? t('present')
-                          : entry.status === 'absent'
-                            ? t('absent')
-                            : t('unmarked')}
+                        {attendanceLabel(entry.status)}
                       </Badge>
                     </TableCell>
                   </TableRow>

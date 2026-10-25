@@ -87,9 +87,8 @@ const styles = StyleSheet.create({
   body: {
     lineHeight: 1.6,
   },
-  paragraph: {
-    marginBottom: 10,
-  },
+  paragraph: { marginBottom: 10 },
+  heading: { color:'#0f766e',fontFamily:'Helvetica-Bold',fontSize:13,marginTop:5,marginBottom:6 },
   footer: {
     borderTopColor: '#e2e8f0',
     borderTopWidth: 1,
@@ -104,10 +103,8 @@ const styles = StyleSheet.create({
 })
 
 function ReportDocument({ input }: { input: ReportPdfInput }) {
-  const paragraphs = input.finalText
-    .split(/\n{2,}|\n/)
-    .map((p) => p.trim())
-    .filter(Boolean)
+  const paragraphs = input.finalText.split(/\n{2,}/).map(p=>p.trim()).filter(Boolean)
+  const inline=(value:string)=>value.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((part,index)=>part.startsWith('**')&&part.endsWith('**')?<Text key={index} style={{fontFamily:'Helvetica-Bold'}}>{part.slice(2,-2)}</Text>:part.startsWith('*')&&part.endsWith('*')?<Text key={index} style={{fontFamily:'Helvetica-Oblique'}}>{part.slice(1,-1)}</Text>:part)
 
   return (
     <Document title={`${input.studentName} — Progress Report`}>
@@ -141,8 +138,8 @@ function ReportDocument({ input }: { input: ReportPdfInput }) {
 
         <View style={styles.body}>
           {paragraphs.map((paragraph, index) => (
-            <Text key={index} style={styles.paragraph}>
-              {paragraph}
+            <Text key={index} style={paragraph.startsWith('## ')?styles.heading:styles.paragraph}>
+              {inline(paragraph.replace(/^## /,''))}
             </Text>
           ))}
         </View>

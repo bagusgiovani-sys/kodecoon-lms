@@ -1,9 +1,11 @@
 import type { LearningData } from './learning'
 export interface MockClass {
+  centerId?: string
   id: string; name: string; ageBracket: string; teacher: string; modules: string[]
 }
 export interface CreditEntry { id: string; date: string; amount: number; reason: string }
 export interface MockStudent {
+  photo?: string
   id: string; name: string; age: number; parentName: string; parentEmail: string
   classIds: string[]; credits: number; creditHistory: CreditEntry[]; completedModules: string[]
 }
@@ -16,12 +18,15 @@ export interface MockFeedback {
   date: string; strengths: string; nextSteps: string; rating: string; published: boolean
 }
 export interface MockSession {
+  roster?: string[]
   id: string; classId: string; date: string; time: string; notes: string
   module?: string; videoUrl?: string
-  completed: boolean; attendance: Record<string, 'present' | 'absent'>
+  completed: boolean; attendance: Record<string, 'present' | 'absent' | 'mia' | 'excused' | 'unmarked'>
 }
 export interface MockReport { id: string; studentId: string; date: string; text: string }
 export interface MockData {
+  centers?: Array<{ id: string; name: string }>
+  weeklySlots?: Array<{ id: string; classId: string; weekday: number; time: string; start: string; members: Array<{ studentId: string; start: string; end?: string }> }>
   learning?: LearningData
   version: 1; classes: MockClass[]; students: MockStudent[]; videos: MockVideo[]
   feedback: MockFeedback[]; sessions: MockSession[]; reports: MockReport[]

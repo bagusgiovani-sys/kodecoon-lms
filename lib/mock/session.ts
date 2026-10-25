@@ -7,10 +7,11 @@ export function applyMockSession(data: MockData, session: MockSession): MockData
   const cls = data.classes.find(c => c.id === session.classId)
   if (!cls) throw new Error('Class not found')
   const students = data.students.map(student => {
-    if (!student.classIds.includes(session.classId)) return student
-    const wasPresent = previous?.attendance[student.id] === 'present'
+    if (!student.classIds.includes(session.classId) && !previous?.attendance[student.id] && !session.roster?.includes(student.id)) return student
+    const wasCharged = previous?.attendance[student.id] === 'present' || previous?.attendance[student.id] === 'mia'
     const isPresent = session.attendance[student.id] === 'present'
-    const amount = Number(wasPresent) - Number(isPresent)
+    const isCharged = isPresent || session.attendance[student.id] === 'mia'
+    const amount = Number(wasCharged) - Number(isCharged)
     if (student.credits + amount < 0) throw new Error(`${student.name} needs a credit top-up before attendance can be saved.`)
     const moduleKey = session.module ? `${cls.id}:${session.module}` : ''
     const creditHistory = student.creditHistory.map(entry => entry.id.startsWith(`session-${session.id}-`) ? { ...entry, date: session.date } : entry)
@@ -19,7 +20,7 @@ export function applyMockSession(data: MockData, session: MockSession): MockData
       credits: student.credits + amount,
       creditHistory: amount ? [...creditHistory, {
         id: `session-${session.id}-${mockId()}`, date: session.date, amount,
-        reason: amount < 0 ? `Attended ${cls.name}` : `Attendance correction · ${cls.name}`,
+        reason: amount < 0 ? `${isPresent ? 'Attend' : 'MIA'} · ${cls.name}` : `Attendance correction · ${cls.name}`,
       }] : creditHistory,
       completedModules: isPresent && moduleKey && !student.completedModules.includes(moduleKey)
         ? [...student.completedModules, moduleKey] : student.completedModules,

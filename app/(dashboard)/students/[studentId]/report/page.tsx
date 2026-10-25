@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { ReportEditor } from '@/components/students/ReportEditor'
+import { FeedbackStudentSelector } from '@/components/students/FeedbackStudentSelector'
 import { requireStaffPage } from '@/lib/utils/pageAuth'
 import { getT } from '@/lib/i18n/server'
 
@@ -29,12 +30,11 @@ export default async function GenerateReportPage({
     .maybeSingle()
   if (!student) notFound()
 
-  const { data: enrollments } = await supabase
-    .from('enrollments')
-    .select('class_id, classes(id, name)')
-    .eq('student_id', studentId)
+  const { data: enrollments } = await supabase.from('enrollments').select('student_id, students(id,name), class_id, classes(id, name)')
+  const rosterStudents=[...new Map((enrollments??[]).filter(row=>row.students).map(row=>[row.student_id,row.students!])).values()].sort((a,b)=>a.name.localeCompare(b.name))
+  const studentEnrollments=(enrollments??[]).filter(row=>row.student_id===studentId)
 
-  const programs = (enrollments ?? []).filter((e) => e.classes !== null)
+  const programs = studentEnrollments.filter((e) => e.classes !== null)
   if (programs.length === 0) {
     return (
       <>
@@ -94,6 +94,7 @@ export default async function GenerateReportPage({
         title={t('reportTitle')}
         subtitle={`${student.name} · ${program.classes!.name}`}
       />
+      <FeedbackStudentSelector students={rosterStudents.map(item=>({id:item.id,name:item.name}))} selected={studentId} />
       <ReportEditor
         studentId={studentId}
         classId={program.class_id}

@@ -96,11 +96,11 @@ export default async function LogSessionPage({
     }
   }
 
-  const initialAttendance: Record<string, 'present' | 'absent' | undefined> = {}
+  const initialAttendance: Record<string, 'present' | 'mia' | 'excused' | 'absent' | undefined> = {}
   if (session) {
     const { data: saved } = await supabase.from('attendance').select('student_id, status, students(id, name)').eq('session_id', session.id)
     for (const entry of saved ?? []) {
-      initialAttendance[entry.student_id] = entry.status === 'present' || entry.status === 'absent' ? entry.status : undefined
+      initialAttendance[entry.student_id] = entry.status === 'present' || entry.status === 'mia' || entry.status === 'excused' || entry.status === 'absent' ? entry.status : undefined
       if (entry.students && !students.some(student => student.id === entry.student_id)) students.push(entry.students)
     }
   }
