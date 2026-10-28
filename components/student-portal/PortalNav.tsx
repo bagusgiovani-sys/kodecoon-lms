@@ -30,7 +30,7 @@ export function PortalNav() {
     <header className="border-border/60 bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
       <div className="mx-auto flex h-14 max-w-2xl items-center justify-between gap-4 px-4">
         <Link href="/student" className="text-primary font-bold tracking-tight">
-          KOMS
+          KodeNexus
         </Link>
         <div className="flex items-center gap-2">
           <LanguageToggle />

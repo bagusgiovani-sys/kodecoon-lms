@@ -21,7 +21,7 @@ export function ReportPrintButton({ studentName, date, text }: { studentName: st
       window.print()
     }}><Download className="size-4" />Print / Save PDF</Action>
     {printing && createPortal(<article className="mock-print-report">
-      <header><p>KodeHub · Progress report</p><h1>{studentName}</h1><p>{dateLabel(date)}</p></header>
+      <header><p>KodeNexus · Progress report</p><h1>{studentName}</h1><p>{dateLabel(date)}</p></header>
       <div className="mock-print-report-text">{text}</div>
       <footer>Demo learning record · Teacher-prepared report</footer>
     </article>, document.body)}

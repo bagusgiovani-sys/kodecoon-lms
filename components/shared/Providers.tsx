@@ -32,7 +32,7 @@ export function Providers({ initialLocale, children }: ProvidersProps) {
           animations are dropped, opacity fades are kept. Components running
           infinite loops gate on useReducedMotion() themselves — MotionConfig
           alone would leave an opacity pulse cycling. */}
-      <MotionConfig reducedMotion="user">
+      <MotionConfig reducedMotion="never">
         <LanguageProvider initialLocale={initialLocale}>
           {children}
           <Toaster position="top-center" />

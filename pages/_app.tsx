@@ -4,13 +4,14 @@ import { Geist } from 'next/font/google'
 import { Providers } from '@/components/shared/Providers'
 import '@/app/globals.css'
 import '@/components/mock/mock.css'
+import '@/components/mock/nexus-themes.css'
 
 const geist = Geist({ subsets: ['latin'] })
 
 export default function App({ Component, pageProps }: AppProps) {
   return <div className={`dark min-h-screen bg-background text-foreground ${geist.className}`}>
     <Head>
-      <title>KodeHub · Your classroom, connected</title>
+      <title>KodeNexus · Your classroom, connected</title>
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta name="theme-color" content="#080e20" />
     </Head>

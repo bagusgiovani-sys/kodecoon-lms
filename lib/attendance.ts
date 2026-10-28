@@ -1,8 +1,8 @@
 export type AttendanceStatus = 'present' | 'mia' | 'excused' | 'unmarked'
 export const attendanceOptions = [
-  { value: 'present', label: 'Attend', credit: 1 },
-  { value: 'mia', label: 'MIA', credit: 1 },
-  { value: 'excused', label: 'Izin', credit: 0 },
+  { value: 'present', label: 'Present', credit: 1 },
+  { value: 'excused', label: 'Leave', credit: 0 },
+  { value: 'mia', label: 'Absent', credit: 1 },
   { value: 'unmarked', label: 'Unmarked', credit: 0 },
 ] as const
 export function attendanceLabel(status: string) {

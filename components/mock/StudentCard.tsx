@@ -1,16 +1,20 @@
 'use client'
+import { DemoLink as Link } from './DemoLink'
 import { ArrowUpRight, BookOpen, Coins } from 'lucide-react'
 import type { MockClass, MockStudent } from '@/lib/mock/data'
+import type { LearnerModule } from '@/lib/mock/nexus'
 import { Avatar, Panel, Pill } from './MockUI'
 
-export function StudentCard({ student, classes, parent = false }: {
+export function StudentCard({ student, classes, learnerModules, parent = false }: {
   student: MockStudent
   classes: MockClass[]
+  learnerModules?: LearnerModule[]
   parent?: boolean
 }) {
   const enrolled = classes.filter(cls => student.classIds.includes(cls.id))
-  const total = enrolled.reduce((sum, cls) => sum + cls.modules.length, 0)
-  const completed = enrolled.reduce((sum, cls) => sum + cls.modules.filter(module => student.completedModules.includes(`${cls.id}:${module}`)).length, 0)
+  const plans = learnerModules?.filter(p => p.studentId === student.id)
+  const total = plans ? plans.length : enrolled.reduce((sum, cls) => sum + cls.modules.length, 0)
+  const completed = plans ? plans.filter(p => p.status === 'completed').length : enrolled.reduce((sum, cls) => sum + cls.modules.filter(module => student.completedModules.includes(`${cls.id}:${module}`)).length, 0)
   const progress = total ? Math.round(completed / total * 100) : 0
   const href = `/${parent ? 'student' : 'students'}/${student.id}`
 
@@ -19,7 +23,7 @@ export function StudentCard({ student, classes, parent = false }: {
       <Avatar name={student.name} large />
       <Pill tone={student.credits <= 2 ? 'warning' : 'good'}>{student.credits <= 2 ? 'Low credits' : 'Learning in progress'}</Pill>
     </div>
-    <h2 className="text-xl font-semibold tracking-tight"><a href={href} className="hover:text-primary">{student.name}</a></h2>
+    <h2 className="text-xl font-semibold tracking-tight"><Link href={href} className="hover:text-primary">{student.name}</Link></h2>
     <p className="mt-1 text-sm text-muted-foreground">Age {student.age} · {student.parentName}</p>
     <div className="my-5 grid flex-1 gap-3">
       <div className="rounded-xl border bg-background/45 p-4">
@@ -36,6 +40,6 @@ export function StudentCard({ student, classes, parent = false }: {
       <div className="mb-2 flex justify-between gap-2 text-xs text-muted-foreground"><span>Module progress</span><span>{completed}/{total}</span></div>
       <div role="progressbar" aria-label={`${student.name} module progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} className="h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} /></div>
     </div>
-    <a href={href} aria-label={`View ${student.name}'s learning record`} className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/20">View learning record<ArrowUpRight className="size-4 shrink-0" /></a>
+    <Link href={href} aria-label={`View ${student.name}'s learning record`} className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/20">View learning record<ArrowUpRight className="size-4 shrink-0" /></Link>
   </Panel>
 }

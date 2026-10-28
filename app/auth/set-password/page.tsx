@@ -59,7 +59,7 @@ export default function SetPasswordPage() {
         <CardHeader>
           <CardTitle>Set your password</CardTitle>
           <CardDescription>
-            Choose a password to finish setting up your KOMS teacher account.
+            Choose a password to finish setting up your KodeNexus staff account.
           </CardDescription>
         </CardHeader>
         <CardContent>

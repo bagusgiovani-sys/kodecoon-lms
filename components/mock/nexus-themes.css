@@ -1,0 +1,59 @@
+/* Palette overrides apply to portals as well as the workspace. */
+html[data-nexus-theme], html[data-nexus-theme] .dark {
+  --background: #070e1c; --foreground: #e5efff; --card: #0d1b30; --card-foreground: #e5efff;
+  --popover: #101f35; --popover-foreground: #e5efff; --primary: #80caff; --primary-foreground: #061321;
+  --secondary: #192d46; --secondary-foreground: #e5efff; --muted: #16253a; --muted-foreground: #aabed6;
+  --accent: #203954; --accent-foreground: #eff8ff; --border: #2b4560; --input: #34516b; --ring: #80caff;
+  --chart-1: var(--primary); --chart-2: #68a5d6; --chart-3: #a6dff5;
+  --nexus-bright: #dcf5ff; --nexus-dim: #237db6;
+}
+html[data-nexus-theme=red], html[data-nexus-theme=red] .dark {
+  --background: #10090c; --foreground: #f7e9ec; --card: #201116; --card-foreground: #f7e9ec;
+  --popover: #28171d; --popover-foreground: #f7e9ec; --primary: #dc5b70; --primary-foreground: #1b0c10;
+  --secondary: #352027; --secondary-foreground: #f7e9ec; --muted: #291a20; --muted-foreground: #c6aab0;
+  --accent: #42242c; --accent-foreground: #fbf0f2; --border: #56303a; --input: #67404a; --ring: #dc5b70;
+  --chart-2: #c85c70; --chart-3: #e59aa7; --nexus-bright: #ffe3e8; --nexus-dim: #a8475a;
+}
+html[data-nexus-theme=green], html[data-nexus-theme=green] .dark {
+  --background: #061310; --foreground: #e3fff1; --card: #0d241d; --card-foreground: #e3fff1;
+  --popover: #132d23; --popover-foreground: #e3fff1; --primary: #7ae6b0; --primary-foreground: #042316;
+  --secondary: #1c3a2e; --secondary-foreground: #e3fff1; --muted: #152e25; --muted-foreground: #aacbbd;
+  --accent: #234a38; --accent-foreground: #ecfff3; --border: #305844; --input: #3e6b53; --ring: #7ae6b0;
+  --chart-2: #49b391; --chart-3: #b4f2b0; --nexus-bright: #dcffe9; --nexus-dim: #299469;
+}
+html[data-nexus-theme=mono], html[data-nexus-theme=mono] .dark {
+  --background: #0c0d10; --foreground: #f0f1f3; --card: #1a1c20; --card-foreground: #f0f1f3;
+  --popover: #22252a; --popover-foreground: #f0f1f3; --primary: #d6dce5; --primary-foreground: #14171c;
+  --secondary: #30343b; --secondary-foreground: #f0f1f3; --muted: #252930; --muted-foreground: #b7bec8;
+  --accent: #3a404a; --accent-foreground: #fff; --border: #4b525e; --input: #5c6572; --ring: #d6dce5;
+  --chart-2: #929ba9; --chart-3: #eef0f4; --nexus-bright: #fff; --nexus-dim: #697483;
+}
+html[data-nexus-theme=light], html[data-nexus-theme=light] .dark {
+  --background: #f3f5f7; --foreground: #20252c; --card: #ffffff; --card-foreground: #20252c;
+  --popover: #ffffff; --popover-foreground: #20252c; --primary: #315f9f; --primary-foreground: #ffffff;
+  --secondary: #e8ebef; --secondary-foreground: #242a32; --muted: #eceff2; --muted-foreground: #626b76;
+  --accent: #e1e6ec; --accent-foreground: #20252c; --border: #d2d8df; --input: #c4cbd3; --ring: #4779bc;
+  --chart-1: #315f9f; --chart-2: #6986a9; --chart-3: #9aa8b8;
+  --nexus-bright: #315f9f; --nexus-dim: #7c8998;
+}
+html[data-nexus-theme=light] .kodecoon-icon { background: linear-gradient(145deg,#30445d,#61748a); filter: none !important; }
+html[data-nexus-theme=candy], html[data-nexus-theme=candy] .dark {
+  color-scheme: light;
+  --background: #fff8f1; --foreground: #392b46; --card: #ffffff; --card-foreground: #392b46;
+  --popover: #ffffff; --popover-foreground: #392b46; --primary: #ec5482; --primary-foreground: #ffffff;
+  --secondary: #fff0d9; --secondary-foreground: #49354a; --muted: #f7ebf1; --muted-foreground: #75677c;
+  --accent: #dff6e8; --accent-foreground: #31533e; --border: #f0d9e1; --input: #e6cbd5; --ring: #ec5482;
+  --chart-1: #ec5482; --chart-2: #f5b83d; --chart-3: #55b88b; --chart-4: #8c70d6; --chart-5: #55a9df;
+  --nexus-bright: #ffb74c; --nexus-dim: #b54e82;
+}
+html[data-nexus-theme=candy] .kodecoon-icon { background: linear-gradient(145deg,#ec5482,#8c70d6); filter: drop-shadow(0 0 12px color-mix(in srgb,#ec5482 40%,transparent)); }
+html[data-nexus-theme=candy] .mock-workspace {
+  background-image: radial-gradient(ellipse at 4% 0%,color-mix(in srgb,#ffd26b 25%,transparent),transparent 34%),radial-gradient(ellipse at 96% 14%,color-mix(in srgb,#f48bb0 18%,transparent),transparent 36%),linear-gradient(color-mix(in srgb,#ec5482 4%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,#ec5482 4%,transparent) 1px,transparent 1px);
+  background-size: 100% 100%,100% 100%,64px 64px,64px 64px;
+}
+.mock-workspace { background-image: linear-gradient(color-mix(in srgb,var(--primary) 3%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--primary) 3%,transparent) 1px,transparent 1px),radial-gradient(ellipse at 85% 0%,color-mix(in srgb,var(--primary) 15%,transparent),transparent 60%); background-size: 64px 64px,64px 64px,100% 100%; }
+.mock-panel { border-radius: 12px; border-top-color: color-mix(in srgb,var(--primary) 45%,var(--border)); }
+.nexus-skeleton { background-image: linear-gradient(100deg,var(--card) 20%,var(--secondary) 45%,var(--card) 70%); }
+[role=tabpanel] button, nav a { transition: color .2s, background-color .2s, box-shadow .2s; }
+nav a[aria-current=page] { background: color-mix(in srgb,var(--primary) 9%,transparent); }
+@media print { html[data-nexus-theme], html[data-nexus-theme] .dark { --background:white; --foreground:black; --card:white; --card-foreground:black; --primary:#244c91; --muted-foreground:#444; --border:#ddd; } }

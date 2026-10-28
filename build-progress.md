@@ -1,5 +1,213 @@
 # Build Progress — KOMS
 
+## 2026-10-28 - Straight logo-reveal wire and selector redesign
+
+- Splash wire is a single straight vertical path from the Kode Nexus title to the
+  reveal point. It fades away after arriving; the Kodecoon logo and “Beyond Coding”
+  tagline are concealed until the arrival. Removed the loading bar.
+- Login and workspace header use a cropped Kodecoon icon only, beside “Kode Nexus by
+  Kodecoon.” Login logo reveals bottom-up with slow upward streams.
+- Replaced native center/theme selects with matching animated option menus. Renamed
+  palettes Ion Blue, Inferno Red, Emerald Green and Obsidian Mono; increased red saturation.
+- Splash duration allows the logo reveal and scan to complete. TypeScript passes.
+
+## 2026-10-28 - Logo reveal wire and login branding
+
+- Replaced splash grid/rain backdrop with a still, soft-focus deep-space palette.
+- Added one glowing SVG wire that draws upward from the Kode Nexus title to a point;
+  the point triggers a bottom-up Kodecoon logo reveal and the existing logo scan.
+- Added the Kodecoon logo and a slow upward stream treatment to the staff/parent login.
+  Main workspace header now reads “Kode Nexus by Kodecoon” with the logo.
+- `npx tsc --noEmit` passes; no browser preview was run.
+
+## 2026-10-28 - Refine splash movement
+
+- Removed the butterfly overlay and expanding pulse rings from the splash.
+- Kept the data streams, reversed their travel to bottom-to-top, and slowed each to
+  6–9.3 seconds with staggered starts for a calmer, rain-like movement.
+
+
+## 2026-10-28 - Restore the Framer Motion animations
+
+- Found the root cause of static motion: the app-wide MotionConfig used
+  `reducedMotion="user"`, which strips transform animations, and the demo repeated that
+  setting. On systems requesting reduced motion, some splash code also explicitly set
+  moving elements to static states.
+- Set the demo/app MotionConfig to `never` for the motion-heavy experience, and removed
+  splash branches that froze movement. The selected top navigation now uses a persistent
+  Web Animations API indicator that slides between active tabs.
+- Rebuilt the splash with three center-outward expanding pulse rings, counter-rotating
+  HUD rings, falling data streams, a traveling logo scan, moving loading bar and separate
+  flapping butterfly wings. Page/section entrances have more visible movement.
+- `npx tsc --noEmit` passes. Browser playback was not run in this pass.
+
+## 2026-10-28 - Four HUD palettes and visible motion
+
+- Added persistent Visual theme selector: Azure Command, Crimson Orbit, Emerald
+  Terminal and Obsidian Signal. Palette tokens cover nested dark surfaces and portals.
+  Added faint grid, sharper panel outlines and stronger selected-navigation treatment.
+- Fixed page entrances occurring behind the splash: content now mounts after its
+  2.4-second presentation. Framer Motion staggers panels, animates shared tab indicators,
+  student tab interactions, counter-rotating splash rings and moving logo scan/text.
+  Reduced-motion preference remains supported.
+- TypeScript and lint pass (two existing graph.mjs warnings). Five isolated browser
+  checks passed for distinct palettes at 360/390/768/1024/1440, persistence, navigation
+  indicator, changing splash transform and reduced-motion readability.
+  Evidence: C:/Users/kodec/AppData/Local/Temp/kodenexus-browser-1793177171575.
+- Official hosting terms/limits reviewed in docs/hosting-assessment.md. Vercel Hobby
+  is unsuitable for this commercial academy use. No deployment performed.
+
+## 2026-10-28 - Class groups, 12-class feedback PDFs and completion certificates
+
+- Added center-scoped Class Groups cards, codes, schedules and learner links.
+- Revised splash order and typography: logo, close Beyond Coding tagline, large spaced
+  blue animated Kode Nexus. Reduced-motion support retained.
+- Feedback now follows every 12 unique Present records across centers, independently
+  of module completion. Added dedicated PDF generation/upload and publication page,
+  historical versions, due/upcoming status, five skill grades and grade legend.
+- Completed learner modules support certificate PDF upload and parent download in a
+  separate Certificates tab. Existing text reports and additional notes are preserved.
+- PDFs are stored in IndexedDB and metadata in localStorage; this is a browser-local
+  demo, not production parent delivery. Real finance security and shared private document
+  storage remain required. Parent UI denies staff routes, finance and unrelated children.
+- Verified: TypeScript, production build, helper/session regression checks; lint has only
+  two pre-existing graph.mjs warnings. Nine isolated Chrome checks passed: center cards,
+  pre-12 blocking, actual PDF generation across centers, report upload/version history,
+  certificate upload, five responsive widths (360/390/768/1024/1440), parent access/download
+  controls, denied routes and splash wording. Generated PDF signature/content checked.
+- Browser evidence: C:/Users/kodec/AppData/Local/Temp/kodenexus-browser-1793176318375.
+  Built-in browser connection was unavailable; used isolated headless Chrome fallback.
+
+## 2026-10-28 - Dashboard previews, center course activity and digital splash
+
+- Added a dashboard-only center selector. It reads academy records for that dashboard
+  without changing the main workspace/session selection. Other tabs retain the main
+  center; returning to Dashboard resets the preview. Cross-center previews show summaries
+  and direct staff to the main selector before opening another center's learner records.
+- Courses now shows courses taken in the main center, ordered by distinct active learners
+  descending (title breaks ties). A separate /courses/library view includes all courses,
+  including zero-enrollment entries. Competition replaces Engineering in the subject
+  filter, course labels and new demo seed; legacy categories normalize for display.
+- Added optional library course links to individual module editing. Counts deduplicate
+  learners, exclude completed-only records and other centers, and prefer individual
+  links over old class-course defaults. Unlinked custom modules display a clear notice.
+- Replaced the white logo splash with the user's transparent PNG, blue/cyan logo mask,
+  scanning illumination, orbit and flowing data trails, plus "Beyond Coding". The source
+  PNG is unchanged. Animation uses Framer Motion and honors reduced-motion settings.
+- Verification: TypeScript, lint (only the two pre-existing graph.mjs warnings), optimized
+  production build, and helper regression suite passed. Helper checks cover unique course
+  counting, completed/other-center exclusion and precedence over class defaults.
+- All eight targeted Chrome workflow checks passed with no captured runtime exceptions:
+  dashboard scope/reset, main selector changes, library/filter, counts/order, center
+  isolation, layouts at 360/390/768/1024/1440px, digital splash and reduced motion.
+  Reviewed desktop/mobile course views and splash; final previews are in docs/previews.
+- Changes apply to the browser-local MVP. Existing demo records are preserved; there are
+  no SQL migrations, production authorization changes, commits or pushes in this slice.
+
+## 2026-10-28 - Center workspaces, documentation-only family view and loading experience
+
+- Latest user direction supersedes the earlier requirement for student assignments:
+  removed assignment navigation, parent project/submission UI, and demo assignment
+  creation/review screens. Old assignment URLs show a retirement message; existing
+  stored history, production APIs and schema remain intact. Parent demo writes are denied.
+- Center selection now sits above navigation. Center cards open Dashboard; Schedule
+  has a separate tab and retains the weekly timetable. Summary cards show learner/class
+  counts, low credits (<=2), classes today, weekly activity and documentation coverage.
+- Center scope filters demo students, class records, attendance, documentation,
+  learner modules, assigned teachers and student-linked finance records. Canonical
+  writes retain the complete academy dataset. Course content is shared academy-wide.
+  Payment records lack transaction-center attribution, so this is not center revenue
+  accounting; a learner enrolled across centers can appear in several views.
+- Added an isolated demo navigation adapter using browser history; this avoids
+  Pages/App Router alias data requests losing the proxy's path parameter. Route changes
+  retain the shell; direct links and refresh still use the existing server demo rewrite.
+- Added the user-supplied Kodecoon logo, cocoon/butterfly splash on full loads, Framer
+  Motion page/student-tab/chart/hover/press transitions, and reduced-motion support.
+- Finance, profiles, attendance and course workspaces are dynamically loaded with
+  skeleton fallbacks. Video cards defer blob reads until near view; embeds lazy-load.
+  Search waits 250 ms; shared buttons reject repeat clicks within 500 ms. Uploads
+  also use an in-flight lock; finance keeps its existing operation-ID retry protection.
+- Confirmed uploaded files remain in browser IndexedDB, not Supabase or Google Drive.
+  The documentation dialog now states this explicitly. Drive links can be embedded;
+  automated private academy Drive uploads and verified family playback remain pending.
+- Verification: TypeScript, lint and optimized production build passed. Lint retains
+  only the two existing graph.mjs warnings. Both local helper suites passed, including
+  new center-scope isolation/non-mutation checks. The original 14 browser regression
+  checks passed (editable student/class/module, payment/receipt/retry, attendance,
+  refresh, guardian restrictions and staff role parity). Additional workspace checks
+  cover center switching, browser history, debounce, duplicate documentation saves,
+  removed assignment controls, route guards and widths 360/390/768/1024/1440.
+  All 12 additional browser checks passed with zero captured runtime exceptions;
+  verified normal butterfly animation and reduced-motion behavior. Reviewed desktop,
+  mobile and splash screenshots in docs/previews/kodenexus-center-dashboard*.png
+  and docs/previews/kodenexus-splash.png. Total: 26 browser workflow checks passed.
+- Demo only: browser storage and simulated accounts are not production authorization.
+  No live Drive/finance integration, schema migrations, commit or push in this slice.
+  Current usage and limitations: docs/kodenexus-mvp.md.
+
+## 2026-10-28 - KodeNexus editable academy demonstration
+
+- User chose KodeNexus and requested an immediately usable demonstration with
+  staff-entered student/class data. Finance is a first-party staff section; there is
+  no external payment application dependency. Updated displayed name and app metadata.
+- Added STB/PIK/BSD center cards, weekly timetables and class-code rosters. Staff can
+  add centers, create/edit class codes, teacher/day/time and duration, create/edit
+  students/guardians, and enrol existing learners. Dated recurring slots preserve
+  earlier schedule records; student enrolment changes retain a history.
+- Individual learner modules and lesson counts are editable independently of classmates;
+  Journey, roster summaries and parent profiles use those records. Existing saved demo
+  balances/progress are preserved by a repeat-safe upgrade. Larger profile photo display.
+- Staff Finance records whole-IDR amounts, references, method/date and optional local
+  receipt files. Payment/credit grants save together, exact retries do not grant twice,
+  changed-payload retries conflict, and parent credit history excludes monetary details.
+- Added per-tab teacher/center-manager/guardian demo identities. Parent routes restrict
+  views to email-linked children and deny staff, finance, peer-child and report-edit
+  paths; parent writes are limited to new work submissions for their own enrolled child.
+  Both staff roles have equal demo access. Internal class notes are hidden from parents.
+- Present / Leave / Absent replaces Attend / Izin / MIA labels while retaining the
+  legacy stored status codes and billing transitions. Present->Absent never charges
+  twice; correction to Leave refunds the charge. Old `absent` history remains free.
+- Verification: TypeScript and production build passed. Lint has zero errors and the
+  two existing graph-harness warnings. `node scripts/nexus-demo-check.mjs` and
+  `node scripts/mock-check.mjs` pass. Local Chrome passed 14 workflow checks including
+  create/edit, guardian scope, payment receipt/double-click, refresh and credit corrections.
+  Five screens passed overflow checks at 360/390/768/1024/1440px; screenshots inspected.
+- Browser skill connection failed with the existing sandboxPolicy metadata error;
+  used local headless Chrome. Driver, fixture receipts/results/screenshots remain in Temp.
+- This is a browser-local demonstration, not deployed Supabase auth/finance, secure
+  shared storage, live payment collection or private Drive integration. No migrations,
+  real credentials, live account data, commits or pushes were used. New guide:
+  `docs/kodenexus-mvp.md`. Dedicated graded module reports, Hall of Fame and the full
+  supervising checklist workflow remain outside this editable-data demonstration slice.
+
+## 2026-10-28 - Table-based ERD handoff export
+
+- Replaced the shareable PDF with `docs/erd/KodeHub-ERD-and-Data-Ownership.pdf`:
+  field-level PK/FK tables, types, orthogonal connectors and crow's-foot markers.
+- Presents one logical model based on confirmed academy-wide individual learning,
+  without current/proposed comparison sections. The model defines integration
+  requirements and does not claim the database changes have been deployed.
+- Added source model, 41 entity dictionaries and all 69 FK relationships in CSV.
+  Shared-core ownership and finance exclusions are explicit; the colleague's physical
+  schema still requires integration mapping. Preserved internal audit sources.
+- Rendered all 13 pages and checked text bounds, entity/FK coverage and relationship
+  register completeness; visually inspected diagrams. No application code, database,
+  security settings, commits or pushes changed.
+
+## 2026-10-28 - Shareable ERD review and checklist analysis
+
+- Added `docs/erd/KodeHub-ERD-Review-2026-10-28.pdf`, a 13-page review separating the
+  existing 38-table local schema from proposed individual-learning/checklist models.
+- Read and visually inspected the supplied three-page teacher checklist: 38 checkbox
+  items across eight stages; the third page is guidance, not extra scored tasks.
+- Included selected-key diagrams, ownership proposals, finance exclusion, report
+  grading, family/staff boundaries, complete table inventory and editable references.
+- Document checks cover all 38 table names, page text bounds, reference extraction
+  and new Markdown files under 300 lines. Rendered all pages for visual inspection.
+- The colleague's migrated schema remains unknown. Proposed models are not migrations.
+  No app/runtime tests, database changes, security changes, commits or pushes occurred.
+  See `docs/erd/README.md` for evidence, limitations and regeneration instructions.
+
 ## 2026-10-25 - Daily attendance, private student media, and feedback formatting (in progress)
 
 - Added production and demo daily attendance views, shared profile controls, credit-safe MIA/Attend/Izin corrections, weekly rosters, profile photos, private media upload/read paths, a staff learner selector, feedback outlines and PDF word styling.
@@ -588,3 +796,100 @@ Steps 8, 28, and 29 have now been taken as far as static analysis allows (see th
 - The authenticated Journey API returns the same active-module filtering and a course progress summary. Families still receive only class journey lesson titles and progress; detailed reusable course lesson content remains staff-only.
 - Verification: `npm run rls:verify` passes 143 checks, TypeScript and production build pass, and lint has zero errors with two existing graph-harness warnings. No live Supabase session or multi-width browser session was used.
 - Limitation: unmapped target lessons have no visual node until staff adds or maps a class journey lesson for them.
+
+## 2026-10-28 - Splash wire, theme menu, and workspace ambience
+
+- The splash keeps its straight digital wire visible through the upward draw and node reveal, then retracts the visible mask from the bottom toward the top. The greeting uses the signed-in demo identity name when available (for example, “Welcome, Gio”).
+- The floating theme menu now chooses a direction using available viewport space and caps its scrollable height to that space, including short screens.
+- Staff and family workspace pages now have slow, faint upward data streams behind the content.
+- Verification: reviewed the installed Next.js App Router client-component guide and ran TypeScript validation. Local browser preview was not run; the development server remains stopped.
+
+## 2026-10-28 - Wire visibility, tab indicator, and light theme
+
+- The splash wire mask now declares SVG user-space units explicitly so the straight path is visible during its upward draw and can retract from bottom to top after reaching the node. Increased the wire's blue contrast and glow.
+- Removed the second, static active-tab underline from the theme CSS; the animated sliding indicator remains the sole underline.
+- Added Arctic White, a light palette with white cards, graphite text, cool-grey surfaces, and restrained blue accents.
+- Verification: `git diff --check` passes. TypeScript validation is currently blocked by malformed generated files under `.next/dev/types` (syntax errors in generated `routes.d.ts` and `validator.ts`, outside the edited source files). No browser preview was run; localhost remains stopped.
+
+## 2026-10-28 - Splash wire rendering and animated sign-in greeting
+
+- Replaced the splash wire's SVG mask with a screen-space animated line. It reveals bottom-to-top, holds at the top node, then clips away from bottom-to-top; this removes the SVG mask behavior that left the entire wire invisible.
+- Splash background and decorative colors now use the active theme CSS variables. Theme preference is applied before paint to avoid showing the default palette first.
+- Successful sign-in now transitions in place to a large “Welcome, [name]” greeting with sequential letter reveal and a blinking square cursor, then opens the workspace without reloading or replaying the splash.
+- Reduced Inferno Red's saturation and contrast while retaining a red palette.
+- Verification: ESLint on the edited TypeScript components and `git diff --check` pass. TypeScript remains blocked by malformed generated `.next/dev/types` files. No browser preview was run because localhost remains stopped.
+
+## 2026-10-28 - Splash wire origin and typewriter spacing
+
+- Moved the splash wire's starting point above the Kode Nexus title while keeping its upward draw and bottom-to-top erase.
+- Changed the sign-in greeting to reveal slices of one normally spaced monospace string. A blinking square cursor follows the revealed text, avoiding per-character flex spacing artifacts.
+- Verification: ESLint on the edited components and `git diff --check` pass. No browser preview was run; localhost remains stopped.
+
+## 2026-10-28 - Login transitions and workspace navigation visibility
+
+- Added animated transitions between the login form, the typed welcome screen, and workspace route changes.
+- The staff landing page now remembers or defaults the selected center while keeping the all-centers directory unfiltered. This lets the center selector and center-aware navigation tabs remain visible together.
+- Moved the theme selector into the main header, exposed it on the login screen, expanded the login screen's upward-moving streams, and replaced the login/header logo crop with the splash's theme-tinted icon treatment. Arctic White uses a neutral slate icon without glow.
+- Login backgrounds now use active theme variables instead of fixed navy colors.
+- Verification: ESLint on edited TypeScript components and `git diff --check` pass. No browser preview was run; localhost remains stopped.
+
+## 2026-10-28 - Splash timing and section-only tab navigation
+
+- The splash intro animations now reach the logo and tagline 0.5 seconds sooner; the splash stays for 5.2 seconds total. During its last second it types “Initializing . . .” and speeds up the blinking block cursor until exit.
+- Restored the theme selector as a fixed control on workspace pages. Tab navigation no longer keys/remounts the whole shell; the existing transition is limited to the content section.
+- Verification: ESLint on edited TypeScript components and `git diff --check` pass. No browser preview was run; localhost remains stopped.
+
+## 2026-10-28 - Faster initializing cue and workspace swipe
+
+- Moved the splash's “Initializing . . .” typewriter to 3.2 seconds into the 5.2-second screen and made the cursor accelerate gradually through the end.
+- Increased login-page upward-stream speed.
+- Added a smooth right-to-left masked swipe with motion blur to content transitions. It plays when the workspace first appears after the welcome and remains scoped to the content area on tab changes.
+- Kept the workspace theme control fixed in the lower-right so it stays visible across main pages.
+- Verification: ESLint on edited TypeScript components and `git diff --check` pass. No browser preview was run; localhost remains stopped.
+
+## 2026-10-28 - Welcome overlay reveals workspace; keep tabs local
+
+- Moved the swipe reveal into a persistent welcome overlay outside route content. The staff/parent page loads beneath it, and the overlay wipes away to reveal that page after navigation.
+- Removed the page-level swipe from ordinary tab/content changes; those return to the section-only fade/slide transition.
+- Increased the splash wire's upward draw speed: it now reaches the top in about 0.5 seconds, holds, then clears bottom-to-top. The initializing cue remains at 3.2 seconds.
+- Verification: ESLint on edited TypeScript components and `git diff --check` pass. No browser preview was run; localhost remains stopped.
+
+## 2026-10-28 - Remove Learning Momentum dashboard card
+
+- Removed the Learning Momentum module-count card from the center dashboard. Expanded the documentation card across the two-column row so the dashboard layout stays balanced.
+- Verification: ESLint on `CenterDashboard.tsx` and `git diff --check` pass.
+
+## 2026-10-28 - Make workspace usable during welcome reveal
+
+- The welcome swipe now stops receiving pointer input as soon as the workspace reveal starts, so an animation layer cannot cover the center selector or tabs.
+- Added a 1.5-second cleanup fallback in case the animation completion event does not fire. Tab and center navigation remain on the demo's in-app history path.
+- Verification: ESLint on `NexusExperience.tsx` and `git diff --check` pass. No browser preview was run; localhost remains stopped.
+
+## 2026-10-28 - Render tab content without waiting on exit motion
+
+- Changed the keyed workspace section transition to animate only the incoming section. The previous `AnimatePresence` wait mode could keep the old section mounted until its exit animation completed, leaving a tab click looking like it did nothing if that animation was interrupted.
+- The shell and navigation controls remain mounted; only the section content remounts for the selected route.
+- Verification: ESLint on `NexusExperience.tsx` and `git diff --check` pass. No browser preview was run; localhost remains stopped.
+
+## 2026-10-28 - Add Candy Bloom color theme
+
+- Added an optional cheerful light theme with warm cream backgrounds, white cards, coral-pink actions, and sunny yellow, mint, lilac, and sky-blue chart accents. Theme choice continues to persist using the existing selector.
+- Updated workspace decoration and Kodecoon icon treatment to match the new palette.
+- Verification: ESLint on `NexusTheme.tsx` and `git diff --check` pass. No browser preview was run; localhost remains stopped.
+
+## 2026-10-28 - Make demo route state explicit after tab navigation
+
+- Replaced the demo URL's external-store snapshot subscription with explicit React state synchronized on hydration and on custom in-app navigation/popstate events. The demo is served through rewritten aliases, so its route display now reads the browser location directly after every navigation event.
+- Verification: ESLint on `DemoLink.tsx` and `NexusExperience.tsx`, plus `git diff --check`, pass. No browser preview was run; localhost remains stopped.
+
+## 2026-10-28 - Prevent welcome layer from blocking workspace controls
+
+- Reverted the explicit route-state hook after it did not resolve the reported tab issue. The welcome transition is now always pointer-transparent, so its full-screen visual layer cannot block center/theme dropdowns or tab controls even if animation cleanup stalls.
+- Verification: ESLint on `NexusExperience.tsx`, `DemoLink.tsx`, `NexusDropdown.tsx`, and `NexusTheme.tsx`, plus `git diff --check`, pass. Browser verification was not run; localhost remains stopped.
+
+## 2026-10-28 - Restore reliable workspace navigation and isolate finance
+
+- Replaced raw `history.pushState` navigation with shallow navigation through the Pages Router's `/demo` page while preserving the requested alias in the address bar. This ensures tabs update through Next's router rather than relying on a custom URL snapshot.
+- Replaced the custom animated center/theme popup with a styled native select, keeping selection visible and using the browser's reliable keyboard/touch controls.
+- Removed Finance from the Kode Nexus navigation and routed direct `/finance` visits to an explanation that finance is managed separately. The center dashboard stays focused on class operations, learner credits and documentation; comprehensive analysis belongs in Analytics.
+- Verification: targeted ESLint and optimized production build pass. `git diff --check` passes. Browser preview was not performed because localhost remains stopped.

@@ -5,8 +5,8 @@ import type { MetadataRoute } from 'next'
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
-    name: 'KOMS — Kodecoon Operations Management System',
-    short_name: 'KOMS',
+    name: 'KodeNexus — Kodecoon Academy',
+    short_name: 'KodeNexus',
     description:
       'Attendance, session videos, and lesson-progress journeys for Kodecoon Academy classes.',
     // Landing page redirects by role, so one start_url serves teacher, admin, and parent.

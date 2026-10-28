@@ -1,0 +1,8 @@
+{
+  "pages": 13,
+  "all_existing_tables_in_pdf": 38,
+  "all_text_within_page": true,
+  "markdown_ceiling_300": "passed",
+  "visual_review_files": "C:\\Users\\kodec\\AppData\\Local\\Temp\\kodehub-erd-qa",
+  "runtime_tests": "not run; document verification only"
+}

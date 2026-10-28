@@ -8,7 +8,7 @@ export const LOCALE_COOKIE = 'koms-locale'
 
 const en = {
   // App
-  appName: 'KOMS',
+  appName: 'KodeNexus',
   appTagline: 'Kodecoon Operations Management System',
 
   // Nav
@@ -188,7 +188,7 @@ const en = {
 export type DictKey = keyof typeof en
 
 const id: Record<DictKey, string> = {
-  appName: 'KOMS',
+  appName: 'KodeNexus',
   appTagline: 'Sistem Manajemen Operasional Kodecoon',
 
   navAttendance: 'Absensi Harian',

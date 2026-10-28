@@ -7,7 +7,7 @@ import { isMockMode } from '@/lib/mock/config'
 // three rules. App-layer checks here are UX (fast redirects); RLS remains
 // the real security boundary (CLAUDE.md §6).
 
-const STAFF_PREFIXES = ['/attendance', '/feedback', '/dashboard', '/schedule', '/classes', '/students', '/courses']
+const STAFF_PREFIXES = ['/staff', '/finance', '/attendance', '/feedback', '/dashboard', '/schedule', '/classes', '/students', '/courses']
 
 function isStaffPath(pathname: string) {
   return STAFF_PREFIXES.some(

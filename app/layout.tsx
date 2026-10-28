@@ -15,14 +15,14 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'KOMS — Kodecoon Operations Management System',
+  title: 'KodeNexus — Kodecoon Academy',
   description:
     'Attendance, session videos, and lesson-progress journeys for Kodecoon Academy classes.',
-  applicationName: 'KOMS',
+  applicationName: 'KodeNexus',
   // iOS ignores the manifest's display mode — these drive install-to-homescreen there.
   appleWebApp: {
     capable: true,
-    title: 'KOMS',
+    title: 'KodeNexus',
     statusBarStyle: 'black-translucent',
   },
   formatDetection: { telephone: false },

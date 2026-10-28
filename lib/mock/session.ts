@@ -20,7 +20,7 @@ export function applyMockSession(data: MockData, session: MockSession): MockData
       credits: student.credits + amount,
       creditHistory: amount ? [...creditHistory, {
         id: `session-${session.id}-${mockId()}`, date: session.date, amount,
-        reason: amount < 0 ? `${isPresent ? 'Attend' : 'MIA'} · ${cls.name}` : `Attendance correction · ${cls.name}`,
+        reason: amount < 0 ? `${isPresent ? 'Present' : 'Absent'} · ${cls.name}` : `Attendance correction · ${cls.name}`,
       }] : creditHistory,
       completedModules: isPresent && moduleKey && !student.completedModules.includes(moduleKey)
         ? [...student.completedModules, moduleKey] : student.completedModules,

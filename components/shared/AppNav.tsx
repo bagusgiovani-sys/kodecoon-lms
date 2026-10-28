@@ -64,7 +64,7 @@ export function AppNav({ role, userName, learningEnabled = false }: AppNavProps)
     <header className="border-border/60 bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
         <Link href="/dashboard" className="text-primary font-bold tracking-tight">
-          KOMS
+          KodeNexus
         </Link>
         <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
           {tabs.map((tab) => {

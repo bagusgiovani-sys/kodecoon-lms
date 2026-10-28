@@ -24,6 +24,9 @@
 button, a, select { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
 .mock-print-report { display: none; }
+.nexus-skeleton { background: linear-gradient(100deg, #101b34 20%, #213457 45%, #101b34 70%); background-size: 240% 100%; animation: nexus-shimmer 1.5s ease-in-out infinite; }
+@keyframes nexus-shimmer { to { background-position: -160% 0; } }
+@media (prefers-reduced-motion: reduce) { .nexus-skeleton { animation: none; } }
 
 @media print {
   body:has(> .mock-print-report) > :not(.mock-print-report) { display: none !important; }

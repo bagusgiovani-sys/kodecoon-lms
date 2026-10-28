@@ -1,0 +1,3 @@
+export function KodecoonIcon({ size = 44 }: { size?: number }) {
+  return <span role="img" aria-label="Kodecoon icon" className="kodecoon-icon inline-block shrink-0" style={{ width: size, height: size, maskImage: 'url(/brand/kodecoon-transparent.png)', WebkitMaskImage: 'url(/brand/kodecoon-transparent.png)', maskSize: '200% 200%', WebkitMaskSize: '200% 200%', maskPosition: 'center 18%', WebkitMaskPosition: 'center 18%', maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat', background: 'linear-gradient(145deg,var(--nexus-bright) 15%,var(--primary) 52%,var(--nexus-dim) 88%)', filter: 'drop-shadow(0 0 8px color-mix(in srgb,var(--primary) 55%,transparent))' }} />
+}

@@ -1,4 +1,12 @@
-# KodeHub mock MVP
+# KodeNexus mock MVP
+
+## Editable academy demonstration — 2026-10-28
+
+See [docs/kodenexus-mvp.md](docs/kodenexus-mvp.md) for the current demo flow:
+center cards/timetables, class and student editing, enrolment, individual learning,
+staff Finance (IDR/receipts/credits), selected-guardian previews and route checks.
+Browser-local demo identity and storage are not production authorization or shared data.
+The dated entries below describe earlier delivery history.
 
 ## Learning pages added 2026-10-15
 
