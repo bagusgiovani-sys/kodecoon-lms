@@ -893,3 +893,9 @@ Steps 8, 28, and 29 have now been taken as far as static analysis allows (see th
 - Replaced the custom animated center/theme popup with a styled native select, keeping selection visible and using the browser's reliable keyboard/touch controls.
 - Removed Finance from the Kode Nexus navigation and routed direct `/finance` visits to an explanation that finance is managed separately. The center dashboard stays focused on class operations, learner credits and documentation; comprehensive analysis belongs in Analytics.
 - Verification: targeted ESLint and optimized production build pass. `git diff --check` passes. Browser preview was not performed because localhost remains stopped.
+
+## 2026-10-28 - Restore styled dropdowns and mobile theme dock
+
+- Replaced the browser-native selects with a custom portal-based dropdown so the menu keeps Kode Nexus styling without being clipped by the header or screen edges. Menus measure available viewport room and open upward or downward as needed.
+- On phone widths, the theme selector becomes a compact palette button fixed to the bottom-right safe area, keeping it out of the login hero and workspace header. Larger screens retain the labeled selector.
+- Verification: targeted ESLint, optimized production build, and `git diff --check` pass. No browser preview was run; localhost remains stopped.

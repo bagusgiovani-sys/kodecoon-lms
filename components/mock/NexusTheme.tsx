@@ -13,13 +13,13 @@ export function useNexusTheme() {
     } catch { document.documentElement.dataset.nexusTheme = 'blue' }
   }, [])
 }
-export function ThemeSelector() {
+export function ThemeSelector({ compactOnMobile = false }: { compactOnMobile?: boolean }) {
   const [theme, setTheme] = useState('blue')
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reflect browser-owned preference
     setTheme(document.documentElement.dataset.nexusTheme ?? 'blue')
   }, [])
-  return <NexusDropdown label="Color theme" value={theme} options={themes} icon={<Palette className="size-4" />} onChange={next => {
+  return <NexusDropdown label="Color theme" value={theme} options={themes} icon={<Palette className="size-4" />} compactOnMobile={compactOnMobile} align="right" onChange={next => {
     setTheme(next); document.documentElement.dataset.nexusTheme = next
     try { localStorage.setItem('kodenexus-theme', next) } catch { /* Theme still applies for this visit. */ }
   }} />

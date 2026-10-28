@@ -51,6 +51,8 @@ html[data-nexus-theme=candy] .mock-workspace {
   background-image: radial-gradient(ellipse at 4% 0%,color-mix(in srgb,#ffd26b 25%,transparent),transparent 34%),radial-gradient(ellipse at 96% 14%,color-mix(in srgb,#f48bb0 18%,transparent),transparent 36%),linear-gradient(color-mix(in srgb,#ec5482 4%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,#ec5482 4%,transparent) 1px,transparent 1px);
   background-size: 100% 100%,100% 100%,64px 64px,64px 64px;
 }
+.nexus-theme-dock { bottom: max(0.75rem,env(safe-area-inset-bottom)); right: max(0.75rem,env(safe-area-inset-right)); }
+@media (min-width: 640px) { .nexus-theme-dock { bottom: auto; right: 1.25rem; top: 1.25rem; } }
 .mock-workspace { background-image: linear-gradient(color-mix(in srgb,var(--primary) 3%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--primary) 3%,transparent) 1px,transparent 1px),radial-gradient(ellipse at 85% 0%,color-mix(in srgb,var(--primary) 15%,transparent),transparent 60%); background-size: 64px 64px,64px 64px,100% 100%; }
 .mock-panel { border-radius: 12px; border-top-color: color-mix(in srgb,var(--primary) 45%,var(--border)); }
 .nexus-skeleton { background-image: linear-gradient(100deg,var(--card) 20%,var(--secondary) 45%,var(--card) 70%); }
