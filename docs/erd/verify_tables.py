@@ -6,7 +6,7 @@ import pymupdf
 from PIL import Image
 here=Path(__file__).resolve().parent
 data=json.loads((here/'table-model.json').read_text(encoding='utf-8'))
-pdf=pymupdf.open(here/'KodeHub-ERD-and-Data-Ownership.pdf')
+pdf=pymupdf.open(here/'KodeNexus-ERD-and-Data-Ownership.pdf')
 qa=Path('C:/Users/kodec/AppData/Local/Temp/kodehub-table-erd-qa');qa.mkdir(exist_ok=True)
 assert len(pdf)==len(data['pages'])
 texts=[];thumbs=[]

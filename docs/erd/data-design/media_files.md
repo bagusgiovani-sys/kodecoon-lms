@@ -1,12 +1,14 @@
 ## media_files
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|
 | PK | id | uuid |  |
 | FK | uploaded_by | uuid | users.id |
-|  | drive_file_id | text |  |
+|  | storage_provider | enum |  |
+|  | storage_key | text |  |
+|  | file_name | text |  |
 |  | mime_type | text |  |
 |  | size_bytes | bigint |  |
 |  | upload_state | enum |  |

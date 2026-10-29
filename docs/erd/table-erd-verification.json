@@ -1,7 +1,7 @@
 {
-  "pages": 13,
-  "entities": 41,
-  "foreign_key_relationships": 69,
+  "pages": 14,
+  "entities": 40,
+  "foreign_key_relationships": 66,
   "field_references": "complete",
   "page_bounds": "passed",
   "review_comparison_removed": true,

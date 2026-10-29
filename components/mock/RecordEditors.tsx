@@ -1,4 +1,5 @@
 'use client'
+import { navigateDemo } from './DemoLink'
 import { useContext, useState } from 'react'
 import { toast } from 'sonner'
 import { mockId, mockToday, type MockClass, type MockStudent } from '@/lib/mock/data'
@@ -30,7 +31,7 @@ export function ClassEditor({ existing, centerId }: { existing?: MockClass; cent
           { id: mockId(), classId: cls.id, weekday: cls.weekday!, time: cls.startTime!, start: today,
             members: current.students.filter(s => s.classIds.includes(cls.id)).map(s => ({ studentId: s.id, start: today })) },
         ],
-      }))) { toast.success(existing ? 'Class updated' : 'Class created'); window.location.assign(`/classes/${cls.id}`) }
+      }))) { toast.success(existing ? 'Class updated' : 'Class created'); navigateDemo(`/classes/${cls.id}`) }
     }}>
       <div className="grid gap-4 sm:grid-cols-2"><Field title="Center"><select name="centerId" defaultValue={existing?.centerId ?? centerId} required className={inputStyle}>{data.centers?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>
         <Field title="Class code"><input name="code" required maxLength={40} defaultValue={existing?.code} placeholder="RCJ-SUN-1300" className={inputStyle} /></Field></div>
@@ -71,7 +72,7 @@ export function StudentEditor({ existing, classId, close }: { existing?: MockStu
           if (!classIds.includes(slot.classId) && active) return { ...slot, members: slot.members.map(m => m.studentId === id && !m.end ? { ...m, end: date } : m) }
           return slot
         }),
-      }))) { toast.success(existing ? 'Student and enrolment updated' : 'Student added'); if (close) close(); else window.location.assign(`/students/${id}`) }
+      }))) { toast.success(existing ? 'Student and enrolment updated' : 'Student added'); if (close) close(); else navigateDemo(`/students/${id}`) }
     }}>
       <Field title="Student name"><input name="name" required maxLength={100} defaultValue={existing?.name} className={inputStyle} /></Field>
       <div className="grid gap-4 sm:grid-cols-2"><Field title="Age"><input name="age" type="number" min="3" max="25" required defaultValue={existing?.age ?? 9} className={inputStyle} /></Field>

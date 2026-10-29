@@ -1,6 +1,6 @@
 ## module_lessons
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|
@@ -9,5 +9,4 @@ Owner: kodehub
 |  | sequence_no | int |  |
 |  | title | text |  |
 |  | objective | text |  |
-|  | teaching_materials | text |  |
 

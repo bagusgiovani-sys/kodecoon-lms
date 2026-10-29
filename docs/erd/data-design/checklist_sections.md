@@ -1,6 +1,6 @@
 ## checklist_sections
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|

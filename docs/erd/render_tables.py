@@ -11,11 +11,11 @@ from reportlab.lib.styles import ParagraphStyle
 HERE=Path(__file__).resolve().parent
 DATA=json.loads((HERE/'table-model.json').read_text(encoding='utf-8'))
 W,H=1191,842
-OUT=HERE/'KodeHub-ERD-and-Data-Ownership.pdf'
-COL={'shared':'#127D68','kodehub':'#233D58','external':'#626B76'}
+OUT=HERE/'KodeNexus-ERD-and-Data-Ownership.pdf'
+COL={'shared':'#127D68','kodenexus':'#233D58','external':'#626B76'}
 C=Canvas(str(OUT),pagesize=(W,H),pageCompression=1)
-C.setTitle('KodeHub - Entity Relationship Diagram and Data Ownership')
-C.setAuthor('KodeHub | Kodecoon Academy')
+C.setTitle('KodeNexus - Entity Relationship Diagram and Data Ownership')
+C.setAuthor('KodeNexus | Kodecoon Academy')
 TEXT=[]; BOUNDS=[]; ROUTES=[]
 
 def line(a,b,color='#82909D',width=.9):
@@ -31,12 +31,12 @@ def paragraph(t,x,y,w,size=11):
     _,h=p.wrap(w,1000);p.drawOn(C,x,H-y-h);BOUNDS.append((page_no,y+h));return h
 
 def header(p):
-    label('KODECOON ACADEMY / KODEHUB',44,33,10,True,'#127D68')
+    label('KODECOON ACADEMY / KODENEXUS',44,33,10,True,'#127D68')
     label(p['title'],44,70,25,True)
     label(p['subtitle'],44,96,11,color='#526578')
     line((44,111),(1147,111),'#D1DBE2')
     line((44,803),(1147,803),'#D1DBE2')
-    label('28 OCT 2026  |  Version '+DATA['version']+'  |  KodeHub logical data model',44,822,9,color='#526578')
+    label('29 OCT 2026  |  Version '+DATA['version']+'  |  KodeNexus logical data model',44,822,9,color='#526578')
     label(str(page_no),1135,822,9)
 
 def boxinfo(n):
@@ -122,7 +122,7 @@ def diagram(p):
     for n in p['nodes']:table(boxes[n['table']],n.get('ref',False))
     for port,kind in ports:cardinal(port,kind)
     label('PK  Primary key     FK  Foreign key     ||  Exactly one     o|  Zero or one     o<  Zero or many',44,677,10)
-    label('GREEN  Shared registry     NAVY  KodeHub     [ref]  Entity repeated from another sheet',44,698,9.5,color='#526578')
+    label('GREEN  Shared registry     NAVY  KodeNexus     [ref]  Entity repeated from another sheet',44,698,9.5,color='#526578')
     y=720
     for note in p['notes']:y+=paragraph(note,44,y,1103,10.7)+7
 
@@ -173,8 +173,9 @@ for page_no,p in enumerate(DATA['pages'],1):
     header(p);{'diagram':diagram,'text':textpage,'matrix':matrix,'dataflow':dataflow}[p['type']](p);C.showPage()
 C.save()
 assert all(y<790 for _,y in BOUNDS),BOUNDS
+shutil.copyfile(OUT,HERE/'KodeHub-ERD-and-Data-Ownership.pdf')
 shutil.copyfile(OUT,HERE/'KodeHub-ERD-Review-2026-10-28.pdf')
-lines=['# KodeHub logical entity dictionary','','Version '+DATA['version']+' - 28 October 2026. Logical interface names; physical integration maps these to the shared registry.','']
+lines=['# KodeNexus logical entity dictionary','','Version '+DATA['version']+' - 29 October 2026. Logical interface names; physical integration maps these to the shared registry.','']
 for name,e in DATA['entities'].items():
     lines.extend(['## '+name,'','Owner: '+e['owner'],'','| Key | Field | Type | References |','|---|---|---|---|'])
     lines.extend('| '+' | '.join(f+[e['references'].get(f[1],'')])+' |' for f in e['fields']);lines.append('')

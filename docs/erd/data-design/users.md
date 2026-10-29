@@ -1,6 +1,6 @@
 ## users
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|

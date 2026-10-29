@@ -15,6 +15,7 @@ export function NexusLogin({ parent }: { parent: boolean }) {
   const { data, signIn } = useMock()
   const guardians = [...new Map(data.students.map(s => [s.parentEmail.toLowerCase(), { email: s.parentEmail.toLowerCase(), name: s.parentName }])).values()]
   const [role, setRole] = useState<'teacher' | 'center_manager'>('teacher')
+  const [signingIn, setSigningIn] = useState(false)
   const [email, setEmail] = useState(() => {
     const selected = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('email')
     return guardians.some(g => g.email === selected) ? selected! : guardians[0]?.email ?? ''
@@ -32,18 +33,19 @@ export function NexusLogin({ parent }: { parent: boolean }) {
     </div><Panel className="self-center p-7 sm:p-9"><Pill tone="good">Interactive MVP demo</Pill><h2 className="mt-6 text-2xl font-semibold">{parent ? 'A window into their learning.' : 'Open your staff workspace.'}</h2><p className="mb-6 mt-3 text-sm leading-6 text-muted-foreground">{parent ? 'Choose a guardian to preview only their linked children.' : 'Add your own students and class details. Teacher and center manager have equal demo access.'}</p>
       <form className="grid gap-5" onSubmit={e => {
         e.preventDefault()
+        if (signingIn) return
         const guardian = guardians.find(g => g.email === email)
         if (parent && !guardian) return
         const identity: DemoIdentity = parent ? { role: 'parent', ...guardian! } : { role, email: 'staff@example.com', name: role === 'teacher' ? 'Gio' : 'Center manager' }
         if (signIn(identity)) {
+          setSigningIn(true)
           const destination = parent ? '/student' : '/staff'
           window.dispatchEvent(new CustomEvent('kodenexus:welcome', { detail: { name: identity.name, destination } }))
-          const phraseLength = Array.from(`Welcome, ${identity.name}`).length
-          window.setTimeout(() => navigateDemo(destination), Math.min(4500, phraseLength * 75 + 900))
+          navigateDemo(destination)
         }
       }}>
         {parent ? <Field title="Guardian account"><select value={email} onChange={e => setEmail(e.target.value)} required className={inputStyle}>{guardians.map(g => <option key={g.email} value={g.email}>{g.name} · {g.email}</option>)}</select></Field> : <Field title="Staff role"><select value={role} onChange={e => setRole(e.target.value as typeof role)} className={inputStyle}><option value="teacher">Teacher</option><option value="center_manager">Center manager</option></select></Field>}
-        <Action type="submit" disabled={parent && !guardians.length}>{parent ? 'Open parent preview' : 'Open KodeNexus'}<ArrowRight className="size-4" /></Action>
+        <Action type="submit" disabled={signingIn || (parent && !guardians.length)}>{signingIn ? 'Opening workspace…' : parent ? 'Open parent preview' : 'Open KodeNexus'}<ArrowRight className="size-4" /></Action>
       </form><p className="mt-5 flex items-start gap-2 text-xs leading-5 text-muted-foreground"><ShieldCheck className="mt-0.5 size-4 shrink-0" />Demo accounts are simulated. Use sample information; changes stay in this browser.</p>
       <div className="mt-6 border-t pt-5 text-center text-sm"><Link href={parent ? '/login' : '/student/login'} className="font-medium text-primary">{parent ? 'Choose a staff account' : 'Choose a parent preview'} →</Link></div>
     </Panel></div>

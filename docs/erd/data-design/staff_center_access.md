@@ -1,6 +1,6 @@
 ## staff_center_access
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|

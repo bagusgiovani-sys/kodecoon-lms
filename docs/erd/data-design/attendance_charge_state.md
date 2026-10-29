@@ -1,6 +1,6 @@
 ## attendance_charge_state
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|

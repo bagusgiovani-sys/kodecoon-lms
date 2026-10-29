@@ -1,6 +1,6 @@
 ## lesson_progress
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|

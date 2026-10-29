@@ -1,11 +1,23 @@
 'use client'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useIsPresent } from 'framer-motion'
 import { Check, ChevronDown } from 'lucide-react'
 import { createPortal } from 'react-dom'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 
 export interface NexusOption { id: string; label: string; detail?: string; swatch?: string }
 interface MenuPosition { left: number; top: number; width: number; maxHeight: number; opensUp: boolean }
+
+function DropdownSurface({ menuRef, label, position, children }: {
+  menuRef: RefObject<HTMLDivElement | null>; label: string; position: MenuPosition; children: ReactNode
+}) {
+  const present = useIsPresent()
+  // The closing artwork must never intercept the next tab or center click.
+  return <motion.div ref={menuRef} role="listbox" aria-label={label} aria-hidden={!present} inert={!present}
+    initial={{ opacity: 0, y: position.opensUp ? 8 : -8, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+    exit={{ opacity: 0, y: position.opensUp ? 6 : -4, scale: .98 }} transition={{ duration: .16, ease: [.22, 1, .36, 1] }}
+    style={{ position: 'fixed', left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight, pointerEvents: present ? 'auto' : 'none' }}
+    className="z-[10000] overflow-y-auto overscroll-contain rounded-2xl border border-primary/25 bg-popover/95 p-2 shadow-[0_18px_55px_rgba(0,0,0,.32)] backdrop-blur-2xl">{children}</motion.div>
+}
 
 export function NexusDropdown({ label, value, options, onChange, icon, compactOnMobile = false, align = 'left' }: {
   label: string
@@ -49,15 +61,20 @@ export function NexusDropdown({ label, value, options, onChange, icon, compactOn
       if (event.key === 'Escape') { setOpen(false); triggerRef.current?.focus() }
     }
     const dismissOnViewportChange = () => setOpen(false)
+    const dismissOnPageScroll = (event: Event) => {
+      // Scrolling the options is not a change to the trigger's position.
+      if (event.target instanceof Node && menuRef.current?.contains(event.target)) return
+      setOpen(false)
+    }
     document.addEventListener('pointerdown', dismissOutside)
     document.addEventListener('keydown', closeOnEscape)
     window.addEventListener('resize', dismissOnViewportChange)
-    window.addEventListener('scroll', dismissOnViewportChange, true)
+    window.addEventListener('scroll', dismissOnPageScroll, true)
     return () => {
       document.removeEventListener('pointerdown', dismissOutside)
       document.removeEventListener('keydown', closeOnEscape)
       window.removeEventListener('resize', dismissOnViewportChange)
-      window.removeEventListener('scroll', dismissOnViewportChange, true)
+      window.removeEventListener('scroll', dismissOnPageScroll, true)
     }
   }, [open])
 
@@ -69,13 +86,13 @@ export function NexusDropdown({ label, value, options, onChange, icon, compactOn
 
   const menu = typeof document !== 'undefined' && position ? createPortal(
     <AnimatePresence>
-      {open && <motion.div ref={menuRef} role="listbox" aria-label={label} initial={{ opacity: 0, y: position.opensUp ? 8 : -8, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: position.opensUp ? 6 : -4, scale: .98 }} transition={{ duration: .16, ease: [.22, 1, .36, 1] }} style={{ position: 'fixed', left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }} className="z-[10000] overflow-y-auto overscroll-contain rounded-2xl border border-primary/25 bg-popover/95 p-2 shadow-[0_18px_55px_rgba(0,0,0,.32)] backdrop-blur-2xl">
+      {open && <DropdownSurface menuRef={menuRef} label={label} position={position}>
         {options.map(option => <button type="button" role="option" aria-selected={value === option.id} key={option.id} onClick={() => { onChange(option.id); setOpen(false) }} className={`flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${value === option.id ? 'bg-primary/10 text-primary' : 'text-foreground'}`}>
           {option.swatch ? <span className="size-4 shrink-0 rounded-full border border-border shadow-sm" style={{ backgroundColor: option.swatch }} /> : <span className="size-2 shrink-0 rounded-full bg-primary/50" />}
           <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{option.label}</span>{option.detail && <span className="block truncate text-[10px] text-muted-foreground">{option.detail}</span>}</span>
           {value === option.id && <Check aria-hidden className="size-4 shrink-0" />}
         </button>)}
-      </motion.div>}
+      </DropdownSurface>}
     </AnimatePresence>, document.body
   ) : null
 

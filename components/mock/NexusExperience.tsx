@@ -17,7 +17,7 @@ export function PageSkeleton() {
 // Delegated motion also covers native links, tab buttons, and controls in lazy pages.
 interface WelcomeRequest { name: string; destination: string }
 
-export function Experience({ children, routeKey }: { children: ReactNode; routeKey: string }) {
+export function Experience({ children }: { children: ReactNode }) {
   useNexusTheme()
   const [scope, animate] = useAnimate()
   const reduced = false
@@ -34,17 +34,20 @@ export function Experience({ children, routeKey }: { children: ReactNode; routeK
     return () => window.removeEventListener('kodenexus:welcome', listen)
   }, [])
   useEffect(() => {
-    if (!welcome || routeKey !== welcome.destination) return
-    const startTimer = window.setTimeout(() => setRevealing(true), 40)
+    if (!welcome) return
+    // Navigation happens immediately; only the welcome artwork is delayed.
+    // A delayed navigation could otherwise pull staff away from a later tab.
+    const hold = Math.min(4500, Array.from(`Welcome, ${welcome.name}`).length * 75 + 900)
+    const startTimer = window.setTimeout(() => setRevealing(true), hold)
     // Framer Motion's completion callback is the normal cleanup path. Keep a
     // timer as a fallback so a reduced-motion/browser interruption cannot
     // leave an invisible full-screen layer covering the workspace.
     const fallbackTimer = window.setTimeout(() => {
       setWelcome(current => current === welcome ? null : current)
       setRevealing(false)
-    }, 1500)
+    }, hold + 1500)
     return () => { window.clearTimeout(startTimer); window.clearTimeout(fallbackTimer) }
-  }, [routeKey, welcome])
+  }, [welcome])
   function target(event: React.SyntheticEvent): HTMLElement | null {
     return event.target instanceof Element ? event.target.closest<HTMLElement>('button:not(:disabled),a[href],input[type=checkbox]') : null
   }

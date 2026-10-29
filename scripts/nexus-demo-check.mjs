@@ -28,18 +28,22 @@ for(const count of [0,11,12,23,24]) assert.equal(Math.floor(feedbackAttendance({
 const { scopeCenterData }=require(join(output,'center.cjs'))
 const { createLearningData }=require(join(output,'learning.cjs'))
 const { courseUsage, courseSubject }=require(join(output,'courseUsage.cjs'))
+assert.equal(createLearningData().courses.length,37,'load the complete Kodecoon module list')
+assert.equal(createLearningData().courses.filter(course=>course.category==='Robotics').length,5)
+assert.equal(createLearningData().courses.filter(course=>course.category==='Coding').length,20)
+assert.equal(createLearningData().courses.filter(course=>course.category==='Holiday Camp').length,12)
 const courseFixture={...data,learning:createLearningData(),learnerModules:[
-  {id:'a',studentId:'student-1',classId:'robotics',courseId:'game-studio',status:'active'},
-  {id:'b',studentId:'student-1',classId:'robotics',courseId:'game-studio',status:'active'},
-  {id:'c',studentId:'student-2',classId:'robotics',courseId:'game-studio',status:'active'},
-  {id:'d',studentId:'student-3',classId:'robotics',courseId:'rover-lab',status:'completed'},
-  {id:'e',studentId:'student-4',classId:'coding',courseId:'rover-lab',status:'active'},
+  {id:'a',studentId:'student-1',classId:'robotics',courseId:'sc-101',status:'active'},
+  {id:'b',studentId:'student-1',classId:'robotics',courseId:'sc-101',status:'active'},
+  {id:'c',studentId:'student-2',classId:'robotics',courseId:'sc-101',status:'active'},
+  {id:'d',studentId:'student-3',classId:'robotics',courseId:'rce',status:'completed'},
+  {id:'e',studentId:'student-4',classId:'coding',courseId:'rce',status:'active'},
 ]}
-courseFixture.learning.classCourses.robotics='rover-lab'
+courseFixture.learning.classCourses.robotics='rce'
 const usage=courseUsage(scopeCenterData(courseFixture,'STB'),courseFixture.learning.courses)
-assert.equal(usage.counts.get('game-studio'),2,'count unique learners, not module rows')
-assert.equal(usage.counts.get('rover-lab'),0,'exclude completed courses, other centers and overridden class defaults')
-assert.equal(courseUsage(scopeCenterData(courseFixture,'PIK'),courseFixture.learning.courses).counts.get('rover-lab'),1)
+assert.equal(usage.counts.get('sc-101'),2,'count unique learners, not module rows')
+assert.equal(usage.counts.get('rce'),0,'exclude completed courses, other centers and overridden class defaults')
+assert.equal(courseUsage(scopeCenterData(courseFixture,'PIK'),courseFixture.learning.courses).counts.get('rce'),1)
 assert.equal(courseSubject('Engineering'),'Competition')
 const snapshot=JSON.stringify(data)
 const stb=scopeCenterData(data,'STB'), pik=scopeCenterData(data,'PIK')

@@ -1,6 +1,6 @@
 ## checklist_results
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|

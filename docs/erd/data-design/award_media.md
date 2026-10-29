@@ -1,6 +1,6 @@
 ## award_media
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|

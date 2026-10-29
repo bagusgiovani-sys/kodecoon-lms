@@ -1,6 +1,6 @@
 ## checklist_items
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|

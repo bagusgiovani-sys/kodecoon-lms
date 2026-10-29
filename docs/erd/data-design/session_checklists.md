@@ -1,6 +1,6 @@
 ## session_checklists
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|

@@ -1,11 +1,11 @@
-## module_reports
+## feedback_reports
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|
 | PK | id | uuid |  |
-| FK | student_module_id | uuid | student_modules.id |
+| FK | cycle_id | uuid | feedback_cycles.id |
 | FK | author_id | uuid | users.id |
 |  | revision | int |  |
 |  | strengths | text |  |

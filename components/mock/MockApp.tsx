@@ -39,10 +39,10 @@ export function MockApp({ path, sessionId }: { path: string; sessionId?: string 
   const location = router.isReady ? router.asPath : path
   const url = new URL(location, 'http://demo.local')
   const activePath = url.pathname === '/demo' ? url.searchParams.get('path') ?? path : url.pathname
-  return <MockProvider><Experience routeKey={activePath}><DemoRoute path={activePath} sessionId={url.searchParams.get('sessionId') ?? sessionId} /></Experience></MockProvider>
+  return <MockProvider><Experience><DemoRoute path={activePath} search={url.search} sessionId={url.searchParams.get('sessionId') ?? sessionId} /></Experience></MockProvider>
 }
 
-function DemoRoute({ path, sessionId }: { path: string; sessionId?: string }) {
+function DemoRoute({ path, search, sessionId }: { path: string; search: string; sessionId?: string }) {
   const { data, identity } = useMock()
   const routeCenter = path.startsWith('/staff/') ? decodeURIComponent(path.split('/')[2]) : path.startsWith('/classes/') ? data.classes.find(c => c.id === path.split('/')[2])?.centerId : undefined
   const [savedCenter, setSavedCenter] = useState<string | null>(null)
@@ -63,7 +63,7 @@ function DemoRoute({ path, sessionId }: { path: string; sessionId?: string }) {
     ? !parentPath || (!!childId && !data.students.some(s => s.id === childId && visibleToGuardian(s, identity))) || path.endsWith('/report')
     : parentPath
   if (denied) return <NexusShell path={path} centerId={centerId}><Empty title="This account cannot open this page" description={identity.role === 'parent' ? 'Use My children to open a linked child. Staff records and finance are unavailable in a parent preview.' : 'Choose a parent account to preview its linked children.'} /><div className="mt-5"><LinkAction href={identity.role === 'parent' ? '/student' : '/staff'}>Return to my workspace</LinkAction></div></NexusShell>
-  return <CenterScope.Provider value={path === '/staff' ? null : centerId}><NexusShell path={path} centerId={centerId}><MockScreen key={`${path}:${centerId}:${sessionId ?? ''}`} path={path} centerId={centerId} sessionId={sessionId} /></NexusShell></CenterScope.Provider>
+  return <CenterScope.Provider value={path === '/staff' ? null : centerId}><NexusShell path={path} centerId={centerId}><MockScreen key={`${path}:${search}:${centerId}:${sessionId ?? ''}`} path={path} centerId={centerId} sessionId={sessionId} /></NexusShell></CenterScope.Provider>
 }
 
 function MockScreen({ path, sessionId, centerId }: { path: string; sessionId?: string; centerId: string | null }) {

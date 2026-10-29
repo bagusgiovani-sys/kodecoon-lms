@@ -26,7 +26,7 @@ export function CenterDirectory() {
         <div className="mt-7 flex items-center justify-between border-t pt-4 text-sm font-medium text-primary">Open center dashboard<ArrowRight className="size-4" /></div>
       </Link>
     })}</div>
-    <Panel title="Ready for your demonstration" className="mt-7"><p className="text-sm leading-7 text-muted-foreground">Create a class, add a student, choose their module, and record attendance. Payments and receipts are in staff Finance. Parent preview shows only children linked to the selected guardian email.</p><div className="mt-5 flex flex-wrap gap-3"><LinkAction href="/students/new">Add student</LinkAction><LinkAction secondary href="/finance">Open Finance</LinkAction><LinkAction secondary href="/student/login">Choose a parent preview</LinkAction></div></Panel>
+    <Panel title="Ready for your demonstration" className="mt-7"><p className="text-sm leading-7 text-muted-foreground">Create a class, add a student, choose their module, and record attendance. Payments and receipts belong in the separate Finance app. Parent preview shows only children linked to the selected guardian email.</p><div className="mt-5 flex flex-wrap gap-3"><LinkAction href="/students/new">Add student</LinkAction><LinkAction secondary href="/student/login">Choose a parent preview</LinkAction></div></Panel>
     <Modal open={adding} close={() => setAdding(false)} title="Add a center" description="Give the center its own timetable and class codes."><form className="grid gap-4" onSubmit={e => {
       e.preventDefault(); const f = new FormData(e.currentTarget), id = String(f.get('code')).trim().toUpperCase()
       if (!/^[A-Z0-9-]{2,12}$/.test(id)) { setError('Use 2–12 letters, numbers or hyphens for the center code.'); return }

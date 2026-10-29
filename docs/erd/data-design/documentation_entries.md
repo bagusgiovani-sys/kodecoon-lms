@@ -1,6 +1,6 @@
 ## documentation_entries
 
-Owner: kodehub
+Owner: kodenexus
 
 | Key | Field | Type | References |
 |---|---|---|---|
