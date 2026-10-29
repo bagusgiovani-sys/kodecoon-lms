@@ -32,6 +32,14 @@ for parent,pk,child,fk,*kind in data['relationships']:
     assert any('FK' in k and n==fk for k,n,_ in data['entities'][child]['fields'])
 rows=list(csv.DictReader((here/'relationship-register.csv').open(encoding='utf-8-sig')))
 assert len(rows)==len(data['relationships'])
-summary={'pages':len(pdf),'entities':len(data['entities']),'foreign_key_relationships':len(rows),'field_references':'complete','page_bounds':'passed','review_comparison_removed':True,'rendered_to':str(qa),'application_tests':'not run'}
+assert len(pdf)==15
+source_text=next(page.get_text() for page in pdf if 'Legacy data-source mapping' in page.get_text())
+source_text=re.sub(r'\s+',' ',source_text.lower())
+for phrase in ['Student Progress Tracker','OClass','current credits left','previous end-module feedback','class code','Finance owns financial records','canonical dataset']:
+    assert phrase.lower() in source_text,phrase
+report_fields={name:(kind,typ) for kind,name,typ in data['entities']['feedback_reports']['fields']}
+assert report_fields['cycle_id'][1]=='uuid?'
+assert 'report_date' in report_fields and 'source_system' in report_fields
+summary={'pages':len(pdf),'entities':len(data['entities']),'foreign_key_relationships':len(rows),'field_references':'complete','page_bounds':'passed','legacy_source_map':'passed','review_comparison_removed':True,'rendered_to':str(qa),'application_tests':'not run'}
 (here/'table-erd-verification.json').write_text(json.dumps(summary,indent=2),encoding='utf-8')
 print(json.dumps(summary))

@@ -1,12 +1,12 @@
 # KodeNexus ERD and data ownership
 
-Version 1.1 - 29 October 2026. Colleague-facing logical integration contract.
+Version 1.2 - 29 October 2026. Colleague-facing logical integration contract.
 
 ## Share this first
 
 [KodeNexus ERD and Data Ownership PDF](KodeNexus-ERD-and-Data-Ownership.pdf)
 
-The 14-page PDF presents one logical model using field rows, PK/FK columns, types,
+The 15-page PDF presents one logical model using field rows, PK/FK columns, types,
 orthogonal connectors and crow's-foot relationship symbols. It contains 40 logical
 entities covering the confirmed individual-learning and academy-wide workflows.
 Shared/operational ownership is color-coded. Logical names map to the colleague's
@@ -18,8 +18,9 @@ claim and contains no live student records or credentials.
 - Page 1: purpose, shared-data boundaries and ERD reading guide.
 - Pages 2-11: scheduling, learning, 12-attendance feedback, PDF/PPT lesson resources,
   completion certificates, checklists, media, credits and access.
-- Pages 12-13: data ownership and integration contract.
-- Page 14: application and data-source flow for Nexus, Finance and Analytics.
+- Page 12: fields described in Student Progress Tracker and OClass, mapped to logical records.
+- Pages 13-14: data ownership and integration contract.
+- Page 15: application and data-source flow for Nexus, Finance and Analytics.
 
 ## Technical companion
 
@@ -65,9 +66,10 @@ python docs/erd/render_tables.py
 python docs/erd/verify_tables.py
 ```
 
-The verifier renders all 14 pages and checks page boundaries, all 40 entity names,
+The verifier renders all 15 pages and checks page boundaries, all 40 entity names,
 all FK targets, all 66 relationship-register entries and removal of the superseded
-current/proposed comparison. Visual inspection checks table rows and connector layout.
+current/proposed comparison. It also checks the Tracker/OClass source mapping and
+legacy report fields. Visual inspection checks table rows and connector layout.
 
 ## Version 1.1 changes
 
@@ -76,6 +78,24 @@ current/proposed comparison. Visual inspection checks table rows and connector l
 - Feedback cycles count every 12 Present sessions, independent of module completion.
 - Published report PDFs, separate completion certificates and versioned lesson materials.
 - Provider/key file metadata and explicit application/data-source flow.
+
+## Version 1.2 changes
+
+- Added a field-level legacy source map for the Student Progress Tracker and OClass:
+  student roster, class codes/rosters/time slots, remaining credit units, previous
+  end-module feedback and OClass money/receipt records.
+- Clarified that the two legacy sources are for reconciliation/import lineage only;
+  after cutover the colleague's consolidated database is the single canonical input.
+  Unresolved differences must be reviewed, not silently overwritten or synced both ways.
+- Historical Tracker feedback is kept separate from new feedback cycles. The logical
+  report model permits a report without a 12-attendance cycle and records its source
+  and date; historical reports do not count toward future 12-Present-session cycles.
+- OClass payment amounts and receipts stay outside KodeNexus in the separate Finance domain.
+
+The source names and fields on page 12 reflect Gio's descriptions of those tools.
+Neither workbook export nor the colleague's migrated schema was available to verify
+the exact headers, identifiers or conflict decisions. Confirm those with her before
+data integration; this page is a mapping proposal, not a claim that an import has run.
 
 The logical `lesson_materials` records are a target contract, not a deployed lesson
 attachment feature. They follow the production session-video Drive file-ID pattern:

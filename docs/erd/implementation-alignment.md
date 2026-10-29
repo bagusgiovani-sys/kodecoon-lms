@@ -21,3 +21,11 @@ Integration order: exchange schema and canonical IDs, assign write owners, map/a
 operational tables, implement and test roles/guardian access, test private family
 file delivery, then connect idempotent Finance credit grants and Analytics views.
 No live database was inspected or migrated in this review.
+# Version 1.2 legacy report note
+
+The logical feedback report now allows a missing attendance-cycle link and records
+report date and source system so prior Student Progress Tracker end-module feedback
+can remain visible as historical material without counting toward new 12-attendance
+cycles. This is a logical contract update only. The deployed SQL schema has not been
+migrated to add these fields or accept nullable cycle IDs. Physical migration and
+mapping must be checked against the colleague's consolidated database before use.

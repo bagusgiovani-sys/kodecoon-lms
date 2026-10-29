@@ -1,9 +1,10 @@
 {
-  "pages": 14,
+  "pages": 15,
   "entities": 40,
   "foreign_key_relationships": 66,
   "field_references": "complete",
   "page_bounds": "passed",
+  "legacy_source_map": "passed",
   "review_comparison_removed": true,
   "rendered_to": "C:\\Users\\kodec\\AppData\\Local\\Temp\\kodehub-table-erd-qa",
   "application_tests": "not run"

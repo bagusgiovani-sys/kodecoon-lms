@@ -55,7 +55,7 @@ students,id,guardian_students,student_id,yes,0..many
 students,id,feedback_cycles,student_id,yes,0..many
 feedback_cycles,id,feedback_cycle_sessions,cycle_id,yes,0..many
 student_sessions,id,feedback_cycle_sessions,student_session_id,yes,0..many
-feedback_cycles,id,feedback_reports,cycle_id,yes,0..many
+feedback_cycles,id,feedback_reports,cycle_id,no,0..many
 users,id,feedback_reports,author_id,yes,0..many
 feedback_reports,id,report_modules,report_id,yes,0..many
 student_modules,id,report_modules,student_module_id,yes,0..many

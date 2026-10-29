@@ -1,6 +1,6 @@
 {
-  "pages": 14,
+  "pages": 15,
   "entities": 40,
   "relationships_drawn": 62,
-  "logical_model_version": "1.1"
+  "logical_model_version": "1.2"
 }
