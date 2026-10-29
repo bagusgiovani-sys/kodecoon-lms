@@ -1,5 +1,10 @@
 # Build Progress — KOMS
 
+## 2026-10-29 - Remove doubled parent learner-tab highlight
+
+- Removed the active blue bottom border from the shared learner-record tabs, which was rendered alongside the animated underline. Parent and staff learner records now use one underline with the staff navigation's 3px rounded glow styling. Added an explicit keyboard focus outline; the tab strip retains horizontal scrolling on narrow screens.
+- Verification: targeted ESLint and `git diff --check` pass; source comparison confirms one active underline and no active button border. Browser verification at phone, tablet and desktop widths could not run because the browser tool failed during connection setup (`missing field sandboxPolicy`). This is a demo UI change; production data/storage behavior is unchanged.
+
 ## 2026-10-28 - Straight logo-reveal wire and selector redesign
 
 - Splash wire is a single straight vertical path from the Kode Nexus title to the
