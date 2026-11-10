@@ -31,6 +31,11 @@ function homeFor(role: string | null) {
 }
 
 export async function proxy(request: NextRequest) {
+  const serviceRoute = /^\/(api|auth)(\/|$)/.test(request.nextUrl.pathname)
+  if (serviceRoute) {
+    if (isMockMode()) return NextResponse.json({ error: 'Local mock mode is active. Use the browser workspace; production services are disabled.' }, { status: 503 })
+    return NextResponse.next()
+  }
   // Render a separate demo surface, never weaken API authorization or RLS.
   // Rewrites preserve the familiar routes without invoking database layouts.
   if (isMockMode()) {
@@ -137,6 +142,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/api/:path*',
+    '/auth/:path*',
     // Everything except API routes (they return their own 401/403 JSON),
     // the auth callback flow, Next internals, and static files.
     '/((?!api|auth|_next/static|_next/image|favicon\\.ico|.*\\..*).*)',

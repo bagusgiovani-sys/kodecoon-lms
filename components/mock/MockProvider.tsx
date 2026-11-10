@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { createMockData, MOCK_STORAGE_KEY, type MockData } from '@/lib/mock/data'
 import { DEMO_IDENTITY_KEY, upgradeNexusData, type DemoIdentity } from '@/lib/mock/nexus'
 import { scopeCenterData } from '@/lib/mock/center'
+import { seedCampusData } from '@/lib/mock/campusSeed'
 import { PageSkeleton } from './NexusExperience'
 export const CenterScope = createContext<string | null>(null)
 interface MockContextValue {
@@ -25,7 +26,9 @@ export function MockProvider({ children }: { children: React.ReactNode }) {
       if (stored?.version === 1 && ['students', 'classes', 'sessions', 'videos', 'feedback', 'reports', 'teachers'].every(key => Array.isArray(stored[key]))) initial = stored
     } catch { toast.info('Starting with fresh demo data.') }
     // Browser-owned data is hydrated after mount, avoiding SSR mismatches.
-    const upgraded = upgradeNexusData(initial)
+    const upgraded = seedCampusData(upgradeNexusData(initial))
+    try { localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(upgraded)) }
+    catch { toast.error('Browser storage is unavailable. Changes cannot be saved until storage is enabled.') }
     dataRef.current = upgraded
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrate external browser storage after SSR.
     setData(upgraded)

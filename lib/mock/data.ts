@@ -29,6 +29,7 @@ export interface MockSession {
 export interface MockReport { id: string; studentId: string; date: string; text: string; cycle?: number; fileId?: string; filename?: string; published?: boolean; sessionIds?: string[] }
 export interface MockCertificate { id: string; studentId: string; moduleId: string; module: string; date: string; fileId: string; filename: string }
 export interface MockData {
+  campusSeedVersion?: number
   certificates?: MockCertificate[]
   learnerModules?: LearnerModule[]
   payments?: MockPayment[]
